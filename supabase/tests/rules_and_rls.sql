@@ -1,6 +1,6 @@
 -- Behaviour checks for status rules and RLS. Runs inside a transaction and ROLLS BACK.
 -- Needs at least one admin profile (used as the test identity; its role is switched temporarily).
--- Usage: paste into the SQL editor and run; every row (37 checks) should say PASS.
+-- Usage: paste into the SQL editor and run; every row (52 checks) should say PASS.
 begin;
 
 create temp table t_results (test text, result text) on commit drop;
@@ -167,6 +167,73 @@ begin
   delete from public.submissions where id = v_sub;
   insert into t_results values ('Delete submission removes its follow-ups',
     case when not exists (select 1 from public.follow_ups where entity_id = v_sub) then 'PASS' else 'FAIL' end);
+end $$;
+
+-- ---------------- Steps 4–5 objects, storage, calculations ----------------
+do $$
+declare
+  v_uid uuid := (select id from public.profiles order by created_at limit 1);  -- same identity as the first block
+  v_rec uuid := (select id from public.submissions where status = 'received' order by ref_no limit 1);
+  v_fu  uuid;
+  v_n   int;
+begin
+  perform set_config('request.jwt.claims', json_build_object('sub', v_uid, 'role', 'authenticated')::text, true);
+
+  -- underwriter
+  update public.profiles set role = 'underwriter', active = true where id = v_uid;
+  execute 'set local role authenticated';
+  perform pg_temp.expect_ok('UW: can add counterparty',
+    'insert into public.counterparties (name, type) values (''Test MGA X'', ''mga'')');
+  delete from public.counterparties where name = 'Test MGA X';
+  select count(*) into v_n from public.counterparties where name = 'Test MGA X';
+  insert into t_results values ('UW: cannot delete counterparty', case when v_n = 1 then 'PASS' else 'FAIL' end);
+  select count(*) into v_n from public.job_runs;
+  insert into t_results values ('UW: job log hidden', case when v_n = 0 then 'PASS' else 'FAIL: ' || v_n end);
+  perform pg_temp.expect_error('UW: cannot run daily job', 'select public.run_daily_follow_ups_now()', 'Only admins');
+  perform pg_temp.expect_error('UW: internal job function not callable', 'select public.run_daily_follow_ups()', 'permission denied');
+  perform pg_temp.expect_ok('UW: can upload to submission folder',
+    format('insert into storage.objects (bucket_id, name, owner_id) values (%L, %L, %L)', 'documents', 'submission/' || v_rec || '/t.pdf', v_uid));
+  perform pg_temp.expect_error('UW: cannot upload to claim folder',
+    format('insert into storage.objects (bucket_id, name, owner_id) values (%L, %L, %L)', 'documents', 'claim/' || v_rec || '/t.pdf', v_uid), 'row-level security');
+  insert into public.follow_ups (entity_type, entity_id, type, due_at, assigned_to) values ('submission', v_rec, 'other', now(), v_uid) returning id into v_fu;
+
+  -- finance: may close a follow-up assigned to them, nothing else
+  execute 'reset role';
+  update public.profiles set role = 'finance' where id = v_uid;
+  execute 'set local role authenticated';
+  perform pg_temp.expect_error('FIN: cannot add counterparty',
+    'insert into public.counterparties (name, type) values (''Test MGA Y'', ''mga'')', 'row-level security');
+  perform pg_temp.expect_error('FIN: cannot upload submission documents',
+    format('insert into storage.objects (bucket_id, name, owner_id) values (%L, %L, %L)', 'documents', 'submission/' || v_rec || '/f.pdf', v_uid), 'row-level security');
+  perform pg_temp.expect_ok('FIN: can close a follow-up assigned to them',
+    format('update public.follow_ups set done_at = now(), outcome = %L where id = %L', 'done', v_fu));
+  select count(*) into v_n from public.follow_ups_v where id = v_fu and done_at is not null;
+  insert into t_results values ('FIN: agenda view shows the closed item', case when v_n = 1 then 'PASS' else 'FAIL' end);
+
+  -- management sees the job log
+  execute 'reset role';
+  update public.profiles set role = 'management' where id = v_uid;
+  execute 'set local role authenticated';
+  perform pg_temp.expect_ok('MGMT: can read job log', 'select count(*) from public.job_runs');
+
+  -- no role sees nothing
+  execute 'reset role';
+  update public.profiles set role = null where id = v_uid;
+  execute 'set local role authenticated';
+  select count(*) into v_n from public.follow_ups_v;
+  insert into t_results values ('NO ROLE: agenda view empty', case when v_n = 0 then 'PASS' else 'FAIL: ' || v_n end);
+  select count(*) into v_n from storage.objects where bucket_id = 'documents';
+  insert into t_results values ('NO ROLE: cannot see stored files', case when v_n = 0 then 'PASS' else 'FAIL: ' || v_n end);
+  execute 'reset role';
+
+  -- calculations: recompute every row independently and compare with the view
+  select count(*) into v_n
+  from public.submissions s join public.submissions_v v on v.id = s.id
+  where v.our_gross_premium is distinct from round(s.gross_premium_100 * (case when s.status = 'bound' then s.signed_share_pct else s.written_share_pct end) / 100, 2)
+     or v.our_net_premium is distinct from v.our_gross_premium - round(v.our_gross_premium * s.commission_pct / 100, 2) - round(v.our_gross_premium * s.brokerage_pct / 100, 2)
+     or v.our_gross_premium_usd is distinct from round(v.our_gross_premium * public.fx_rate_to_usd(s.currency, coalesce(s.bound_at::date, s.received_at)), 2)
+     or (s.status = 'bound' and s.signed_share_pct > s.written_share_pct);
+  insert into t_results values ('Calculations: view matches independent recompute (all rows)', case when v_n = 0 then 'PASS' else 'FAIL: ' || v_n || ' rows' end);
 end $$;
 
 select * from t_results;
