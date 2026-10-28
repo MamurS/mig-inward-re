@@ -1,6 +1,6 @@
 -- Behaviour checks for status rules and RLS. Runs inside a transaction and ROLLS BACK.
 -- Needs at least one admin profile (used as the test identity; its role is switched temporarily).
--- Usage: paste into the SQL editor and run; every row should say PASS.
+-- Usage: paste into the SQL editor and run; every row (37 checks) should say PASS.
 begin;
 
 create temp table t_results (test text, result text) on commit drop;
@@ -140,6 +140,33 @@ begin
   perform pg_temp.expect_error('ANON: cannot call status RPC',
     format('select public.change_submission_status(%L, %L)', v_rec, 'under_review'), 'permission denied');
   execute 'reset role';
+end $$;
+
+-- ---------------- delete rules (as table owner) ----------------
+do $$
+declare v_sub uuid := (select id from public.submissions where status = 'offered' order by ref_no limit 1);
+        v_doc uuid;
+begin
+  insert into public.documents (entity_type, entity_id, doc_type, file_name, storage_path)
+  values ('submission', v_sub, 'slip', 't.pdf', 'submission/' || v_sub || '/t.pdf') returning id into v_doc;
+  begin
+    delete from public.submissions where id = v_sub;
+    insert into t_results values ('Delete submission with documents blocked', 'FAIL');
+  exception when others then
+    insert into t_results values ('Delete submission with documents blocked', case when sqlerrm like 'Delete the documents%' then 'PASS' else 'FAIL ' || sqlerrm end);
+  end;
+  perform public.apply_submission_status(v_sub, 'bound', null, 'x', null, null, (select written_share_pct from public.submissions where id = v_sub), v_doc);
+  begin
+    delete from public.documents where id = v_doc;
+    insert into t_results values ('Delete evidence document blocked', 'FAIL');
+  exception when others then
+    insert into t_results values ('Delete evidence document blocked', case when sqlerrm like '%confirmation evidence%' then 'PASS' else 'FAIL ' || sqlerrm end);
+  end;
+  delete from public.submission_status_history where submission_id = v_sub;
+  delete from public.documents where id = v_doc;
+  delete from public.submissions where id = v_sub;
+  insert into t_results values ('Delete submission removes its follow-ups',
+    case when not exists (select 1 from public.follow_ups where entity_id = v_sub) then 'PASS' else 'FAIL' end);
 end $$;
 
 select * from t_results;

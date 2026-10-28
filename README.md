@@ -3,7 +3,7 @@
 Internal system for Mosaic Insurance Group (Tashkent) to register, assess, offer and track
 inward reinsurance shares from MGA partners. CEO dashboard for all MGA business.
 
-> Status: **Phase 0–1, Step 2** — database: reference data, submissions, status machine, follow-ups, documents, audit, RLS, demo data. UI pages come in Steps 3–5.
+> Status: **Phase 0–1, Step 3** — database + submissions register (filters, search, sort, Excel export), create/edit form with live figures, detail page with status actions, timeline, documents and change log. Agenda, dashboard and admin pages come in Steps 4–5.
 
 ## Stack
 
@@ -36,6 +36,8 @@ Migrations in `supabase/migrations/` (apply in filename order):
 | `…_status_machine.sql` | `change_submission_status()` — the only way to change a status |
 | `…_storage_documents.sql` | private Storage bucket `documents` + access rules |
 | `…_policy_tuning.sql` | RLS performance tuning, extra indexes |
+| `…_underwriters_manage_counterparties.sql` | underwriters may add / edit counterparties (delete: admin only) |
+| `…_document_evidence_and_submission_delete.sql`, `…_submission_delete_after_trigger.sql` | confirmation documents can't be deleted; deleting a submission removes its follow-ups and needs its documents removed first |
 
 Conventions: money `numeric(18,2)`, shares / percentages `numeric(9,6)` stored as percent (12.5 = 12.5 %),
 every amount keeps its own currency; USD via `fx_rates` (rate on the bound date, otherwise the received date).
@@ -68,7 +70,7 @@ commission and brokerage = % of our gross · our net = gross − commission − 
 
 ### Checks
 
-`supabase/tests/rules_and_rls.sql` — 34 checks of the status rules and per-role access; runs in a
+`supabase/tests/rules_and_rls.sql` — 37 checks of the status rules and per-role access; runs in a
 transaction and rolls back. Paste into the SQL editor: every row must say PASS.
 
 ## Roles
@@ -82,6 +84,8 @@ transaction and rolls back. Paste into the SQL editor: every row must say PASS.
 | `management` | Read everything + CEO dashboard |
 
 A new login has **no role** and sees only a "waiting for access" page until an admin assigns one.
+People who leave are **deactivated** (Admin page / `active = false`), not deleted — their name stays on the
+submissions, documents and history they worked on.
 Access is enforced in the database (RLS), not only in the UI.
 
 ## Creating users (for now)
