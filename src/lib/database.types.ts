@@ -256,6 +256,20 @@ export type Database = {
         }
         Relationships: []
       }
+      job_runs: {
+        Row: {
+          error: string | null
+          finished_at: string | null
+          id: number
+          job: string
+          result: Json | null
+          started_at: string
+          started_by: string | null
+        }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
       lines_of_business: {
         Row: {
           active: boolean
@@ -522,6 +536,21 @@ export type Database = {
       }
     }
     Views: {
+      follow_ups_v: {
+        Row: Database["public"]["Tables"]["follow_ups"]["Row"] & {
+          entity_ref: string | null
+          entity_label: string | null
+          submission_status: Database["public"]["Enums"]["submission_status"] | null
+          mga_id: string | null
+          mga_name: string | null
+          offer_valid_until: string | null
+          assigned_to_name: string | null
+          done_by_name: string | null
+          is_overdue: boolean | null
+          days_overdue: number | null
+        }
+        Relationships: []
+      }
       submissions_v: {
         Row: {
           bound_at: string | null
@@ -608,6 +637,7 @@ export type Database = {
         Returns: Database["public"]["Tables"]["submissions"]["Row"]
       }
       fx_rate_to_usd: { Args: { p_currency: string; p_date: string }; Returns: number }
+      run_daily_follow_ups_now: { Args: never; Returns: Json }
       has_role: { Args: { roles: Database["public"]["Enums"]["app_role"][] }; Returns: boolean }
       is_app_user: { Args: never; Returns: boolean }
       submission_next_statuses: {

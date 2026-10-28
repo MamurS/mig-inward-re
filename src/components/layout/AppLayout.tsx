@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { NAV_ITEMS } from './nav'
 import { LanguageSwitcher } from './LanguageSwitcher'
 import { UserMenu } from './UserMenu'
+import { useMyOverdueCount } from '@/features/followups/FollowUps'
 
 export function AppLayout() {
   const { t, i18n } = useTranslation()
@@ -26,6 +27,7 @@ export function AppLayout() {
   }, [profile?.preferred_language, i18n])
 
   const items = NAV_ITEMS.filter((item) => role && item.roles.includes(role))
+  const overdue = useMyOverdueCount()
 
   const nav = (
     <nav className="flex flex-col gap-1 p-3">
@@ -41,7 +43,12 @@ export function AppLayout() {
           }
         >
           <Icon className="size-4" />
-          {t(labelKey)}
+          <span className="flex-1">{t(labelKey)}</span>
+          {to === '/agenda' && (overdue.data ?? 0) > 0 && (
+            <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] leading-none font-semibold text-white" title={t('agenda.bucket.overdue')}>
+              {overdue.data}
+            </span>
+          )}
         </NavLink>
       ))}
     </nav>

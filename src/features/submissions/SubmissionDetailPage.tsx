@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Circle, Clock, FileText, Pencil } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, ArrowRight, FileText, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/PageHeader'
 import { Button } from '@/components/ui/button'
@@ -16,11 +16,11 @@ import { NEXT_STATUSES, type SubmissionStatus } from '@/lib/status'
 import { formatDate, formatDateTime, formatMoney, formatPct } from '@/lib/format'
 import { openDocument } from '@/lib/documents'
 import { errorMessage } from '@/lib/errors'
-import { cn } from '@/lib/utils'
 import { useCounterparties, useCountries, useLinesOfBusiness, useLocalName, useUsers, userName } from '@/hooks/useReference'
 import { DocumentsPanel } from '@/features/documents/DocumentsPanel'
 import { useAuditLog, useEntityDocuments, useEntityFollowUps, useSubmission, useSubmissionHistory } from './api'
 import { StatusChangeDialog } from './StatusChangeDialog'
+import { AddFollowUpButton, CloseFollowUpDialog, FollowUpItem, RescheduleFollowUpDialog, type FollowUp } from '@/features/followups/FollowUps'
 import { FiguresTable } from './SubmissionFormPage'
 
 export function SubmissionDetailPage() {
@@ -38,6 +38,8 @@ export function SubmissionDetailPage() {
   const lobs = useLinesOfBusiness()
   const localName = useLocalName()
   const [target, setTarget] = useState<SubmissionStatus | null>(null)
+  const [closing, setClosing] = useState<FollowUp | null>(null)
+  const [rescheduling, setRescheduling] = useState<FollowUp | null>(null)
 
   if (sub.isLoading) return <FullPageSpinner />
   if (sub.error) return <p className="p-6 text-sm text-destructive">{errorMessage(sub.error)}</p>
@@ -49,7 +51,6 @@ export function SubmissionDetailPage() {
   const usersById = new Map(users.data?.map((u) => [u.id, u]))
   const country = countries.data?.find((c) => c.code === s.insured_country)
   const docsById = new Map(docs.data?.map((d) => [d.id, d]))
-  const openFollowUps = followUps.data?.filter((f) => !f.done_at) ?? []
 
   // Human-readable values in the change log (names instead of ids, formatted dates)
   const fmtValue = (field: string, v: unknown): string => {
@@ -259,37 +260,23 @@ export function SubmissionDetailPage() {
           </Card>
 
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between gap-2">
               <CardTitle>{t('fu.title')}</CardTitle>
+              {editable && <AddFollowUpButton entityType="submission" entityId={s.id!} defaultAssignee={s.underwriter_id} />}
             </CardHeader>
-            <CardContent className="grid gap-3">
+            <CardContent className="grid gap-2">
               {!followUps.data?.length && <p className="text-sm text-muted-foreground">{t('fu.none')}</p>}
-              {followUps.data?.map((f) => {
-                const overdue = !f.done_at && new Date(f.due_at) < new Date()
-                return (
-                  <div key={f.id} className={cn('rounded-md border p-2.5 text-sm', f.done_at && 'opacity-70')}>
-                    <div className="flex items-center gap-2">
-                      {f.done_at ? <CheckCircle2 className="size-4 text-emerald-600" /> : overdue ? <Clock className="size-4 text-destructive" /> : <Circle className="size-4 text-muted-foreground" />}
-                      <span className="font-medium">{f.title || t(`fuType.${f.type}`)}</span>
-                    </div>
-                    <div className={cn('mt-1 text-xs', overdue ? 'font-medium text-destructive' : 'text-muted-foreground')}>
-                      {t('fu.due')}: {formatDate(f.due_at)} · {userName(usersById.get(f.assigned_to ?? ''))}
-                    </div>
-                    {f.done_at && (
-                      <div className="mt-1 text-xs text-muted-foreground">
-                        {t('fu.doneOn', { date: formatDate(f.done_at) })}: {f.outcome}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-              {openFollowUps.length > 0 && <p className="text-xs text-muted-foreground">{t('fu.manageInAgenda')}</p>}
+              {followUps.data?.map((f) => (
+                <FollowUpItem key={f.id} followUp={f} onDone={setClosing} onReschedule={setRescheduling} />
+              ))}
             </CardContent>
           </Card>
         </div>
       </div>
 
       <StatusChangeDialog submission={s} target={target} documents={docs.data ?? []} onClose={() => setTarget(null)} />
+      <CloseFollowUpDialog followUp={closing} onClose={() => setClosing(null)} />
+      <RescheduleFollowUpDialog followUp={rescheduling} onClose={() => setRescheduling(null)} />
     </>
   )
 }

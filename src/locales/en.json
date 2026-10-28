@@ -46,7 +46,10 @@
     "save": "Save",
     "edit": "Edit",
     "delete": "Delete",
-    "remove": "Remove"
+    "remove": "Remove",
+    "active": "Active",
+    "inactive": "inactive",
+    "close": "Close"
   },
   "pages": {
     "dashboard": {
@@ -300,7 +303,25 @@
     "none": "No follow-ups.",
     "due": "Due",
     "doneOn": "Done {{date}}",
-    "manageInAgenda": "Close follow-ups from \"My agenda\"."
+    "manageInAgenda": "Close follow-ups from \"My agenda\".",
+    "add": "Add follow-up",
+    "addTitle": "New follow-up",
+    "added": "Follow-up added",
+    "assignedTo": "Assigned to",
+    "closeTitle": "Close follow-up",
+    "closed": "Follow-up closed",
+    "daysOverdue": "{{count}} days overdue",
+    "markDone": "Done",
+    "nextDue": "Next follow-up on",
+    "outcome": "Outcome",
+    "outcomeHint": "What happened? e.g. \"MGA says answer by Friday\"",
+    "outcomeRequired": "Enter the outcome to close the follow-up.",
+    "rescheduleTitle": "Reschedule / reassign",
+    "rescheduled": "Follow-up updated",
+    "scheduleNext": "Schedule another follow-up",
+    "titleField": "Title",
+    "titlePlaceholder": "e.g. Call MGA about revised terms",
+    "type": "Type"
   },
   "cp": {
     "add": {
@@ -310,7 +331,38 @@
     },
     "created": "{{name}} added",
     "duplicate": "A counterparty with this name and type already exists.",
-    "moreLater": "Contacts and other details can be added on the counterparty page."
+    "moreLater": "Contacts and other details can be added on the counterparty page.",
+    "search": "Search name…",
+    "allTypes": "All types",
+    "showInactive": "Show inactive",
+    "type": "Type",
+    "submissions": "Submissions",
+    "bound": "Bound",
+    "boundUsd": "Our bound gross (USD)",
+    "none": "No counterparties found.",
+    "notFound": "Counterparty not found.",
+    "openInRegister": "Open in register",
+    "theirSubmissions": "Submissions",
+    "role": "Role",
+    "sender": "sender",
+    "details": "Details",
+    "contacts": "Contacts",
+    "addContact": "Add contact",
+    "noContacts": "No contacts yet.",
+    "contactName": "Name",
+    "contactRole": "Position",
+    "saved": "Counterparty saved",
+    "kpi": {
+      "submissions": "Submissions",
+      "thisYear": "{{count}} this year",
+      "offered": "Offered",
+      "declined": "declined: {{count}}",
+      "bound": "Bound",
+      "boundUsd": "Bound premium (USD)",
+      "thisYearUsd": "this year: {{amount}}",
+      "openOffers": "Open offers",
+      "avgShare": "Avg signed share"
+    }
   },
   "v": {
     "required": "Required",
@@ -323,5 +375,124 @@
     "days": "Whole number of days",
     "periodOrder": "Must be on or after \"period from\"",
     "deductionsOver100": "Commission + brokerage cannot exceed 100 %"
+  },
+  "agenda": {
+    "mine": "My follow-ups",
+    "everyone": "Everyone",
+    "open": "Open",
+    "done30": "Done (last 30 days)",
+    "nothingOpen": "Nothing open — all follow-ups are done.",
+    "nothingDone": "Nothing closed in the last 30 days.",
+    "bucket": {
+      "overdue": "Overdue",
+      "today": "Due today",
+      "week": "Next 7 days",
+      "later": "Later"
+    }
+  },
+  "dash": {
+    "period": "Period",
+    "allYears": "All years",
+    "tiles": {
+      "receivedMonth": "Received this month",
+      "underReview": "Under review",
+      "notReviewed": "+ {{count}} not yet reviewed",
+      "awaiting": "Awaiting answer",
+      "overdue": "Overdue follow-ups",
+      "boundYtd": "Bound in {{year}}",
+      "ourGross": "our gross"
+    },
+    "funnelTitle": "Status funnel",
+    "funnel": {
+      "received": "Received",
+      "reviewed": "Reviewed",
+      "offered": "Offered",
+      "bound": "Bound"
+    },
+    "count": "Count",
+    "hitRatio": "Hit ratio",
+    "hitRatioExplain": "{{bound}} bound of {{offered}} offered in the period",
+    "hitRatioDecided": "Of offers already answered (bound, NTU, no response)",
+    "boundPremiumPeriod": "Our bound gross premium in the period (USD)",
+    "byMonth": "Bound premium by month (USD)",
+    "byMga": "Our bound premium by MGA (USD)",
+    "byLob": "Our bound premium by line (USD)",
+    "noBound": "No bound business in this period",
+    "ourGrossUsd": "Our gross (USD)",
+    "awaitingByAge": "Awaiting answer — age",
+    "days": "{{range}} days",
+    "ageNote": "Days since the offer was made; amounts are our gross (USD).",
+    "oldestOffers": "Oldest unanswered offers",
+    "openInRegister": "Open in register",
+    "noOpenOffers": "No offers are waiting for an answer.",
+    "offeredOn": "Offered",
+    "daysWaiting": "Days waiting"
+  },
+  "admin": {
+    "tabs": {
+      "users": "Users & roles",
+      "reference": "Reference data",
+      "fx": "FX rates",
+      "settings": "Settings",
+      "jobs": "Scheduled jobs"
+    },
+    "saved": "Saved",
+    "add": "Add",
+    "duplicate": "This code already exists.",
+    "users": {
+      "help": "People who leave are deactivated, not deleted — their name stays on their work.",
+      "new": "New user",
+      "newHelp": "Creates a login with a temporary password. Give it to the person; they can sign in straight away.",
+      "role": "Role",
+      "noRole": "— no access —",
+      "created": "Created",
+      "create": "Create user",
+      "created_ok": "{{email}} created",
+      "passOn": "Give these to the user: {{email}} / {{password}}",
+      "tempPassword": "Temporary password",
+      "tempPasswordHint": "At least 10 characters. Shown only now — copy it.",
+      "setPassword": "Set new password",
+      "passwordSet": "Password changed",
+      "pickRole": "Choose a role first."
+    },
+    "ref": {
+      "lob": "Lines of business",
+      "currencies": "Currencies",
+      "countries": "Countries",
+      "code": "Code",
+      "counterpartiesHint": "MGAs, brokers and cedents are managed on the Counterparties page."
+    },
+    "fx": {
+      "add": "Add / update an FX rate",
+      "help": "Rate = how many USD for 1 unit of the currency. Amounts use the latest rate on or before the date (bound date, else received date).",
+      "date": "Date",
+      "rate": "USD per 1 {{ccy}}",
+      "rateShort": "USD per unit",
+      "source": "Source",
+      "invalid": "Choose a currency and date and enter a rate above 0.",
+      "confirmDelete": "Delete the {{ccy}} rate of {{date}}?"
+    },
+    "settings": {
+      "firstDays": "First follow-up after an offer (days)",
+      "firstDaysHint": "Created automatically when a submission is offered.",
+      "repeatDays": "Repeat follow-ups every (days)",
+      "repeatDaysHint": "The daily job creates the next reminder for open offers without one.",
+      "autoEnabled": "Automatically move old offers to \"No response\"",
+      "autoDays": "…after (days since the offer)",
+      "autoDaysHint": "A late answer can still be recorded: \"No response\" → Bound / NTU.",
+      "invalidDays": "Days must be whole numbers from 1 to 365."
+    },
+    "jobs": {
+      "title": "Daily follow-up job",
+      "help": "Runs every day at 08:15 Tashkent time. Creates repeat reminders, flags expired offers and (if enabled) moves old offers to \"No response\".",
+      "runNow": "Run now",
+      "started": "Started",
+      "trigger": "Trigger",
+      "outcome": "Result",
+      "manual": "manual",
+      "scheduled": "scheduled",
+      "none": "No runs yet.",
+      "result": "{{repeats}} new reminders, {{expiry}} expired offers flagged, {{noresp}} moved to \"No response\""
+    }
   }
 }

@@ -46,7 +46,10 @@
     "save": "Saqlash",
     "edit": "Tahrirlash",
     "delete": "O'chirish",
-    "remove": "Olib tashlash"
+    "remove": "Olib tashlash",
+    "active": "Faol",
+    "inactive": "nofaol",
+    "close": "Yopish"
   },
   "pages": {
     "dashboard": {
@@ -300,7 +303,25 @@
     "none": "Eslatmalar yo'q.",
     "due": "Muddat",
     "doneOn": "Bajarildi {{date}}",
-    "manageInAgenda": "Eslatmalarni \"Mening vazifalarim\" bo'limida yoping."
+    "manageInAgenda": "Eslatmalarni \"Mening vazifalarim\" bo'limida yoping.",
+    "add": "Eslatma qo'shish",
+    "addTitle": "Yangi eslatma",
+    "added": "Eslatma qo'shildi",
+    "assignedTo": "Mas'ul",
+    "closeTitle": "Eslatmani yopish",
+    "closed": "Eslatma yopildi",
+    "daysOverdue": "{{count}} kun kechikdi",
+    "markDone": "Bajarildi",
+    "nextDue": "Keyingi eslatma sanasi",
+    "outcome": "Natija",
+    "outcomeHint": "Nima bo'ldi? Masalan: \"MGA jumagacha javob beradi\"",
+    "outcomeRequired": "Eslatmani yopish uchun natijani kiriting.",
+    "rescheduleTitle": "Muddatni yoki mas'ulni o'zgartirish",
+    "rescheduled": "Eslatma yangilandi",
+    "scheduleNext": "Keyingi eslatmani rejalashtirish",
+    "titleField": "Sarlavha",
+    "titlePlaceholder": "Masalan: yangi shartlar bo'yicha MGA ga qo'ng'iroq",
+    "type": "Turi"
   },
   "cp": {
     "add": {
@@ -310,7 +331,38 @@
     },
     "created": "{{name}} qo'shildi",
     "duplicate": "Bunday nom va turdagi kontragent allaqachon mavjud.",
-    "moreLater": "Kontaktlar va boshqa ma'lumotlarni kontragent sahifasida qo'shish mumkin."
+    "moreLater": "Kontaktlar va boshqa ma'lumotlarni kontragent sahifasida qo'shish mumkin.",
+    "search": "Nomi bo'yicha qidirish…",
+    "allTypes": "Barcha turlar",
+    "showInactive": "Nofaollarni ko'rsatish",
+    "type": "Turi",
+    "submissions": "Arizalar",
+    "bound": "Tasdiqlangan",
+    "boundUsd": "Tasdiqlangan yalpi (USD)",
+    "none": "Kontragentlar topilmadi.",
+    "notFound": "Kontragent topilmadi.",
+    "openInRegister": "Reestrda ochish",
+    "theirSubmissions": "Arizalar",
+    "role": "Roli",
+    "sender": "yuboruvchi",
+    "details": "Ma'lumotlar",
+    "contacts": "Kontaktlar",
+    "addContact": "Kontakt qo'shish",
+    "noContacts": "Hozircha kontaktlar yo'q.",
+    "contactName": "Ism",
+    "contactRole": "Lavozim",
+    "saved": "Kontragent saqlandi",
+    "kpi": {
+      "submissions": "Arizalar",
+      "thisYear": "shu yil: {{count}}",
+      "offered": "Taklif berilgan",
+      "declined": "rad etilgan: {{count}}",
+      "bound": "Tasdiqlangan",
+      "boundUsd": "Tasdiqlangan mukofot (USD)",
+      "thisYearUsd": "shu yil: {{amount}}",
+      "openOffers": "Ochiq takliflar",
+      "avgShare": "O'rtacha tasdiqlangan ulush"
+    }
   },
   "v": {
     "required": "Majburiy maydon",
@@ -323,5 +375,124 @@
     "days": "Butun kunlar soni",
     "periodOrder": "Davr boshlanishidan oldin bo'lmasligi kerak",
     "deductionsOver100": "Komissiya + brokerlik 100 % dan oshmasligi kerak"
+  },
+  "agenda": {
+    "mine": "Mening eslatmalarim",
+    "everyone": "Barcha xodimlar",
+    "open": "Ochiq",
+    "done30": "Bajarilgan (30 kun)",
+    "nothingOpen": "Ochiq eslatmalar yo'q.",
+    "nothingDone": "So'nggi 30 kunda hech narsa yopilmagan.",
+    "bucket": {
+      "overdue": "Muddati o'tgan",
+      "today": "Bugun",
+      "week": "Keyingi 7 kun",
+      "later": "Keyinroq"
+    }
+  },
+  "dash": {
+    "period": "Davr",
+    "allYears": "Barcha yillar",
+    "tiles": {
+      "receivedMonth": "Shu oyda qabul qilingan",
+      "underReview": "Ko'rib chiqilmoqda",
+      "notReviewed": "+ hali ko'rilmagan: {{count}}",
+      "awaiting": "Javob kutilmoqda",
+      "overdue": "Muddati o'tgan eslatmalar",
+      "boundYtd": "{{year}} yilda tasdiqlangan",
+      "ourGross": "bizning yalpi"
+    },
+    "funnelTitle": "Holatlar voronkasi",
+    "funnel": {
+      "received": "Qabul qilingan",
+      "reviewed": "Ko'rib chiqilgan",
+      "offered": "Taklif berilgan",
+      "bound": "Tasdiqlangan"
+    },
+    "count": "Soni",
+    "hitRatio": "Konversiya",
+    "hitRatioExplain": "Davrda {{offered}} taklifdan {{bound}} tasdiqlangan",
+    "hitRatioDecided": "Javob olingan takliflardan (bound, NTU, javobsiz)",
+    "boundPremiumPeriod": "Davrdagi tasdiqlangan yalpi mukofotimiz (USD)",
+    "byMonth": "Oylar bo'yicha tasdiqlangan mukofot (USD)",
+    "byMga": "MGA bo'yicha tasdiqlangan mukofot (USD)",
+    "byLob": "Turlar bo'yicha tasdiqlangan mukofot (USD)",
+    "noBound": "Bu davrda tasdiqlangan bitimlar yo'q",
+    "ourGrossUsd": "Bizning yalpi (USD)",
+    "awaitingByAge": "Javob kutilmoqda — muddat bo'yicha",
+    "days": "{{range}} kun",
+    "ageNote": "Taklif berilganidan beri kunlar; summalar — bizning yalpi (USD).",
+    "oldestOffers": "Javobsiz eng eski takliflar",
+    "openInRegister": "Reestrda ochish",
+    "noOpenOffers": "Javob kutayotgan takliflar yo'q.",
+    "offeredOn": "Taklif sanasi",
+    "daysWaiting": "Kutish kunlari"
+  },
+  "admin": {
+    "tabs": {
+      "users": "Foydalanuvchilar va rollar",
+      "reference": "Ma'lumotnomalar",
+      "fx": "Valyuta kurslari",
+      "settings": "Sozlamalar",
+      "jobs": "Rejalashtirilgan vazifalar"
+    },
+    "saved": "Saqlandi",
+    "add": "Qo'shish",
+    "duplicate": "Bunday kod allaqachon mavjud.",
+    "users": {
+      "help": "Ketgan xodimlar o'chirilmaydi, nofaol qilinadi — ismlari tarixda qoladi.",
+      "new": "Yangi foydalanuvchi",
+      "newHelp": "Vaqtinchalik parol bilan hisob yaratadi. Uni xodimga bering — u darhol kira oladi.",
+      "role": "Rol",
+      "noRole": "— ruxsat yo'q —",
+      "created": "Yaratilgan",
+      "create": "Yaratish",
+      "created_ok": "{{email}} yaratildi",
+      "passOn": "Xodimga bering: {{email}} / {{password}}",
+      "tempPassword": "Vaqtinchalik parol",
+      "tempPasswordHint": "Kamida 10 belgi. Faqat hozir ko'rsatiladi — nusxa oling.",
+      "setPassword": "Yangi parol o'rnatish",
+      "passwordSet": "Parol o'zgartirildi",
+      "pickRole": "Avval rolni tanlang."
+    },
+    "ref": {
+      "lob": "Sug'urta turlari",
+      "currencies": "Valyutalar",
+      "countries": "Davlatlar",
+      "code": "Kod",
+      "counterpartiesHint": "MGA, brokerlar va tsedentlar \"Kontragentlar\" bo'limida yuritiladi."
+    },
+    "fx": {
+      "add": "Kursni qo'shish / o'zgartirish",
+      "help": "Kurs = valyutaning 1 birligi uchun necha USD. Sanadagi oxirgi kurs ishlatiladi (tasdiqlash, aks holda qabul sanasi).",
+      "date": "Sana",
+      "rate": "1 {{ccy}} uchun USD",
+      "rateShort": "Birlik uchun USD",
+      "source": "Manba",
+      "invalid": "Valyuta va sanani tanlang, 0 dan katta kurs kiriting.",
+      "confirmDelete": "{{date}} sanadagi {{ccy}} kursi o'chirilsinmi?"
+    },
+    "settings": {
+      "firstDays": "Taklifdan keyingi birinchi eslatma (kun)",
+      "firstDaysHint": "Taklif berilganda avtomatik yaratiladi.",
+      "repeatDays": "Eslatmalarni har (kun) takrorlash",
+      "repeatDaysHint": "Kundalik vazifa ochiq takliflar uchun keyingi eslatmani yaratadi.",
+      "autoEnabled": "Eski takliflarni avtomatik \"Javob yo'q\" holatiga o'tkazish",
+      "autoDays": "…dan keyin (taklifdan beri kun)",
+      "autoDaysHint": "Kech javobni baribir kiritish mumkin: \"Javob yo'q\" → Bound / NTU.",
+      "invalidDays": "Kunlar 1 dan 365 gacha butun son bo'lishi kerak."
+    },
+    "jobs": {
+      "title": "Kundalik eslatma vazifasi",
+      "help": "Har kuni Toshkent vaqti bilan 08:15 da ishlaydi: takroriy eslatmalar, muddati o'tgan takliflarni belgilash va (yoqilgan bo'lsa) \"Javob yo'q\" ga o'tkazish.",
+      "runNow": "Hozir ishga tushirish",
+      "started": "Boshlangan",
+      "trigger": "Ishga tushirish",
+      "outcome": "Natija",
+      "manual": "qo'lda",
+      "scheduled": "jadval bo'yicha",
+      "none": "Hozircha ishga tushirilmagan.",
+      "result": "yangi eslatmalar: {{repeats}}, muddati o'tganlar: {{expiry}}, \"Javob yo'q\" ga o'tkazilgan: {{noresp}}"
+    }
   }
 }

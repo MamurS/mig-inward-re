@@ -7,10 +7,14 @@ import { homePathFor } from '@/components/layout/nav'
 import { FullPageSpinner } from '@/components/FullPageSpinner'
 import { LoginPage } from '@/pages/LoginPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
-import { PlaceholderPage } from '@/pages/PlaceholderPage'
 
 const SubmissionsPage = lazy(() => import('@/features/submissions/SubmissionsPage').then((m) => ({ default: m.SubmissionsPage })))
 const SubmissionFormPage = lazy(() => import('@/features/submissions/SubmissionFormPage').then((m) => ({ default: m.SubmissionFormPage })))
+const AgendaPage = lazy(() => import('@/features/followups/AgendaPage').then((m) => ({ default: m.AgendaPage })))
+const DashboardPage = lazy(() => import('@/features/dashboard/DashboardPage').then((m) => ({ default: m.DashboardPage })))
+const CounterpartiesPage = lazy(() => import('@/features/counterparties/CounterpartiesPage').then((m) => ({ default: m.CounterpartiesPage })))
+const CounterpartyDetailPage = lazy(() => import('@/features/counterparties/CounterpartyDetailPage').then((m) => ({ default: m.CounterpartyDetailPage })))
+const AdminPage = lazy(() => import('@/features/admin/AdminPage').then((m) => ({ default: m.AdminPage })))
 const SubmissionDetailPage = lazy(() => import('@/features/submissions/SubmissionDetailPage').then((m) => ({ default: m.SubmissionDetailPage })))
 
 function HomeRedirect() {
@@ -30,9 +34,7 @@ export default function App() {
           <Route
             path="dashboard"
             element={
-              <RequireRole roles={['admin', 'management']}>
-                <PlaceholderPage page="dashboard" />
-              </RequireRole>
+              <RequireRole roles={['admin', 'management']}>{page(<DashboardPage />)}</RequireRole>
             }
           />
           <Route path="submissions" element={page(<SubmissionsPage />)} />
@@ -45,15 +47,13 @@ export default function App() {
             path="submissions/:id/edit"
             element={<RequireRole roles={['admin', 'underwriter']}>{page(<SubmissionFormPage />)}</RequireRole>}
           />
-          <Route path="agenda" element={<PlaceholderPage page="agenda" />} />
-          <Route path="counterparties" element={<PlaceholderPage page="counterparties" />} />
-          <Route path="counterparties/:id" element={<PlaceholderPage page="counterparties" />} />
+          <Route path="agenda" element={page(<AgendaPage />)} />
+          <Route path="counterparties" element={page(<CounterpartiesPage />)} />
+          <Route path="counterparties/:id" element={page(<CounterpartyDetailPage />)} />
           <Route
             path="admin"
             element={
-              <RequireRole roles={['admin']}>
-                <PlaceholderPage page="admin" />
-              </RequireRole>
+              <RequireRole roles={['admin']}>{page(<AdminPage />)}</RequireRole>
             }
           />
           <Route path="*" element={<NotFoundPage />} />
