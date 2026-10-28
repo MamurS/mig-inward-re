@@ -1,0 +1,146 @@
+-- Behaviour checks for status rules and RLS. Runs inside a transaction and ROLLS BACK.
+-- Needs at least one admin profile (used as the test identity; its role is switched temporarily).
+-- Usage: paste into the SQL editor and run; every row should say PASS.
+begin;
+
+create temp table t_results (test text, result text) on commit drop;
+grant all on t_results to authenticated, anon;
+
+create or replace function pg_temp.expect_error(p_test text, p_sql text, p_like text)
+returns void language plpgsql as $$
+begin
+  execute p_sql;
+  insert into t_results values (p_test, 'FAIL: no error');
+exception when others then
+  insert into t_results values (p_test,
+    case when sqlerrm ilike '%' || p_like || '%' then 'PASS' else 'FAIL: ' || sqlerrm end);
+end $$;
+
+create or replace function pg_temp.expect_ok(p_test text, p_sql text)
+returns void language plpgsql as $$
+begin
+  execute p_sql;
+  insert into t_results values (p_test, 'PASS');
+exception when others then
+  insert into t_results values (p_test, 'FAIL: ' || sqlerrm);
+end $$;
+
+grant execute on function pg_temp.expect_error(text, text, text), pg_temp.expect_ok(text, text) to authenticated, anon;
+
+do $$
+declare
+  v_uid uuid := (select id from public.profiles where role = 'admin' order by created_at limit 1);
+  v_rev uuid := (select id from public.submissions where status = 'under_review' order by ref_no limit 1);
+  v_rec uuid := (select id from public.submissions where status = 'received' order by ref_no limit 1);
+  v_off uuid := (select id from public.submissions where status = 'offered' order by ref_no limit 1);
+  v_fu  uuid;
+  v_n   int;
+begin
+  perform set_config('request.jwt.claims', json_build_object('sub', v_uid, 'role', 'authenticated')::text, true);
+
+  -- ---------------- as UNDERWRITER ----------------
+  update public.profiles set role = 'underwriter' where id = v_uid;
+  execute 'set local role authenticated';
+
+  perform pg_temp.expect_error('UW: direct status update blocked',
+    format('update public.submissions set status = %L where id = %L', 'bound', v_off), 'permission denied');
+  perform pg_temp.expect_error('UW: cannot jump received → bound',
+    format('select public.change_submission_status(%L, %L)', v_rec, 'bound'), 'not allowed');
+  perform pg_temp.expect_error('UW: offer needs valid-until date',
+    format('select public.change_submission_status(%L, %L, null, 10)', v_rev, 'offered'), 'valid until');
+  perform pg_temp.expect_error('UW: offer needs written share',
+    format('select public.change_submission_status(%L, %L, null, null, current_date + 30)', v_rev, 'offered'), 'written share');
+  perform pg_temp.expect_error('UW: signed > written rejected',
+    format('select public.change_submission_status(%L, %L, null, null, null, 99)', v_off, 'bound'), 'cannot exceed');
+  perform pg_temp.expect_error('UW: signed missing rejected',
+    format('select public.change_submission_status(%L, %L)', v_off, 'bound'), 'signed share');
+  perform pg_temp.expect_error('UW: NTU needs reason',
+    format('select public.change_submission_status(%L, %L, %L)', v_off, 'ntu', '  '), 'reason is required');
+  perform pg_temp.expect_error('UW: decline needs reason',
+    format('select public.change_submission_status(%L, %L)', v_rev, 'declined'), 'reason is required');
+
+  perform pg_temp.expect_ok('UW: valid offer accepted',
+    format('select public.change_submission_status(%L, %L, %L, 12.5, current_date + 30)', v_rev, 'offered', 'Quote sent'));
+  select count(*) into v_n from public.follow_ups
+   where entity_id = v_rev and type = 'request_update' and done_at is null
+     and due_at::date = (now() + interval '7 days')::date;
+  insert into t_results values ('UW: offer creates follow-up at +7 days', case when v_n = 1 then 'PASS' else 'FAIL: ' || v_n end);
+  select count(*) into v_n from public.submission_status_history where submission_id = v_rev and to_status = 'offered' and changed_by = v_uid;
+  insert into t_results values ('UW: transition written to history', case when v_n = 1 then 'PASS' else 'FAIL' end);
+
+  perform pg_temp.expect_ok('UW: valid bind (signed < written) accepted',
+    format('select public.change_submission_status(%L, %L, %L, null, null, 5)', v_rev, 'bound', 'Firm order'));
+  select count(*) into v_n from public.follow_ups where entity_id = v_rev and done_at is null and type = 'request_update';
+  insert into t_results values ('UW: bind closes open follow-ups', case when v_n = 0 then 'PASS' else 'FAIL: ' || v_n end);
+
+  select id into v_fu from public.follow_ups where done_at is null limit 1;
+  perform pg_temp.expect_error('UW: closing follow-up needs outcome',
+    format('update public.follow_ups set done_at = now() where id = %L', v_fu), 'follow_ups_outcome_chk');
+  perform pg_temp.expect_ok('UW: closing follow-up with outcome',
+    format('update public.follow_ups set done_at = now(), outcome = %L where id = %L', 'MGA replied', v_fu));
+
+  perform pg_temp.expect_error('UW: history is append-only (update)',
+    'update public.submission_status_history set comment = ''x''', 'permission denied');
+  perform pg_temp.expect_error('UW: history cannot be inserted directly',
+    format('insert into public.submission_status_history (submission_id, to_status) values (%L, %L)', v_rev, 'bound'), 'permission denied');
+  perform pg_temp.expect_error('UW: audit log cannot be changed',
+    'delete from public.audit_log', 'permission denied');
+  perform pg_temp.expect_error('UW: cannot set ref_no',
+    format('update public.submissions set ref_no = %L where id = %L', 'X', v_rev), 'permission denied');
+  update public.currencies set name = 'x' where code = 'USD';  -- RLS: affects 0 rows
+  select count(*) into v_n from public.currencies where name = 'x';
+  insert into t_results values ('UW: cannot edit reference data', case when v_n = 0 then 'PASS' else 'FAIL' end);
+  perform pg_temp.expect_ok('UW: can create submission',
+    'insert into public.submissions (source_party_id, mga_id, insured_name, currency) select id, id, ''Test insured'', ''USD'' from public.counterparties where type = ''mga'' limit 1');
+  select count(*) into v_n from public.audit_log where table_name = 'submissions' and action = 'INSERT' and changed_by = v_uid;
+  insert into t_results values ('Audit log records the insert with user', case when v_n >= 1 then 'PASS' else 'FAIL' end);
+  select count(*) into v_n from public.submissions where insured_name = 'Test insured' and ref_no ~ ('^SUB-' || extract(year from current_date) || '-\d{4}$');
+  insert into t_results values ('Ref no generated SUB-YYYY-NNNN', case when v_n = 1 then 'PASS' else 'FAIL' end);
+
+  -- ---------------- as FINANCE ----------------
+  execute 'reset role';
+  update public.profiles set role = 'finance' where id = v_uid;
+  execute 'set local role authenticated';
+
+  select count(*) into v_n from public.submissions_v;
+  insert into t_results values ('FIN: can read submissions view', case when v_n > 0 then 'PASS' else 'FAIL' end);
+  perform pg_temp.expect_error('FIN: cannot change status',
+    format('select public.change_submission_status(%L, %L)', v_rec, 'under_review'), 'Only underwriters');
+  perform pg_temp.expect_error('FIN: cannot insert submission',
+    'insert into public.submissions (source_party_id, mga_id, insured_name, currency) select id, id, ''X'', ''USD'' from public.counterparties where type = ''mga'' limit 1',
+    'row-level security');
+  update public.submissions set notes = 'hacked' where id = v_rec;
+  select count(*) into v_n from public.submissions where notes = 'hacked';
+  insert into t_results values ('FIN: update affects 0 rows', case when v_n = 0 then 'PASS' else 'FAIL' end);
+  perform pg_temp.expect_error('FIN: cannot add submission follow-up',
+    format('insert into public.follow_ups (entity_type, entity_id, due_at) values (%L, %L, now())', 'submission', v_rec),
+    'row-level security');
+
+  -- ---------------- as MANAGEMENT ----------------
+  execute 'reset role';
+  update public.profiles set role = 'management' where id = v_uid;
+  execute 'set local role authenticated';
+  select count(*) into v_n from public.submission_status_history;
+  insert into t_results values ('MGMT: can read history', case when v_n > 0 then 'PASS' else 'FAIL' end);
+  perform pg_temp.expect_error('MGMT: cannot change status',
+    format('select public.change_submission_status(%L, %L)', v_rec, 'under_review'), 'Only underwriters');
+
+  -- ---------------- NO ROLE ----------------
+  execute 'reset role';
+  update public.profiles set role = null where id = v_uid;
+  execute 'set local role authenticated';
+  select count(*) into v_n from public.submissions;
+  insert into t_results values ('NO ROLE: sees 0 submissions', case when v_n = 0 then 'PASS' else 'FAIL: ' || v_n end);
+
+  -- ---------------- ANON ----------------
+  execute 'reset role';
+  execute 'set local role anon';
+  perform pg_temp.expect_error('ANON: cannot read submissions', 'select 1 from public.submissions', 'permission denied');
+  perform pg_temp.expect_error('ANON: cannot read view', 'select 1 from public.submissions_v', 'permission denied');
+  perform pg_temp.expect_error('ANON: cannot call status RPC',
+    format('select public.change_submission_status(%L, %L)', v_rec, 'under_review'), 'permission denied');
+  execute 'reset role';
+end $$;
+
+select * from t_results;
+rollback;
