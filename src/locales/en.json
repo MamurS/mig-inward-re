@@ -1,0 +1,68 @@
+{
+  "app": {
+    "name": "MIG Inward Re",
+    "tagline": "Inward reinsurance — MGA business"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "submissions": "Submissions",
+    "agenda": "My agenda",
+    "counterparties": "Counterparties",
+    "admin": "Admin"
+  },
+  "roles": {
+    "admin": "Admin",
+    "underwriter": "Underwriter",
+    "finance": "Finance",
+    "claims": "Claims",
+    "management": "Management"
+  },
+  "auth": {
+    "signInTitle": "Sign in",
+    "signInSubtitle": "Use the account created for you by the administrator.",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign in",
+    "signingIn": "Signing in…",
+    "signOut": "Sign out",
+    "invalidEmail": "Enter a valid email address",
+    "passwordRequired": "Enter your password",
+    "notConfigured": "The app is not connected to the database. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.",
+    "invalidCredentials": "Wrong email or password"
+  },
+  "access": {
+    "noAccessTitle": "Waiting for access",
+    "noAccessBody": "Your account ({{email}}) exists but has no role yet, or is deactivated. Ask an administrator to assign you a role.",
+    "forbiddenTitle": "Not available for your role",
+    "forbiddenBody": "This page is not available for your role. Use the menu to go to a page you can access.",
+    "notFoundTitle": "Page not found",
+    "goHome": "Go to start page"
+  },
+  "common": {
+    "language": "Language",
+    "loading": "Loading…",
+    "comingSoon": "This page will be built in a later step."
+  },
+  "pages": {
+    "dashboard": {
+      "title": "CEO dashboard",
+      "subtitle": "All MGA business at a glance"
+    },
+    "submissions": {
+      "title": "Submissions",
+      "subtitle": "Register of all inward submissions"
+    },
+    "agenda": {
+      "title": "My agenda",
+      "subtitle": "Your open follow-ups, overdue first"
+    },
+    "counterparties": {
+      "title": "Counterparties",
+      "subtitle": "MGAs, brokers and cedents"
+    },
+    "admin": {
+      "title": "Administration",
+      "subtitle": "Users and roles, reference data, settings"
+    }
+  }
+}
