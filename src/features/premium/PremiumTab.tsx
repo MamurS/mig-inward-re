@@ -154,18 +154,19 @@ export function PremiumTab({ submission: s, startEditor = false, onEditorStarted
             )}
           </div>
 
-          <div className="overflow-x-auto rounded-md border">
-            <table className="w-full text-body">
+          {/* Scrolls inside its own box if it ever must; # stays put, the actions column too */}
+          <div className="overflow-x-auto rounded-lg border">
+            <table className="w-full text-table">
               <thead>
-                <tr className="border-b bg-muted text-caption text-muted-foreground">
-                  <th className="px-2 py-2 text-left font-medium">#</th>
-                  <th className="px-2 py-2 text-left font-medium">{t('prem.type')}</th>
-                  <th className="px-2 py-2 text-left font-medium">{t('prem.dueDate')}</th>
-                  <th className="px-2 py-2 text-right font-medium">{t('prem.net')}</th>
-                  <th className="px-2 py-2 text-right font-medium">{t('prem.paid')}</th>
-                  <th className="px-2 py-2 text-right font-medium">{t('prem.leftToSettle')}</th>
-                  <th className="px-2 py-2 text-left font-medium">{t('fields.status')}</th>
-                  <th className="w-px px-2 py-2"><span className="sr-only">{t('ui.actions')}</span></th>
+                <tr className="border-b text-small text-muted-foreground">
+                  <th className="sticky left-0 z-[1] h-11 bg-card px-3 text-left font-medium">#</th>
+                  <th className="h-11 px-3 text-left font-medium">{t('prem.type')}</th>
+                  <th className="h-11 px-3 text-left font-medium">{t('prem.dueDate')}</th>
+                  <th className="h-11 px-3 text-right font-medium">{t('prem.net')}</th>
+                  <th className="h-11 px-3 text-right font-medium">{t('prem.paid')}</th>
+                  <th className="h-11 px-3 text-right font-medium">{t('prem.leftToSettle')}</th>
+                  <th className="h-11 px-3 text-left font-medium">{t('fields.status')}</th>
+                  <th className="sticky right-0 z-[1] w-px bg-card px-2"><span className="sr-only">{t('ui.actions')}</span></th>
                 </tr>
               </thead>
               <tbody>
@@ -178,25 +179,25 @@ export function PremiumTab({ submission: s, startEditor = false, onEditorStarted
                     i.status === 'written_off'
                   )
                   return (
-                    <tr key={i.id} className={cn('border-b align-top last:border-0', i.status === 'written_off' && 'text-muted-foreground')}>
-                      <td className="px-2 py-2 num">{i.installment_no}</td>
-                      <td className="px-2 py-2">
+                    <tr key={i.id} className={cn('group/row border-b align-top transition-colors last:border-0 hover:bg-slate-50', i.status === 'written_off' && 'text-muted-foreground')}>
+                      <td className="sticky left-0 bg-card px-3 py-3 num group-hover/row:bg-slate-50">{i.installment_no}</td>
+                      <td className="px-3 py-3">
                         <Badge tone={isReturn ? 'brand' : i.type === 'additional' ? 'info' : 'neutral'}>{t(`prem.types.${i.type}`)}</Badge>
                       </td>
-                      <td className="px-2 py-2 whitespace-nowrap">{formatDate(i.due_date)}</td>
-                      <td className="px-2 py-2 text-right num">
+                      <td className="px-3 py-3 whitespace-nowrap">{formatDate(i.due_date)}</td>
+                      <td className="px-3 py-3 text-right num">
                         <div className="font-medium">{formatAmount(i.net_amount)}</div>
                         <div className="text-caption whitespace-nowrap text-muted-foreground" title={`${t('prem.gross')} − ${t('prem.deductions')}`}>
                           {/* gross − deductions = net (for return premium both are negative: −2,000 + 600 = −1,400) */}
                           {formatAmount(i.gross_amount)} {isReturn ? '+' : '−'} {formatAmount(sumMoney([i.commission_amount, i.brokerage_amount]).replace('-', ''))}
                         </div>
                       </td>
-                      <td className="px-2 py-2 text-right num">{isReturn ? '—' : formatAmount(i.paid_amount)}</td>
-                      <td className={cn('px-2 py-2 text-right font-medium num', !isReturn && (i.days_overdue ?? 0) > 0 && 'text-danger-700')}>
+                      <td className="px-3 py-3 text-right num">{isReturn ? '—' : formatAmount(i.paid_amount)}</td>
+                      <td className={cn('px-3 py-3 text-right font-medium num', !isReturn && (i.days_overdue ?? 0) > 0 && 'text-danger-700')}>
                         {formatAmount(left)}
                         {isReturn && Number(left) > 0 && <div className="text-caption font-normal text-muted-foreground">{t('prem.weOwe')}</div>}
                       </td>
-                      <td className="px-2 py-2">
+                      <td className="px-3 py-3">
                         <div className="flex flex-wrap items-center gap-1">
                           <Badge tone={STATUS_TONE[i.status ?? 'open'] ?? 'neutral'}>{t(`prem.status.${statusKey(i)}`)}</Badge>
                           {(i.days_overdue ?? 0) > 0 && <AgingBadge days={i.days_overdue!} />}
@@ -210,7 +211,7 @@ export function PremiumTab({ submission: s, startEditor = false, onEditorStarted
                           <p className="mt-1 text-caption text-muted-foreground">{t('prem.settledOn', { date: formatDate(i.settled_at) })}</p>
                         )}
                       </td>
-                      <td className="px-2 py-1">
+                      <td className="sticky right-0 bg-card px-2 py-2 group-hover/row:bg-slate-50">
                         {actions && (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>

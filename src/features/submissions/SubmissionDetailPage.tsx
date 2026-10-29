@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { AlertTriangle, ArrowLeft, ArrowRight, Clock, FileText, Pencil } from 'lucide-react'
+import { AlertTriangle, ArrowRight, Clock, FileText, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/PageHeader'
 import { Button } from '@/components/ui/button'
@@ -94,13 +94,8 @@ export function SubmissionDetailPage() {
 
   return (
     <>
-      <div className="mb-2">
-        <Link to="/submissions" className="inline-flex items-center gap-1 text-body text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="size-4" />
-          {t('pages.submissions.title')}
-        </Link>
-      </div>
       <PageHeader
+        breadcrumbs={[{ label: t('pages.submissions.title'), to: '/submissions' }, { label: s.ref_no ?? '' }]}
         title={s.insured_name ?? s.ref_no ?? ''}
         subtitle={[s.ref_no, s.mga_name, s.lob_name, s.currency].filter(Boolean).join(' · ')}
         actions={
@@ -205,97 +200,6 @@ export function SubmissionDetailPage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent>
-              <Tabs value={activeTab} onValueChange={setTab}>
-                <TabsList>
-                  {showPremium && <TabsTrigger value="premium">{t('prem.tab')}</TabsTrigger>}
-                  <TabsTrigger value="timeline">{t('sub.tabs.timeline')}</TabsTrigger>
-                  <TabsTrigger value="documents">{t('sub.tabs.documents')} ({docs.data?.length ?? 0})</TabsTrigger>
-                  <TabsTrigger value="changes">{t('sub.tabs.changes')}</TabsTrigger>
-                </TabsList>
-
-                {showPremium && (
-                  <TabsContent value="premium">
-                    <PremiumTab submission={s} startEditor={scheduleStep} onEditorStarted={() => setScheduleStep(false)} />
-                  </TabsContent>
-                )}
-
-                <TabsContent value="timeline">
-                  <ol className="relative ml-2 border-l pl-6">
-                    {history.data?.map((h) => {
-                      const doc = h.document_id ? docsById.get(h.document_id) : undefined
-                      return (
-                        <li key={h.id} className="relative pb-5 last:pb-0">
-                          <span className="absolute top-1 -left-[31px] flex size-3 items-center justify-center rounded-full border-2 border-background bg-primary" />
-                          <div className="flex flex-wrap items-center gap-2 text-body">
-                            {h.from_status && <><StatusBadge status={h.from_status} /><ArrowRight className="size-3.5 text-muted-foreground" /></>}
-                            <StatusBadge status={h.to_status} />
-                            <span className="text-caption text-muted-foreground">
-                              {formatDateTime(h.changed_at)} · {h.changed_by ? userName(usersById.get(h.changed_by)) : t('sub.system')}
-                            </span>
-                          </div>
-                          {(h.written_share_pct !== null || h.signed_share_pct !== null) && h.to_status !== 'received' && (
-                            <p className="mt-1 text-caption text-muted-foreground">
-                              {t('fields.writtenSharePct')}: {formatPct(h.written_share_pct)}
-                              {h.signed_share_pct !== null && ` · ${t('fields.signedSharePct')}: ${formatPct(h.signed_share_pct)}`}
-                            </p>
-                          )}
-                          {h.comment && <p className="mt-1 text-body">{h.comment}</p>}
-                          {doc && (
-                            <button type="button" className="mt-1 inline-flex items-center gap-1 text-caption text-primary hover:underline" onClick={() => openDocument(doc).catch((e) => toast.error(errorMessage(e)))}>
-                              <FileText className="size-3.5" />
-                              {doc.file_name}
-                            </button>
-                          )}
-                        </li>
-                      )
-                    })}
-                  </ol>
-                </TabsContent>
-
-                <TabsContent value="documents">
-                  <DocumentsPanel
-                    entityType="submission"
-                    entityId={s.id!}
-                    documents={docs.data ?? []}
-                    canWrite={editable}
-                    evidenceIds={new Set(history.data?.map((h) => h.document_id).filter((x): x is string => Boolean(x)))}
-                  />
-                </TabsContent>
-
-                <TabsContent value="changes">
-                  {audit.data?.length ? (
-                    <ul className="grid gap-3 text-body">
-                      {audit.data.map((a) => (
-                        <li key={a.id} className="border-b pb-2 last:border-0">
-                          <div className="text-caption text-muted-foreground">
-                            {formatDateTime(a.changed_at)} · {a.changed_by ? userName(usersById.get(a.changed_by)) : t('sub.system')} · {t(`audit.${a.action}`)}
-                          </div>
-                          {a.action === 'UPDATE' && a.changed_fields && (
-                            <div className="mt-1 grid gap-0.5">
-                              {a.changed_fields.map((f) => {
-                                const oldV = (a.old_data as Record<string, unknown> | null)?.[f]
-                                const newV = (a.new_data as Record<string, unknown> | null)?.[f]
-                                return (
-                                  <div key={f} className="text-caption">
-                                    <span className="font-medium">{t(`auditField.${f}`, { defaultValue: f })}</span>:{' '}
-                                    <span className="text-muted-foreground line-through">{fmtValue(f, oldV)}</span> → <span>{fmtValue(f, newV)}</span>
-                                  </div>
-                                )
-                              })}
-                            </div>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="py-4 text-center text-body text-muted-foreground">{t('sub.noChanges')}</p>
-                  )}
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Right column */}
@@ -320,7 +224,7 @@ export function SubmissionDetailPage() {
           </Card>
 
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between gap-2">
+            <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
               <CardTitle>{t('fu.title')}</CardTitle>
               {editable && <AddFollowUpButton entityType="submission" entityId={s.id!} defaultAssignee={s.underwriter_id} />}
             </CardHeader>
@@ -333,6 +237,99 @@ export function SubmissionDetailPage() {
           </Card>
         </div>
       </div>
+
+      {/* Full width: the Premium tab's table needs the whole content width */}
+      <Card className="mt-4">
+        <CardContent>
+          <Tabs value={activeTab} onValueChange={setTab}>
+            <TabsList>
+              {showPremium && <TabsTrigger value="premium">{t('prem.tab')}</TabsTrigger>}
+              <TabsTrigger value="timeline">{t('sub.tabs.timeline')}</TabsTrigger>
+              <TabsTrigger value="documents">{t('sub.tabs.documents')} ({docs.data?.length ?? 0})</TabsTrigger>
+              <TabsTrigger value="changes">{t('sub.tabs.changes')}</TabsTrigger>
+            </TabsList>
+
+            {showPremium && (
+              <TabsContent value="premium">
+                <PremiumTab submission={s} startEditor={scheduleStep} onEditorStarted={() => setScheduleStep(false)} />
+              </TabsContent>
+            )}
+
+            <TabsContent value="timeline">
+              <ol className="relative ml-2 border-l pl-6">
+                {history.data?.map((h) => {
+                  const doc = h.document_id ? docsById.get(h.document_id) : undefined
+                  return (
+                    <li key={h.id} className="relative pb-5 last:pb-0">
+                      <span className="absolute top-1 -left-[31px] flex size-3 items-center justify-center rounded-full border-2 border-background bg-primary" />
+                      <div className="flex flex-wrap items-center gap-2 text-body">
+                        {h.from_status && <><StatusBadge status={h.from_status} /><ArrowRight className="size-3.5 text-muted-foreground" /></>}
+                        <StatusBadge status={h.to_status} />
+                        <span className="text-caption text-muted-foreground">
+                          {formatDateTime(h.changed_at)} · {h.changed_by ? userName(usersById.get(h.changed_by)) : t('sub.system')}
+                        </span>
+                      </div>
+                      {(h.written_share_pct !== null || h.signed_share_pct !== null) && h.to_status !== 'received' && (
+                        <p className="mt-1 text-caption text-muted-foreground">
+                          {t('fields.writtenSharePct')}: {formatPct(h.written_share_pct)}
+                          {h.signed_share_pct !== null && ` · ${t('fields.signedSharePct')}: ${formatPct(h.signed_share_pct)}`}
+                        </p>
+                      )}
+                      {h.comment && <p className="mt-1 text-body">{h.comment}</p>}
+                      {doc && (
+                        <button type="button" className="mt-1 inline-flex items-center gap-1 text-caption text-primary hover:underline" onClick={() => openDocument(doc).catch((e) => toast.error(errorMessage(e)))}>
+                          <FileText className="size-3.5" />
+                          {doc.file_name}
+                        </button>
+                      )}
+                    </li>
+                  )
+                })}
+              </ol>
+            </TabsContent>
+
+            <TabsContent value="documents">
+              <DocumentsPanel
+                entityType="submission"
+                entityId={s.id!}
+                documents={docs.data ?? []}
+                canWrite={editable}
+                evidenceIds={new Set(history.data?.map((h) => h.document_id).filter((x): x is string => Boolean(x)))}
+              />
+            </TabsContent>
+
+            <TabsContent value="changes">
+              {audit.data?.length ? (
+                <ul className="grid gap-3 text-body">
+                  {audit.data.map((a) => (
+                    <li key={a.id} className="border-b pb-2 last:border-0">
+                      <div className="text-caption text-muted-foreground">
+                        {formatDateTime(a.changed_at)} · {a.changed_by ? userName(usersById.get(a.changed_by)) : t('sub.system')} · {t(`audit.${a.action}`)}
+                      </div>
+                      {a.action === 'UPDATE' && a.changed_fields && (
+                        <div className="mt-1 grid gap-0.5">
+                          {a.changed_fields.map((f) => {
+                            const oldV = (a.old_data as Record<string, unknown> | null)?.[f]
+                            const newV = (a.new_data as Record<string, unknown> | null)?.[f]
+                            return (
+                              <div key={f} className="text-caption">
+                                <span className="font-medium">{t(`auditField.${f}`, { defaultValue: f })}</span>:{' '}
+                                <span className="text-muted-foreground line-through">{fmtValue(f, oldV)}</span> → <span>{fmtValue(f, newV)}</span>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="py-4 text-center text-body text-muted-foreground">{t('sub.noChanges')}</p>
+              )}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
 
       <StatusChangeDialog
         submission={s}

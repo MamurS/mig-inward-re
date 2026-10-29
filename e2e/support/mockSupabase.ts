@@ -127,19 +127,31 @@ function sortRows(rows: Row[], order: string | null): Row[] {
 }
 
 /** Installs the mock and a signed-in session for `role` on a browser context. */
-export async function installMock(context: BrowserContext, role: FixtureRole | null = 'admin', lang: 'en' | 'ru' | 'uz' = 'en') {
+export async function installMock(
+  context: BrowserContext,
+  role: FixtureRole | null = 'admin',
+  lang: 'en' | 'ru' | 'uz' = 'en',
+  appearance: { theme?: 'grey' | 'blue' | 'green' | 'orange'; textSize?: 'normal' | 'large' } = {},
+) {
   const db: Record<string, Row[]> = Object.fromEntries(Object.entries(TABLES).map(([k, v]) => [k, structuredClone(v)]))
+  // the signed-in user's saved appearance (profiles.ui_theme / ui_text_size)
+  const look = { theme: appearance.theme ?? 'grey', textSize: appearance.textSize ?? 'normal' }
+  if (role) {
+    const me = db.profiles?.find((p) => p.id === authUser(role).id)
+    if (me) Object.assign(me, { ui_theme: look.theme, ui_text_size: look.textSize })
+  }
   Object.assign(db, premiumSeed(db.submissions_v))
   normalizePremium(db, null)
   const PREMIUM_VIEWS = new Set(['premium_installments_v', 'premium_receipts_v', 'premium_schedule_check_v'])
 
   const user = role ? authUser(role) : null
   await context.addInitScript(
-    ([key, session, language]) => {
+    ([key, session, language, cached]) => {
       try {
         if (session) localStorage.setItem(key as string, session as string)
         else localStorage.removeItem(key as string)
         localStorage.setItem('mig.lang', language as string)
+        localStorage.setItem('mig.appearance', cached as string)
       } catch {
         /* ignore */
       }
@@ -153,6 +165,7 @@ export async function installMock(context: BrowserContext, role: FixtureRole | n
           })
         : null,
       lang,
+      JSON.stringify(look),
     ],
   )
 

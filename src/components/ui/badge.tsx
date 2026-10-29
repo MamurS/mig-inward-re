@@ -27,7 +27,7 @@ export type BadgeTone =
 
 const TINT: Record<BadgeTone, string> = {
   neutral: 'bg-slate-100 text-slate-700 border-slate-200',
-  brand: 'bg-navy-100 text-navy-700 border-navy-200',
+  brand: 'bg-brand-100 text-brand-700 border-brand-200',
   info: 'bg-info-100 text-info-700 border-info-200',
   success: 'bg-success-100 text-success-700 border-success-200',
   warning: 'bg-warning-100 text-warning-700 border-warning-200',
@@ -48,7 +48,7 @@ const TINT: Record<BadgeTone, string> = {
 const SOLID: Partial<Record<BadgeTone, string>> = {
   danger: 'bg-danger-600 text-white border-danger-600',
   aging_90: 'bg-aging-90plus-ink text-white border-aging-90plus-ink',
-  brand: 'bg-navy-600 text-white border-navy-600',
+  brand: 'bg-brand-600 text-white border-brand-600',
   neutral: 'bg-slate-700 text-white border-slate-700',
 }
 

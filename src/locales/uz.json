@@ -517,7 +517,17 @@
     "playMotion": "Animatsiyani koʻrsatish",
     "reducedMotion": "Tizimda «harakatni kamaytirish» yoqilgan boʻlsa, hammasi bir zumda oʻzgaradi.",
     "sampleTable": "Namuna jadval",
-    "amount": "Summa"
+    "amount": "Summa",
+    "themes": "Rang mavzulari",
+    "themesHint": "Mavzu faqat urgʻu shkalasini, sahifa va yon panel tusini oʻzgartiradi. Holat va muddat oʻtish ranglari toʻrttasida ham bir xil. Quyida shu mavzudagi har bir rang juftligi uchun kontrast.",
+    "pair": {
+      "button": "Asosiy tugmadagi matn",
+      "link": "Oq fondagi havola",
+      "nav": "Faol menyu bandi",
+      "sidebarText": "Yon panel matni",
+      "canvasText": "Sahifadagi ikkinchi darajali matn",
+      "ring": "Oq fondagi fokus chizigʻi"
+    }
   },
   "ui": {
     "actions": "Amallar",
@@ -670,5 +680,22 @@
     "writeOffUndone": "№{{no}} hisobdan chiqarish bekor qilindi",
     "writtenOffBy": "{{who}} hisobdan chiqargan, {{when}}",
     "writtenOffToast": "№{{no}} toʻlov hisobdan chiqarildi"
+  },
+  "appearance": {
+    "title": "Koʻrinish",
+    "subtitle": "Rang mavzusi va matn oʻlchami. Profilingizda saqlanadi va barcha qurilmalarda ishlaydi.",
+    "theme": "Rang mavzusi",
+    "themes": {
+      "grey": "Kulrang",
+      "blue": "Moviy",
+      "green": "Yashil",
+      "orange": "Toʻq sariq"
+    },
+    "textSize": "Matn oʻlchami",
+    "textSizeHint": "«Yirik» barcha matnni bir pogʻona kattalashtiradi.",
+    "sizes": {
+      "normal": "Oddiy",
+      "large": "Yirik"
+    }
   }
 }

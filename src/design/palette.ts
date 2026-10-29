@@ -79,6 +79,45 @@ export const RAMPS: Record<RampName, Ramp> = Object.fromEntries(
 export const CANVAS = solveStep(0.93, RAMP_SPECS.slate.chroma * 0.2, RAMP_SPECS.slate.hue)
 
 // ---------------------------------------------------------------------------
+// Colour themes (Appearance, saved on the user's profile). A theme changes only
+// the ACCENT (the `brand` ramp: primary buttons, active nav, links, focus,
+// selection, KPI chips, the main chart colour) and the TINT of the page and
+// the sidebar. Status, ageing and data colours never change — they carry
+// meaning. The accent ramp is solved like every other ramp (equal luminance
+// per step), so every pairing that passes in one theme passes in all.
+// ---------------------------------------------------------------------------
+
+export const THEME_SPECS = {
+  grey: { accent: { hue: 255, chroma: 0.15 }, tint: { hue: 255, chroma: 0.004 }, role: 'neutral light grey, blue accent (default)' },
+  blue: { accent: { hue: 250, chroma: 0.15 }, tint: { hue: 232, chroma: 0.03 }, role: 'sky-blue tint, blue accent' },
+  green: { accent: { hue: 148, chroma: 0.16 }, tint: { hue: 125, chroma: 0.05 }, role: 'lime / salad-green tint, green accent' },
+  orange: { accent: { hue: 50, chroma: 0.17 }, tint: { hue: 60, chroma: 0.045 }, role: 'peach / soft-orange tint, orange accent' },
+} as const
+
+export type ThemeName = keyof typeof THEME_SPECS
+export const THEME_NAMES = Object.keys(THEME_SPECS) as ThemeName[]
+export const DEFAULT_THEME: ThemeName = 'grey'
+
+export interface ThemeColors {
+  brand: Ramp
+  /** page background */
+  canvas: string
+  /** the sidebar's solid colour (fallback where backdrop-filter is unsupported) */
+  sidebar: string
+}
+
+export const THEMES = Object.fromEntries(
+  Object.entries(THEME_SPECS).map(([name, spec]) => [
+    name,
+    {
+      brand: buildRamp(spec.accent),
+      canvas: solveStep(0.93, spec.tint.chroma, spec.tint.hue),
+      sidebar: solveStep(0.965, spec.tint.chroma * 0.8, spec.tint.hue),
+    },
+  ]),
+) as Record<ThemeName, ThemeColors>
+
+// ---------------------------------------------------------------------------
 // Domain scales. Each entry: TINT (badge background, step 100), LINE (hairline,
 // step 200), SOLID (bars, dots, chart marks, step 400 — ≥ 3 : 1 on white),
 // INK (text on the tint or on white, step 600 — ≥ 4.5 : 1 on both) and DEEP
@@ -144,7 +183,7 @@ export const AGING_COLORS = Object.fromEntries(
 /** Categorical series in a fixed order; neighbours differ in hue by ≥ ~60°.
  * All at step 400 (≥ 3 : 1 on white). */
 export const CATEGORICAL: readonly string[] = [
-  RAMPS.navy[400],
+  THEMES.grey.brand[400], // the theme accent (re-mapped per theme)
   RAMPS.warning[400],
   RAMPS.teal[400],
   RAMPS.magenta[400],
@@ -154,8 +193,8 @@ export const CATEGORICAL: readonly string[] = [
   RAMPS.danger[400],
 ]
 
-/** Sequential (magnitude): one hue, light to dark — navy 100 … 900. */
-export const SEQUENTIAL: readonly string[] = STEPS.slice(1).map((s) => RAMPS.navy[s])
+/** Sequential (magnitude): the theme accent, light to dark — brand 100 … 900. */
+export const SEQUENTIAL: readonly string[] = STEPS.slice(1).map((s) => THEMES.grey.brand[s])
 
 // ---------------------------------------------------------------------------
 // The pairing rule
@@ -168,13 +207,15 @@ export const GRAPHIC_MIN = 3
  * (with white and the canvas as step 50). */
 export function worstContrastAt(distance: number): { ratio: number; where: string } {
   let worst = { ratio: Infinity, where: '' }
-  for (const [name, ramp] of Object.entries(RAMPS)) {
+  const ramps: [string, Ramp][] = [
+    ...Object.entries(RAMPS),
+    ...THEME_NAMES.map((t) => [`brand(${t})`, THEMES[t].brand] as [string, Ramp]),
+  ]
+  const surfaces: [string, string][] = [['white', '#ffffff'], ['canvas', CANVAS], ...THEME_NAMES.flatMap((t) => [[`canvas(${t})`, THEMES[t].canvas], [`sidebar(${t})`, THEMES[t].sidebar]] as [string, string][])]
+  for (const [name, ramp] of ramps) {
     for (let i = 0; i + distance < STEPS.length; i++) {
       const pairs: [string, string, string][] = [[ramp[STEPS[i]], ramp[STEPS[i + distance]], `${name}-${STEPS[i]}/${STEPS[i + distance]}`]]
-      if (i === 0) {
-        pairs.push(['#ffffff', ramp[STEPS[distance]], `white/${name}-${STEPS[distance]}`])
-        pairs.push([CANVAS, ramp[STEPS[distance]], `canvas/${name}-${STEPS[distance]}`])
-      }
+      if (i === 0) for (const [sn, hex] of surfaces) pairs.push([hex, ramp[STEPS[distance]], `${sn}/${name}-${STEPS[distance]}`])
       for (const [a, b, where] of pairs) {
         const ratio = contrast(a, b)
         if (ratio < worst.ratio) worst = { ratio, where }
@@ -188,16 +229,33 @@ export function worstContrastAt(distance: number): { ratio: number; where: strin
 // Type, space, radius, elevation, motion
 // ---------------------------------------------------------------------------
 
-/** 12 / 13 / 14 / 16 / 20 / 28 / 36 px. Name → [size, line height]. */
+/** Normal text: 12 caption · 13 labels · 14 table cells · 15 body and forms ·
+ * 16 lead · 18 section titles · 28 page titles · 34 KPI figures (px).
+ * Name → [size, line height]; body text at ≈ 1.5. */
 export const TYPE_SCALE = {
-  caption: ['0.75rem', '1rem'],
-  small: ['0.8125rem', '1.125rem'],
-  body: ['0.875rem', '1.25rem'],
+  caption: ['0.75rem', '1.125rem'],
+  small: ['0.8125rem', '1.25rem'],
+  table: ['0.875rem', '1.3125rem'],
+  body: ['0.9375rem', '1.40625rem'],
   lead: ['1rem', '1.5rem'],
-  title: ['1.25rem', '1.75rem'],
-  headline: ['1.75rem', '2.125rem'],
-  display: ['2.25rem', '2.5rem'],
+  title: ['1.125rem', '1.625rem'],
+  headline: ['1.75rem', '2.25rem'],
+  display: ['2.125rem', '2.5rem'],
 } as const
+
+export type TextSize = 'normal' | 'large'
+
+/** «Large» text (Appearance): every size one step up — 13 · 14 · 15 · 16 · 17 · 20 · 30 · 36. */
+export const TYPE_SCALE_LARGE: Record<keyof typeof TYPE_SCALE, readonly [string, string]> = {
+  caption: ['0.8125rem', '1.25rem'],
+  small: ['0.875rem', '1.3125rem'],
+  table: ['0.9375rem', '1.40625rem'],
+  body: ['1rem', '1.5rem'],
+  lead: ['1.0625rem', '1.625rem'],
+  title: ['1.25rem', '1.75rem'],
+  headline: ['1.875rem', '2.375rem'],
+  display: ['2.25rem', '2.625rem'],
+}
 
 export const FONTS = {
   sans: "'Inter Variable', 'Inter', ui-sans-serif, system-ui, sans-serif",
@@ -207,11 +265,12 @@ export const FONTS = {
 /** Spacing steps a layout may use (4 px grid; 2 px only for hairlines). */
 export const SPACING_STEPS = [0.5, 1, 2, 3, 4, 5, 6, 8, 10, 12, 14, 16, 20] as const
 
-export const RADII = { sm: '0.25rem', md: '0.375rem', lg: '0.5rem', xl: '0.75rem' } as const
+/** Controls (inputs, buttons) 10 px, cards 12 px. */
+export const RADII = { sm: '0.25rem', md: '0.375rem', lg: '0.5rem', control: '0.625rem', xl: '0.75rem', '2xl': '1rem' } as const
 
 /** Fewer shadows: a hairline lift at rest, a soft one for overlays. */
 export const SHADOWS = {
-  card: '0 1px 2px 0 rgb(40 34 26 / 0.04)',
+  card: '0 1px 2px 0 rgb(40 34 26 / 0.03)',
   pop: '0 10px 28px -8px rgb(24 20 14 / 0.18), 0 3px 8px -4px rgb(24 20 14 / 0.10)',
 } as const
 
@@ -239,8 +298,9 @@ export const MOTION = {
 // ramps. One place to re-map, and the contrast test resolves them too.
 // ---------------------------------------------------------------------------
 
-export function roleTokens(): Record<string, string> {
+export function roleTokens(theme: ThemeName = DEFAULT_THEME): Record<string, string> {
   const r = RAMPS
+  const t = THEMES[theme]
   return {
     background: '#ffffff',
     foreground: r.slate[900],
@@ -248,7 +308,7 @@ export function roleTokens(): Record<string, string> {
     'card-foreground': r.slate[900],
     popover: '#ffffff',
     'popover-foreground': r.slate[900],
-    primary: r.navy[600],
+    primary: t.brand[600],
     'primary-foreground': '#ffffff',
     secondary: r.slate[100],
     'secondary-foreground': r.slate[900],
@@ -260,19 +320,34 @@ export function roleTokens(): Record<string, string> {
     'destructive-foreground': '#ffffff',
     border: r.slate[200],
     input: r.slate[300],
-    ring: r.sky[400],
-    link: r.sky[600],
-    // the sidebar: navy dimmed one step (800), its text quiet
-    sidebar: r.navy[800],
-    'sidebar-foreground': r.slate[50],
-    'sidebar-muted': r.navy[200],
-    'sidebar-accent': r.navy[700],
+    ring: t.brand[400],
+    link: t.brand[600],
+    canvas: t.canvas,
+    // the light, frosted sidebar: dark text, the active item a soft accent pill
+    sidebar: t.sidebar,
+    'sidebar-foreground': r.slate[800],
+    'sidebar-muted': r.slate[600],
+    'sidebar-accent': t.brand[100],
+    'sidebar-accent-foreground': t.brand[800],
+    'sidebar-hover': r.slate[100],
+    'sidebar-border': r.slate[200],
   }
 }
 
+/** The colour tokens that differ per theme (the rest are shared). */
+export function themeTokens(theme: ThemeName): Record<string, string> {
+  const out: Record<string, string> = {}
+  for (const step of STEPS) out[`brand-${step}`] = THEMES[theme].brand[step]
+  const roles = roleTokens(theme)
+  for (const k of ['primary', 'ring', 'link', 'canvas', 'sidebar', 'sidebar-accent', 'sidebar-accent-foreground']) out[k] = roles[k]
+  out['data-1'] = THEMES[theme].brand[400]
+  STEPS.slice(1).forEach((s, i) => (out[`seq-${i + 1}`] = THEMES[theme].brand[s]))
+  return out
+}
+
 /** Every colour token (`--color-<name>`) as hex. */
-export function colorTokens(): Record<string, string> {
-  const out: Record<string, string> = { white: '#ffffff', black: '#000000', canvas: CANVAS, scrim: RAMPS.navy[900] }
+export function colorTokens(theme: ThemeName = DEFAULT_THEME): Record<string, string> {
+  const out: Record<string, string> = { white: '#ffffff', black: '#000000', canvas: CANVAS, scrim: RAMPS.slate[900] }
   for (const [name, ramp] of Object.entries(RAMPS)) for (const step of STEPS) out[`${name}-${step}`] = ramp[step]
   for (const [k, c] of Object.entries(STATUS_COLORS)) {
     const key = k.replace('_', '-')
@@ -292,7 +367,7 @@ export function colorTokens(): Record<string, string> {
   }
   CATEGORICAL.forEach((hex, i) => (out[`data-${i + 1}`] = hex))
   SEQUENTIAL.forEach((hex, i) => (out[`seq-${i + 1}`] = hex))
-  Object.assign(out, roleTokens())
+  Object.assign(out, roleTokens(theme), themeTokens(theme))
   return out
 }
 
@@ -328,9 +403,25 @@ export function renderTokensCss(): string {
   for (const [name, value] of Object.entries(MOTION.durations)) lines.push(`  --duration-${name}: ${value};`)
   for (const [name, value] of Object.entries(MOTION.easings)) lines.push(`  --ease-${name}: ${value};`)
   lines.push('  /* Every `transition-*` utility is productive by default. */')
-  lines.push(`  --default-transition-duration: ${MOTION.durations['fast-02']};`)
+  lines.push(`  --default-transition-duration: ${MOTION.durations['moderate-01']};`)
   lines.push(`  --default-transition-timing-function: ${MOTION.easings['productive-standard']};`)
   lines.push('}')
+  lines.push('')
+  lines.push('/* Appearance — text size «Large»: every size one step up (spacing unchanged). */')
+  lines.push(":root[data-text-size='large'] {")
+  for (const [name, [size, lineHeight]] of Object.entries(TYPE_SCALE_LARGE)) {
+    lines.push(`  --text-${name}: ${size};`)
+    lines.push(`  --text-${name}--line-height: ${lineHeight};`)
+  }
+  lines.push('}')
+  for (const theme of THEME_NAMES) {
+    if (theme === DEFAULT_THEME) continue
+    lines.push('')
+    lines.push(`/* Appearance — theme «${theme}»: ${THEME_SPECS[theme].role}. Accent and tints only. */`)
+    lines.push(`:root[data-theme='${theme}'] {`)
+    for (const [name, hex] of Object.entries(themeTokens(theme))) lines.push(`  --color-${name}: ${hex};`)
+    lines.push('}')
+  }
   return `${lines.join('\n')}\n`
 }
 

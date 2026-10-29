@@ -105,8 +105,8 @@ export function DataTable<T>({
       return n
     })
 
-  const frozen = 'sticky left-0 z-[1] bg-card shadow-[inset_-1px_0_0_var(--color-border)] group-hover/row:bg-slate-50 group-data-[selected=true]/row:bg-navy-50'
-  const headCell = 'sticky top-0 z-[2] h-10 border-b bg-card px-3 text-left align-middle text-caption font-medium whitespace-nowrap text-muted-foreground'
+  const frozen = 'sticky left-0 z-[1] bg-card shadow-[inset_-1px_0_0_var(--color-border)] group-hover/row:bg-slate-50 group-data-[selected=true]/row:bg-brand-50'
+  const headCell = 'sticky top-0 z-[2] h-11 border-b bg-card px-3 text-left align-middle text-small font-medium whitespace-nowrap text-muted-foreground'
 
   return (
     <div className={cn('min-w-0', className)}>
@@ -161,7 +161,7 @@ export function DataTable<T>({
       </div>
 
       <div className={cn('relative overflow-auto', maxHeight)}>
-        <table className="w-full caption-bottom border-separate border-spacing-0 text-body">
+        <table className="w-full caption-bottom border-separate border-spacing-0 text-table">
           <thead>
             <tr>
               {visible.map((c, i) => {
@@ -186,7 +186,7 @@ export function DataTable<T>({
                         <input
                           type="checkbox"
                           aria-label={t('ui.selectAll')}
-                          className="size-4 accent-navy-600"
+                          className="size-4 accent-brand-600"
                           checked={allOn}
                           ref={(el) => {
                             if (el) el.indeterminate = selectedRows.length > 0 && !allOn
@@ -219,7 +219,7 @@ export function DataTable<T>({
                   <tr
                     key={rid}
                     data-selected={on}
-                    className={cn('group/row transition-colors hover:bg-slate-50 data-[selected=true]:bg-navy-50', ROW_H[density], onRowClick && 'cursor-pointer')}
+                    className={cn('group/row transition-colors hover:bg-slate-50 data-[selected=true]:bg-brand-50', ROW_H[density], onRowClick && 'cursor-pointer')}
                     onClick={onRowClick ? () => onRowClick(r) : undefined}
                   >
                     {visible.map((c, i) => (
@@ -232,7 +232,7 @@ export function DataTable<T>({
                             <input
                               type="checkbox"
                               aria-label={t('ui.selectRow')}
-                              className="size-4 accent-navy-600"
+                              className="size-4 accent-brand-600"
                               checked={on}
                               onClick={(e) => e.stopPropagation()}
                               onChange={() => toggle(rid)}

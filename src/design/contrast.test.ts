@@ -23,10 +23,9 @@ import { join, relative } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 import { contrast, luminance } from './oklch'
-import { AGING_COLORS, CANVAS, GRAPHIC_MIN, RAMPS, STATUS_COLORS, TEXT_MIN, colorTokens, worstContrastAt } from './palette'
+import { AGING_COLORS, CANVAS, GRAPHIC_MIN, RAMPS, STATUS_COLORS, TEXT_MIN, THEME_NAMES, THEMES, colorTokens, worstContrastAt, type ThemeName } from './palette'
 
 const SRC = join(__dirname, '..')
-const TOKENS = colorTokens()
 
 function hexToRgb(hex: string): [number, number, number] {
   const n = Number.parseInt(hex.slice(1), 16)
@@ -40,8 +39,11 @@ function blend(fg: string, alpha: number, bg: string): string {
   return `#${a.map((x, i) => Math.round(x * alpha + b[i] * (1 - alpha)).toString(16).padStart(2, '0')).join('')}`
 }
 
-/** A colour class value (`slate-500`, `white/70`) → [hex, alpha]. */
-function resolve(value: string): [string, number] | null {
+/** A colour class value (`slate-500`, `white/70`) → [hex, alpha], in a theme. */
+function resolver(TOKENS: Record<string, string>) {
+  return (value: string) => resolve(TOKENS, value)
+}
+function resolve(TOKENS: Record<string, string>, value: string): [string, number] | null {
   const [name, opacity] = value.split('/')
   const hex = TOKENS[name]
   if (!hex || !hex.startsWith('#')) return null
@@ -67,9 +69,10 @@ function classStrings(source: string): string[] {
   return out
 }
 
-/** The dark surface a light colour with no background of its own sits on. */
-function darkSurface(file: string): string {
-  if (/(layout[\\/]AppLayout|LoginPage)\.tsx$/.test(file)) return TOKENS.sidebar
+/** The dark surface a light colour with no background of its own sits on:
+ * the login page's navy brand panel, otherwise a primary (accent) button. */
+function darkSurface(TOKENS: Record<string, string>, file: string): string {
+  if (/LoginPage\.tsx$/.test(file)) return TOKENS['navy-800']
   return TOKENS.primary
 }
 
@@ -85,7 +88,8 @@ const VARIANT = /^(?:\[[^\]]*\]:|[a-z0-9@*_-]+(?:\[[^\]]*\])?:)*/
 /** States WCAG exempts (disabled controls) or hints checked elsewhere (placeholders). */
 const EXEMPT_VARIANTS = /(^|:)(disabled|placeholder|group-disabled|aria-disabled):/
 
-function audit(): Finding[] {
+function audit(TOKENS: Record<string, string>): Finding[] {
+  const resolve = resolver(TOKENS)
   const findings: Finding[] = []
   for (const file of files(SRC)) {
     const source = readFileSync(file, 'utf8')
@@ -115,8 +119,8 @@ function audit(): Finding[] {
         if (!color) continue
         const need = graphic || m[1] !== 'text' ? GRAPHIC_MIN : TEXT_MIN
         const onDark = luminance(color[0]) > 0.4
-        const ownHex = own ? (own[1] < 1 ? blend(own[0], own[1], onDark ? darkSurface(file) : TOKENS.white) : own[0]) : null
-        const surfaces = ownHex ? [ownHex] : onDark ? [darkSurface(file)] : [TOKENS.white, TOKENS.canvas]
+        const ownHex = own ? (own[1] < 1 ? blend(own[0], own[1], onDark ? darkSurface(TOKENS, file) : '#ffffff') : own[0]) : null
+        const surfaces = ownHex ? [ownHex] : onDark ? [darkSurface(TOKENS, file)] : ['#ffffff', TOKENS.canvas]
         for (const surface of surfaces) {
           const fg = color[1] < 1 ? blend(color[0], color[1], surface) : color[0]
           const ratio = contrast(fg, surface)
@@ -130,7 +134,7 @@ function audit(): Finding[] {
   return findings
 }
 
-describe('the palette keeps the pairing rule', () => {
+describe('the palette keeps the pairing rule (every ramp, every theme accent)', () => {
   it('steps 5 apart read as text, 4 apart as icons and large text', () => {
     expect(worstContrastAt(5).ratio).toBeGreaterThanOrEqual(TEXT_MIN)
     expect(worstContrastAt(4).ratio).toBeGreaterThanOrEqual(GRAPHIC_MIN)
@@ -144,21 +148,41 @@ describe('the palette keeps the pairing rule', () => {
       expect(contrast(c.solid, '#ffffff')).toBeGreaterThanOrEqual(GRAPHIC_MIN)
     }
   })
-
-  it('secondary text reads on the canvas; white reads on the 90+ solid and the sidebar', () => {
-    expect(contrast(RAMPS.slate[500], CANVAS)).toBeGreaterThanOrEqual(TEXT_MIN)
-    expect(contrast(TOKENS['muted-foreground'], CANVAS)).toBeGreaterThanOrEqual(TEXT_MIN)
-    expect(contrast('#ffffff', AGING_COLORS['90+'].ink)).toBeGreaterThanOrEqual(TEXT_MIN)
-    expect(contrast(TOKENS['sidebar-foreground'], TOKENS.sidebar)).toBeGreaterThanOrEqual(TEXT_MIN)
-    expect(contrast(TOKENS['sidebar-muted'], TOKENS.sidebar)).toBeGreaterThanOrEqual(TEXT_MIN)
-    expect(contrast(TOKENS.ring, '#ffffff')).toBeGreaterThanOrEqual(GRAPHIC_MIN)
-    expect(contrast(TOKENS.link, '#ffffff')).toBeGreaterThanOrEqual(TEXT_MIN)
-  })
 })
 
-describe('every text and icon colour in use passes', () => {
-  it('has no pair below 4.5 : 1 (text) or 3 : 1 (icons, large text)', () => {
-    const findings = audit()
+/** The frosted sidebar is semi-transparent over the canvas: check text on both ends. */
+const sidebarSurfaces = (t: Record<string, string>) => [t.sidebar, t.canvas, '#ffffff']
+
+describe.each(THEME_NAMES)('theme «%s»', (theme: ThemeName) => {
+  const T = colorTokens(theme)
+
+  it('secondary text, links, focus ring and white-on-primary read', () => {
+    expect(contrast(RAMPS.slate[500], T.canvas)).toBeGreaterThanOrEqual(TEXT_MIN)
+    expect(contrast(T['muted-foreground'], T.canvas)).toBeGreaterThanOrEqual(TEXT_MIN)
+    expect(contrast('#ffffff', T.primary)).toBeGreaterThanOrEqual(TEXT_MIN)
+    expect(contrast(T.link, '#ffffff')).toBeGreaterThanOrEqual(TEXT_MIN)
+    expect(contrast(T.link, T.canvas)).toBeGreaterThanOrEqual(TEXT_MIN)
+    expect(contrast(T.ring, '#ffffff')).toBeGreaterThanOrEqual(GRAPHIC_MIN)
+    expect(contrast(T.ring, T.canvas)).toBeGreaterThanOrEqual(GRAPHIC_MIN)
+    expect(contrast('#ffffff', AGING_COLORS['90+'].ink)).toBeGreaterThanOrEqual(TEXT_MIN)
+  })
+
+  it('the sidebar: text, quiet text and the active pill read', () => {
+    for (const bg of sidebarSurfaces(T)) {
+      expect(contrast(T['sidebar-foreground'], bg)).toBeGreaterThanOrEqual(TEXT_MIN)
+      expect(contrast(T['sidebar-muted'], bg)).toBeGreaterThanOrEqual(TEXT_MIN)
+      expect(contrast(T['sidebar-foreground'], T['sidebar-hover'])).toBeGreaterThanOrEqual(TEXT_MIN)
+    }
+    expect(contrast(T['sidebar-accent-foreground'], T['sidebar-accent'])).toBeGreaterThanOrEqual(TEXT_MIN)
+    expect(T.sidebar).toBe(THEMES[theme].sidebar)
+  })
+
+  it('every text and icon colour in use passes (4.5 : 1 text, 3 : 1 icons / large text)', () => {
+    const findings = audit(T)
     expect(findings.map((f) => `${f.file}: ${f.pair} = ${f.ratio.toFixed(2)} < ${f.need} — "${f.classes}"`)).toEqual([])
   })
 })
+
+// Text size does not change any colour pair; «Large» only makes more text count as large
+// (a lower bar), so the Normal audit above is the stricter of the two.
+void CANVAS

@@ -1,4 +1,5 @@
-import { LogOut, UserRound } from 'lucide-react'
+import { useState } from 'react'
+import { LogOut, Palette, UserRound } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import {
@@ -10,13 +11,16 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/auth/AuthProvider'
+import { AppearanceDialog } from './AppearanceDialog'
 
 export function UserMenu() {
   const { t } = useTranslation()
   const { profile, role, signOut } = useAuth()
   const name = profile?.full_name || profile?.email || ''
+  const [appearance, setAppearance] = useState(false)
 
   return (
+    <>
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="max-w-56">
@@ -31,11 +35,18 @@ export function UserMenu() {
           {role && <div className="mt-1 text-caption text-muted-foreground">{t(`roles.${role}`)}</div>}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem onSelect={() => setAppearance(true)}>
+          <Palette />
+          {t('appearance.title')}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={() => void signOut()}>
           <LogOut />
           {t('auth.signOut')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+    <AppearanceDialog open={appearance} onClose={() => setAppearance(false)} />
+    </>
   )
 }

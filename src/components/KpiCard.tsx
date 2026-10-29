@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { ComponentType, ReactNode } from 'react'
 import { Link } from 'react-router'
 import { ArrowDownRight, ArrowRight, ArrowUpRight } from 'lucide-react'
 import { locale } from '@/lib/format'
@@ -17,9 +17,9 @@ export function Sparkline({ values, className }: { values: number[]; className?:
   const [lx, ly] = pts[pts.length - 1]
   return (
     <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" className={cn('h-8 w-full overflow-visible', className)} aria-hidden>
-      <path d={`${line}L${w},${h}L0,${h}Z`} className="fill-navy-100" />
-      <path d={line} className="fill-none stroke-navy-500" strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
-      <circle cx={lx} cy={ly} r={2.5} className="fill-navy-600" />
+      <path d={`${line}L${w},${h}L0,${h}Z`} className="fill-brand-100" />
+      <path d={line} className="fill-none stroke-brand-500" strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
+      <circle cx={lx} cy={ly} r={2.5} className="fill-brand-600" />
     </svg>
   )
 }
@@ -39,6 +39,7 @@ export function KpiCard({
   series,
   to,
   alert = false,
+  icon: ChipIcon,
   className,
 }: {
   label: string
@@ -52,6 +53,8 @@ export function KpiCard({
   to?: string
   /** The figure needs attention (e.g. overdue items): shown in the danger ink. */
   alert?: boolean
+  /** Shown in a soft accent-tinted chip next to the label. */
+  icon?: ComponentType<{ className?: string }>
   className?: string
 }) {
   const hasDelta = delta !== null && delta !== undefined && Number.isFinite(delta)
@@ -60,11 +63,18 @@ export function KpiCard({
   const Icon = !hasDelta || flat ? ArrowRight : delta > 0 ? ArrowUpRight : ArrowDownRight
   const body = (
     <>
-      <div className="flex items-start justify-between gap-2">
-        <span className="text-caption font-medium text-muted-foreground">{label}</span>
-        {to && <ArrowRight className="size-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" aria-hidden />}
+      <div className="flex items-center justify-between gap-2">
+        <span className="flex min-w-0 items-center gap-3">
+          {ChipIcon && (
+            <span className={cn('flex size-9 shrink-0 items-center justify-center rounded-lg', alert ? 'bg-danger-100 text-danger-700' : 'bg-brand-50 text-brand-700')} aria-hidden>
+              <ChipIcon className="size-[18px]" />
+            </span>
+          )}
+          <span className="text-small font-medium text-muted-foreground">{label}</span>
+        </span>
+        {to && <ArrowRight className="size-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" aria-hidden />}
       </div>
-      <div className={cn('font-display-bold text-headline num', alert ? 'text-danger-700' : 'text-foreground')}>{value}</div>
+      <div className={cn('mt-1 font-display-bold text-display num', alert ? 'text-danger-700' : 'text-foreground')}>{value}</div>
       <div className="flex min-h-5 flex-wrap items-center gap-x-2 text-caption text-muted-foreground">
         {hasDelta && (
           <span className={cn('inline-flex items-center gap-0.5 font-medium num', flat ? 'text-muted-foreground' : good ? 'text-success-700' : 'text-danger-700')}>
@@ -78,9 +88,9 @@ export function KpiCard({
       {series && <Sparkline values={series} className="mt-1" />}
     </>
   )
-  const base = cn('group flex min-w-0 flex-col gap-1 rounded-xl border bg-card p-4 shadow-card', className)
+  const base = cn('group flex min-w-0 flex-col gap-1 rounded-xl border bg-card p-5 shadow-card', className)
   return to ? (
-    <Link to={to} className={cn(base, 'transition-colors hover:border-navy-300 hover:bg-navy-50')} data-slot="card">
+    <Link to={to} className={cn(base, 'transition-colors hover:border-brand-300 hover:bg-brand-50')} data-slot="card">
       {body}
     </Link>
   ) : (

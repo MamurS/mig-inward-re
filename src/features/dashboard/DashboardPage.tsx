@@ -3,7 +3,7 @@ import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { Bar, BarChart, CartesianGrid, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, AlarmClock, CircleCheckBig, FileSearch, Hourglass, Inbox } from 'lucide-react'
 import { PageHeader } from '@/components/PageHeader'
 import { KpiCard } from '@/components/KpiCard'
 import { Skeleton } from '@/components/Skeleton'
@@ -45,7 +45,7 @@ const partOfDay = () => {
 const COLUMNS =
   'id, ref_no, insured_name, status, received_at, offered_at, bound_at, offer_valid_until, mga_id, mga_name, lob_name, our_gross_premium_usd, follow_up_overdue, offer_expired'
 
-const BAR = 'var(--color-navy-500)'
+const BAR = 'var(--color-brand-500)'
 /** Axis text: slate-600 reads at 6.5 : 1 on white. */
 const TICK = { fontSize: 12, fill: 'var(--color-slate-600)' }
 
@@ -201,17 +201,19 @@ export function DashboardPage() {
       <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
         <KpiCard
           label={t('dash.tiles.receivedMonth')}
+          icon={Inbox}
           value={m.receivedThisMonth}
           delta={m.receivedDelta}
           deltaLabel={t('ui.kpi.vsLastMonth')}
           series={m.receivedTrend}
           to={`/submissions?from=${m.monthStart}`}
         />
-        <KpiCard label={t('dash.tiles.underReview')} value={m.underReview} sub={t('dash.tiles.notReviewed', { count: m.notReviewed })} to="/submissions?status=under_review" />
-        <KpiCard label={t('dash.tiles.awaiting')} value={m.awaiting} sub={t('ui.kpi.offeredOrNoResponse')} to="/submissions?status=offered,no_response&sort=next_follow_up_at&dir=asc" />
-        <KpiCard label={t('dash.tiles.overdue')} value={m.overdue} sub={t('ui.kpi.followUpsPastDue')} to="/submissions?overdue=1" alert={m.overdue > 0} />
+        <KpiCard icon={FileSearch} label={t('dash.tiles.underReview')} value={m.underReview} sub={t('dash.tiles.notReviewed', { count: m.notReviewed })} to="/submissions?status=under_review" />
+        <KpiCard icon={Hourglass} label={t('dash.tiles.awaiting')} value={m.awaiting} sub={t('ui.kpi.offeredOrNoResponse')} to="/submissions?status=offered,no_response&sort=next_follow_up_at&dir=asc" />
+        <KpiCard icon={AlarmClock} label={t('dash.tiles.overdue')} value={m.overdue} sub={t('ui.kpi.followUpsPastDue')} to="/submissions?overdue=1" alert={m.overdue > 0} />
         <KpiCard
           label={t('dash.tiles.boundYtd', { year: thisYear })}
+          icon={CircleCheckBig}
           value={m.boundYtd}
           delta={m.boundDelta}
           deltaLabel={t('ui.kpi.vsLastYear')}
@@ -224,7 +226,7 @@ export function DashboardPage() {
       {/* What needs an answer first, then how we are doing */}
       <div className="mb-4 grid gap-4 xl:grid-cols-3">
         <Card className="gap-0 py-0 xl:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between gap-2 py-4">
+          <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 py-4">
             <CardTitle>{t('dash.oldestOffers')}</CardTitle>
             <Link to="/submissions?status=offered,no_response&sort=received_at&dir=asc" className="text-body text-link hover:underline">{t('dash.openInRegister')}</Link>
           </CardHeader>

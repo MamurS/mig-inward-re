@@ -179,16 +179,16 @@ export function ScheduleEditor({
         )}
 
         {/* Live preview — the same rounding the database applies */}
-        <div className="overflow-x-auto rounded-md border">
-          <table className="w-full text-body">
+        <div className="overflow-x-auto rounded-lg border">
+          <table className="w-full text-table">
             <thead>
-              <tr className="border-b bg-muted text-caption text-muted-foreground">
-                <th className="px-3 py-2 text-left font-medium">#</th>
-                <th className="px-3 py-2 text-left font-medium">{t('prem.dueDate')}</th>
-                <th className="px-3 py-2 text-right font-medium">{t('prem.gross')}</th>
-                <th className="px-3 py-2 text-right font-medium">{t('fields.commission')}</th>
-                <th className="px-3 py-2 text-right font-medium">{t('fields.brokerage')}</th>
-                <th className="px-3 py-2 text-right font-medium">{t('prem.net')}</th>
+              <tr className="border-b text-small text-muted-foreground">
+                <th className="h-10 px-3 text-left font-medium">#</th>
+                <th className="h-10 px-3 text-left font-medium">{t('prem.dueDate')}</th>
+                <th className="h-10 px-3 text-right font-medium">{t('prem.gross')}</th>
+                <th className="h-10 px-3 text-right font-medium">{t('fields.commission')}</th>
+                <th className="h-10 px-3 text-right font-medium">{t('fields.brokerage')}</th>
+                <th className="h-10 px-3 text-right font-medium">{t('prem.net')}</th>
               </tr>
             </thead>
             <tbody>
@@ -196,25 +196,25 @@ export function ScheduleEditor({
                 <tr><td colSpan={6} className="px-3 py-4 text-center text-muted-foreground">{t('prem.previewInvalid')}</td></tr>
               ) : (
                 rows.map((r, i) => (
-                  <tr key={i} className="border-b last:border-0">
-                    <td className="px-3 py-2 num">{i + 1}</td>
-                    <td className="px-3 py-2">{formatDate(r.due_date)}</td>
-                    <td className="px-3 py-2 text-right num">{formatAmount(cleanDecimal(r.gross_amount))}</td>
-                    <td className="px-3 py-2 text-right num">{formatAmount(preview[i]?.commission)}</td>
-                    <td className="px-3 py-2 text-right num">{formatAmount(preview[i]?.brokerage)}</td>
-                    <td className="px-3 py-2 text-right font-medium num">{formatAmount(preview[i]?.net)}</td>
+                  <tr key={i} className="border-b transition-colors last:border-0 hover:bg-slate-50">
+                    <td className="px-3 py-3 num">{i + 1}</td>
+                    <td className="px-3 py-3">{formatDate(r.due_date)}</td>
+                    <td className="px-3 py-3 text-right num">{formatAmount(cleanDecimal(r.gross_amount))}</td>
+                    <td className="px-3 py-3 text-right num">{formatAmount(preview[i]?.commission)}</td>
+                    <td className="px-3 py-3 text-right num">{formatAmount(preview[i]?.brokerage)}</td>
+                    <td className="px-3 py-3 text-right font-medium num">{formatAmount(preview[i]?.net)}</td>
                   </tr>
                 ))
               )}
             </tbody>
             {!invalid && (
               <tfoot>
-                <tr className="border-t bg-muted font-semibold">
-                  <td className="px-3 py-2" colSpan={2}>{t('prem.total')}</td>
-                  <td className="px-3 py-2 text-right num">{formatAmount(totalGross)}</td>
-                  <td className="px-3 py-2 text-right num">{formatAmount(sumMoney(preview.map((p) => p.commission)))}</td>
-                  <td className="px-3 py-2 text-right num">{formatAmount(sumMoney(preview.map((p) => p.brokerage)))}</td>
-                  <td className="px-3 py-2 text-right num">{formatAmount(totalNet)}</td>
+                <tr className="border-t font-semibold">
+                  <td className="px-3 py-3" colSpan={2}>{t('prem.total')}</td>
+                  <td className="px-3 py-3 text-right num">{formatAmount(totalGross)}</td>
+                  <td className="px-3 py-3 text-right num">{formatAmount(sumMoney(preview.map((p) => p.commission)))}</td>
+                  <td className="px-3 py-3 text-right num">{formatAmount(sumMoney(preview.map((p) => p.brokerage)))}</td>
+                  <td className="px-3 py-3 text-right num">{formatAmount(totalNet)}</td>
                 </tr>
               </tfoot>
             )}

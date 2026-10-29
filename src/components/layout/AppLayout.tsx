@@ -9,6 +9,7 @@ import { NAV_ITEMS } from './nav'
 import { LanguageSwitcher } from './LanguageSwitcher'
 import { UserMenu } from './UserMenu'
 import { useMyOverdueCount } from '@/features/followups/FollowUps'
+import { AppearanceSync } from './AppearanceDialog'
 import { CommandPalette, OPEN_PALETTE, isMac } from '@/components/CommandPalette'
 
 export function AppLayout() {
@@ -31,20 +32,20 @@ export function AppLayout() {
   const overdue = useMyOverdueCount()
 
   const nav = (
-    <nav className="flex flex-col gap-1 p-3">
+    <nav className="flex flex-col gap-1 px-3 py-4">
       {items.map(({ to, labelKey, icon: Icon }) => (
         <NavLink
           key={to}
           to={to}
           className={({ isActive }) =>
             cn(
-              'flex items-center gap-3 rounded-md px-3 py-2 text-body font-medium text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground',
-              isActive && 'bg-sidebar-accent text-sidebar-foreground',
+              'flex min-h-10 items-center gap-3 rounded-control px-3 py-2 text-body text-sidebar-foreground transition-colors hover:bg-sidebar-hover [&>svg]:text-sidebar-muted',
+              isActive && 'bg-sidebar-accent font-medium text-sidebar-accent-foreground hover:bg-sidebar-accent [&>svg]:text-sidebar-accent-foreground',
             )
           }
         >
-          <Icon className="size-4" />
-          <span className="flex-1">{t(labelKey)}</span>
+          <Icon className="size-5 shrink-0" />
+          <span className="min-w-0 flex-1 truncate" title={t(labelKey)}>{t(labelKey)}</span>
           {to === '/agenda' && (overdue.data ?? 0) > 0 && (
             <span className="rounded-full bg-danger-600 px-2 py-0.5 text-caption leading-none font-semibold text-white" title={t('agenda.bucket.overdue')}>
               {overdue.data}
@@ -56,11 +57,12 @@ export function AppLayout() {
   )
 
   const brand = (
-    <div className="flex h-14 items-center gap-2 border-b border-white/10 px-5">
-      <div className="flex size-7 items-center justify-center rounded bg-white/10 text-caption font-display-bold text-white">MIG</div>
+    <div className="flex h-16 items-center gap-3 px-5">
+      {/* the brand lives in the logo mark */}
+      <div className="flex size-9 shrink-0 items-center justify-center rounded-control bg-navy-800 text-caption font-display-bold text-white">MIG</div>
       <div className="min-w-0 leading-tight">
-        <div className="text-body font-semibold text-white">{t('app.name')}</div>
-        <div className="truncate text-caption text-sidebar-muted">{t('app.tagline')}</div>
+        <div className="truncate text-body font-semibold text-sidebar-foreground">{t('app.name')}</div>
+        <div className="truncate text-caption text-sidebar-muted" title={t('app.tagline')}>{t('app.tagline')}</div>
       </div>
     </div>
   )
@@ -68,7 +70,7 @@ export function AppLayout() {
   return (
     <div className="flex min-h-screen">
       {/* Desktop sidebar */}
-      <aside className="sticky top-0 hidden h-screen w-60 shrink-0 bg-sidebar lg:block">
+      <aside className="glass-sidebar sticky top-0 z-20 hidden h-screen w-64 shrink-0 lg:block">
         {brand}
         {nav}
       </aside>
@@ -77,7 +79,7 @@ export function AppLayout() {
       {mobileOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
           <div className="absolute inset-0 bg-scrim/50" onClick={() => setMobileOpen(false)} />
-          <aside className="absolute inset-y-0 left-0 w-64 bg-sidebar">
+          <aside className="absolute inset-y-0 left-0 w-72 bg-sidebar shadow-pop">
             {brand}
             {nav}
           </aside>
@@ -85,14 +87,14 @@ export function AppLayout() {
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b bg-background px-4">
+        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b bg-background/80 px-4 backdrop-blur-md md:px-8">
           <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setMobileOpen((o) => !o)}>
             {mobileOpen ? <X /> : <Menu />}
           </Button>
           <button
             type="button"
             onClick={() => window.dispatchEvent(new Event(OPEN_PALETTE))}
-            className="flex h-9 w-full max-w-sm items-center gap-2 rounded-md border bg-canvas px-3 text-body text-muted-foreground transition-colors hover:border-input hover:text-foreground"
+            className="flex h-10 w-full max-w-sm items-center gap-2 rounded-control border bg-background px-3 text-body text-muted-foreground transition-colors hover:border-input hover:text-foreground"
           >
             <Search className="size-4" />
             <span className="flex-1 truncate text-left">{t('ui.palette.button')}</span>
@@ -102,10 +104,11 @@ export function AppLayout() {
           <LanguageSwitcher />
           <UserMenu />
         </header>
-        <main className="mx-auto w-full max-w-[1600px] flex-1 p-4 md:p-6">
+        <main className="mx-auto w-full max-w-[1600px] flex-1 p-4 md:p-6 lg:p-8">
           <Outlet />
         </main>
         <CommandPalette />
+        <AppearanceSync />
       </div>
     </div>
   )

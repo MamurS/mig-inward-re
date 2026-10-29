@@ -26,6 +26,8 @@ const profiles: Row[] = Object.values(USERS).map((u) => ({
   ...u,
   active: true,
   preferred_language: 'en',
+  ui_theme: 'grey',
+  ui_text_size: 'normal',
   created_at: iso(200 * DAY),
   updated_at: iso(200 * DAY),
 }))

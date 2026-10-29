@@ -517,7 +517,17 @@
     "playMotion": "Play motion",
     "reducedMotion": "With «reduce motion» switched on in the system, everything moves instantly.",
     "sampleTable": "Sample table",
-    "amount": "Amount"
+    "amount": "Amount",
+    "themes": "Colour themes",
+    "themesHint": "Each theme changes only the accent ramp, the page tint and the sidebar tint. Status and ageing colours are the same in all four. Ratios below are measured for every pairing that theme uses.",
+    "pair": {
+      "button": "Button text on primary",
+      "link": "Link on white",
+      "nav": "Active nav item",
+      "sidebarText": "Sidebar text",
+      "canvasText": "Muted text on page",
+      "ring": "Focus ring on white"
+    }
   },
   "ui": {
     "actions": "Actions",
@@ -670,5 +680,22 @@
     "writeOffUndone": "Write-off of #{{no}} undone",
     "writtenOffBy": "Written off by {{who}}, {{when}}",
     "writtenOffToast": "Installment #{{no}} written off"
+  },
+  "appearance": {
+    "title": "Appearance",
+    "subtitle": "Colour theme and text size. Saved to your profile and applied on every device.",
+    "theme": "Colour theme",
+    "themes": {
+      "grey": "Grey",
+      "blue": "Blue",
+      "green": "Green",
+      "orange": "Orange"
+    },
+    "textSize": "Text size",
+    "textSizeHint": "Large makes every text one step bigger.",
+    "sizes": {
+      "normal": "Normal",
+      "large": "Large"
+    }
   }
 }

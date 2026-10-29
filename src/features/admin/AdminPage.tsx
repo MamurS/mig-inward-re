@@ -106,7 +106,7 @@ function UsersTab() {
 
   return (
     <Card className="gap-0 py-0">
-      <CardHeader className="flex flex-row items-center justify-between py-4">
+      <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 py-4">
         <div>
           <CardTitle>{t('admin.tabs.users')}</CardTitle>
           <p className="mt-1 text-caption text-muted-foreground">{t('admin.users.help')}</p>
@@ -517,7 +517,7 @@ function FxTab() {
         </CardContent>
       </Card>
       <Card className="gap-0 py-0">
-        <CardHeader className="flex flex-row items-center justify-between py-4">
+        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 py-4">
           <CardTitle>{t('admin.tabs.fx')}</CardTitle>
           <div className="w-36">
             <NativeSelect value={filter} onChange={(e) => setFilter(e.target.value)}>
@@ -658,7 +658,7 @@ function JobsTab() {
 
   return (
     <Card className="gap-0 py-0">
-      <CardHeader className="flex flex-row items-center justify-between py-4">
+      <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 py-4">
         <div>
           <CardTitle>{t('admin.jobs.title')}</CardTitle>
           <p className="mt-1 text-caption text-muted-foreground">{t('admin.jobs.help')}</p>

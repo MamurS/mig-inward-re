@@ -185,7 +185,7 @@ export function CommandPalette() {
                       onClick={item.run}
                       className={cn(
                         'flex h-10 cursor-pointer items-center gap-3 rounded-md px-3 text-body [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-muted-foreground',
-                        index === active && 'bg-navy-50',
+                        index === active && 'bg-brand-50',
                       )}
                     >
                       {item.icon}

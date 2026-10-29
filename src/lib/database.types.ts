@@ -692,6 +692,8 @@ export type Database = {
           id: string
           preferred_language: string
           role: Database["public"]["Enums"]["app_role"] | null
+          ui_text_size: string
+          ui_theme: string
           updated_at: string
         }
         Insert: {
@@ -702,6 +704,8 @@ export type Database = {
           id: string
           preferred_language?: string
           role?: Database["public"]["Enums"]["app_role"] | null
+          ui_text_size?: string
+          ui_theme?: string
           updated_at?: string
         }
         Update: {
@@ -712,6 +716,8 @@ export type Database = {
           id?: string
           preferred_language?: string
           role?: Database["public"]["Enums"]["app_role"] | null
+          ui_text_size?: string
+          ui_theme?: string
           updated_at?: string
         }
         Relationships: []
@@ -1452,6 +1458,8 @@ export type Database = {
           id: string
           preferred_language: string
           role: Database["public"]["Enums"]["app_role"] | null
+          ui_text_size: string
+          ui_theme: string
           updated_at: string
         }
         SetofOptions: {

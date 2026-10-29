@@ -37,13 +37,59 @@ the hue:
   steps (≥ 3 : 1). The test `src/design/contrast.test.ts` proves the worst
   pair of every ramp.
 - **Ramps.** `slate` — warm neutrals (hue 70, chroma 0.012): text, borders,
-  surfaces. `navy` — the brand, reserved for the sidebar, the primary button
-  and focus of brand moments. `sky` — secondary: focus ring, links,
+  surfaces. `brand` — the theme accent (primary button, active nav, links,
+  focus ring, selected rows, KPI chips, chart accent); it is one of four
+  ramps, chosen by the colour theme. `navy` — the company colour, kept for the
+  logo chip and the login panel only. `sky` — secondary: focus ring, links,
   informational highlights. `success`, `warning`, `danger`, `info` — feedback.
   `violet`, `teal`, `magenta` — only for data (charts, status scale).
-- **Page background** is the warm canvas; cards are white.
-- **No dark theme** for now: the light theme is the default, and a dark theme
-  ships only once it passes the same contrast test.
+- **Page background** is the theme's canvas tint (with a faint accent wash at
+  the top); cards are white.
+- **No dark theme** for now: a dark theme ships only once it passes the same
+  contrast test.
+
+### Colour themes and text size
+
+Four light themes, chosen per user under user menu → **Appearance** and saved
+on the profile (`profiles.ui_theme`, `ui_text_size`):
+
+| theme | accent | page and sidebar tint |
+|---|---|---|
+| Grey (default) | blue | cool grey |
+| Blue | blue | pale sky |
+| Green | green | lime / salad |
+| Orange | orange | peach |
+
+- **Mechanics.** `palette.ts` → `THEMES` builds each theme's `brand` ramp on
+  the same equal-luminance steps as every other ramp, so the pairing rule —
+  and the contrast test — hold in every theme by construction. `tokens.css`
+  holds the grey theme in `@theme` and one `:root[data-theme='…']` block per
+  other theme re-mapping `--color-brand-*`, `primary`, `ring`, `link`,
+  `canvas`, `sidebar*`, `data-1` and `seq-*`. Components only use roles and
+  `brand-*` — **no component knows the theme**.
+- **Fixed in every theme:** status and ageing colours, feedback colours,
+  text and borders (slate).
+- **Pastels are backgrounds only** (canvas, sidebar, `brand-50/100` tints);
+  text on them uses steps ≥ 5 apart.
+- **Text size.** Normal / Large; Large moves every `text-*` one step up
+  (`:root[data-text-size='large']`). Only type changes — never layout tokens.
+- **Applying.** `src/lib/appearance.ts` sets `data-theme` / `data-text-size`
+  on `<html>`; the last choice is cached in `localStorage` (`mig.appearance`)
+  and an inline script in `index.html` applies it before the first paint, so
+  there is no flash. A theme change cross-fades colours for 150 ms
+  (`theme-fade`); a size change is instant. Both respect reduced motion.
+- **The admin token page** (`/admin/tokens`) shows all four themes with their
+  ramps and measured contrast.
+
+### Sidebar
+
+Light and frosted: the theme's sidebar tint at 72 % behind
+`backdrop-filter: saturate(1.4) blur(18px)`, a solid tint where that is not
+supported (`glass-sidebar` in `index.css`), a hairline right border, no heavy
+shadow. Dark text (`sidebar-foreground` slate-800, `sidebar-muted` slate-600),
+20 px icons; the active item is a soft accent pill (`sidebar-accent` brand-100,
+text brand-800, medium weight); hover is a gentle slate-100. No navy in the
+sidebar except the logo chip.
 
 ### Roles (shadcn/ui vocabulary)
 
@@ -67,7 +113,7 @@ amber and orange to red. Badges are tinted; **only 90+ is solid** (white on
 `aging-90plus` with `-tint/-line/-ink/-deep`.
 
 **Charts** — categorical `data-1 … data-8` (all ≥ 3 : 1 on white, in an order
-that keeps neighbours distinct), sequential `seq-1 … seq-9` (navy 100 … 900).
+that keeps neighbours distinct), sequential `seq-1 … seq-9` (theme accent 100 … 900).
 
 ### Palette values (generated from `palette.ts`)
 
@@ -86,7 +132,23 @@ that keeps neighbours distinct), sequential `seq-1 … seq-9` (navy 100 … 900)
 | teal | `#eefdfc`<br>`oklch(98.3% 0.016 192.1)` | `#d1f9f6`<br>`oklch(95.3% 0.041 190.9)` | `#a2f1eb`<br>`oklch(90.5% 0.078 189.8)` | `#5ddcd4`<br>`oklch(82.2% 0.113 189.5)` | `#009c97`<br>`oklch(62.5% 0.108 190.8)` | `#007d78`<br>`oklch(53.2% 0.092 189.9)` | `#006965`<br>`oklch(47.0% 0.081 190.2)` | `#005653`<br>`oklch(40.9% 0.070 190.7)` | `#004441`<br>`oklch(34.9% 0.060 189.8)` | `#002524`<br>`oklch(23.9% 0.041 192.1)` |
 | magenta | `#fff9fc`<br>`oklch(98.8% 0.007 345.3)` | `#ffedf7`<br>`oklch(96.3% 0.023 342.9)` | `#ffd7ec`<br>`oklch(91.9% 0.052 345.2)` | `#ffb2dd`<br>`oklch(84.9% 0.104 345.0)` | `#dc5dab`<br>`oklch(66.2% 0.180 345.3)` | `#bb3e8e`<br>`oklch(56.6% 0.181 345.1)` | `#a1317a`<br>`oklch(50.4% 0.166 344.7)` | `#862564`<br>`oklch(43.8% 0.148 345.0)` | `#6a1b4e`<br>`oklch(37.0% 0.125 345.3)` | `#43042f`<br>`oklch(26.0% 0.103 345.0)` |
 
-Canvas `#f8f6f5` `oklch(97.4% 0.003 48.7)`. Pairing: 5 steps worst 4.62 (canvas/slate-500), 4 steps worst 3.13 (canvas/navy-400).
+Canvas (no theme) `#f8f6f5`. Pairing across every ramp, every theme accent, canvas and sidebar: 5 steps worst 4.62 (canvas/slate-500), 4 steps worst 3.12 (canvas/brand(blue)-400).
+
+### Themes
+
+| theme | 50 | 100 | 200 | 300 | 400 | 500 | 600 | 700 | 800 | 900 | canvas | sidebar |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| grey | `#f7fbff` | `#e9f3ff` | `#d0e4ff` | `#a4cbff` | `#468de4` | `#2770c4` | `#1c5eab` | `#134d8e` | `#0c3b71` | `#002047` | `#f5f7fa` | `#fafbfe` |
+| blue | `#f6fbff` | `#e9f3ff` | `#cce5ff` | `#9dcdff` | `#3690e2` | `#0b72c2` | `#0061a8` | `#004e8a` | `#003d6d` | `#002240` | `#edf9ff` | `#f7fcff` |
+| green | `#f1fdf3` | `#dbfade` | `#b7efbe` | `#88db94` | `#2ca04a` | `#008131` | `#006e29` | `#005920` | `#004517` | `#002809` | `#eefdd8` | `#f5ffe5` |
+| orange | `#fff9f5` | `#ffeee6` | `#ffdac7` | `#ffb991` | `#df6a09` | `#b45300` | `#9a4600` | `#7f3800` | `#642b00` | `#3b1600` | `#fff5ee` | `#fffbf7` |
+
+| theme | white on primary | link on white | active nav | sidebar muted text | muted text on canvas | ring on white |
+|---|---|---|---|---|---|---|
+| grey | 6.48 | 6.48 | 9.96 | 6.27 | 6.04 | 3.39 |
+| blue | 6.41 | 6.41 | 9.92 | 6.28 | 6.05 | 3.36 |
+| green | 6.44 | 6.44 | 10.06 | 6.28 | 6.08 | 3.37 |
+| orange | 6.46 | 6.46 | 9.87 | 6.30 | 6.04 | 3.39 |
 
 ### Status scale
 
@@ -111,9 +173,9 @@ Canvas `#f8f6f5` `oklch(97.4% 0.003 48.7)`. Pairing: 5 steps worst 4.62 (canvas/
 
 ### Categorical
 
-data-1 `#4690d7` (3.37 : 1 on white) · data-2 `#c37c00` (3.39 : 1 on white) · data-3 `#009c97` (3.39 : 1 on white) · data-4 `#dc5dab` (3.39 : 1 on white) · data-5 `#0095c9` (3.42 : 1 on white) · data-6 `#00a05b` (3.40 : 1 on white) · data-7 `#a274e8` (3.39 : 1 on white) · data-8 `#fe4741` (3.39 : 1 on white)
+data-1 `#468de4` (3.39 : 1 on white) · data-2 `#c37c00` (3.39 : 1 on white) · data-3 `#009c97` (3.39 : 1 on white) · data-4 `#dc5dab` (3.39 : 1 on white) · data-5 `#0095c9` (3.42 : 1 on white) · data-6 `#00a05b` (3.40 : 1 on white) · data-7 `#a274e8` (3.39 : 1 on white) · data-8 `#fe4741` (3.39 : 1 on white) — data-1 follows the theme accent (grey shown).
 
-### Roles
+### Roles (grey theme; the others re-map primary, ring, link, canvas and sidebar*)
 
 | role | hex |
 |---|---|
@@ -123,7 +185,7 @@ data-1 `#4690d7` (3.37 : 1 on white) · data-2 `#c37c00` (3.39 : 1 on white) · 
 | card-foreground | `#23211e` |
 | popover | `#ffffff` |
 | popover-foreground | `#23211e` |
-| primary | `#1b609e` |
+| primary | `#1c5eab` |
 | primary-foreground | `#ffffff` |
 | secondary | `#f3f1ef` |
 | secondary-foreground | `#23211e` |
@@ -135,12 +197,16 @@ data-1 `#4690d7` (3.37 : 1 on white) · data-2 `#c37c00` (3.39 : 1 on white) · 
 | destructive-foreground | `#ffffff` |
 | border | `#e5e2de` |
 | input | `#cdc8c2` |
-| ring | `#0095c9` |
-| link | `#00658a` |
-| sidebar | `#0a3c68` |
-| sidebar-foreground | `#fafaf9` |
-| sidebar-muted | `#cce4ff` |
-| sidebar-accent | `#124f84` |
+| ring | `#468de4` |
+| link | `#1c5eab` |
+| canvas | `#f5f7fa` |
+| sidebar | `#fafbfe` |
+| sidebar-foreground | `#3e3a37` |
+| sidebar-muted | `#635d58` |
+| sidebar-accent | `#e9f3ff` |
+| sidebar-accent-foreground | `#0c3b71` |
+| sidebar-hover | `#f3f1ef` |
+| sidebar-border | `#e5e2de` |
 
 ## Type
 
@@ -148,8 +214,11 @@ data-1 `#4690d7` (3.37 : 1 on white) · data-2 `#c37c00` (3.39 : 1 on white) · 
   display face — only for page titles, the logo and KPI figures
   (`font-display-bold`). Both cover Cyrillic (incl. ў қ ғ ҳ) and the Uzbek
   modifier letter ʻ (U+02BB) and ’ (U+2019).
-- **Scale** (px / line height): caption 12/16 · small 13/18 · body 14/20 ·
-  lead 16/24 · title 20/28 · headline 28/34 · display 36/40. Classes
+- **Scale** (px / line height, Normal): caption 12/18 · small 13/20 ·
+  table 14/21 · body 15/22.5 (forms too) · lead 16/24 · title 18/26 (section
+  titles) · headline 28/36 (page titles) · display 34/40 (KPI figures).
+  Large text moves each one step up (caption 13 … display 36). 12 px is the
+  minimum anywhere. Classes
   `text-caption … text-display`; Tailwind's default sizes and `text-[Npx]`
   are forbidden (the scale test fails).
 - **Weights.** 400 regular, 500 medium (labels, table headers, buttons),
@@ -163,7 +232,17 @@ data-1 `#4690d7` (3.37 : 1 on white) · data-2 `#c37c00` (3.39 : 1 on white) · 
 - **4 px grid.** Spacing steps 1, 2, 3, 4, 5, 6, 8, 10, 12, 14, 16, 20
   (Tailwind units, × 4 px); `0.5` (2 px) only for hairlines and badge
   padding. Half steps (`1.5`, `2.5`) are forbidden.
-- **Radii** sm 4 · md 6 · lg 8 · xl 12 px. Cards xl, controls md, badges md.
+- **Radii** sm 4 · md 6 · lg 8 · control 10 · xl 12 · 2xl 16 px. Cards xl
+  (white, hairline border, very soft shadow, 24 px padding), inputs and
+  buttons `rounded-control` at 40 px tall, badges md.
+- **Page padding** 16 / 24 / 32 px (mobile / md / lg).
+- **Tables.** No header bar: a quiet small-text header over hairline rows,
+  a subtle slate-50 hover; regular rows about 48 px (the density switch keeps
+  compact and comfortable). A table that cannot fit scrolls inside its own
+  box with the first column frozen; the page itself never scrolls sideways
+  and row actions stay visible (sticky right column on the Premium tab).
+- **Page header.** Quiet breadcrumbs, the title (headline), a subtitle, the
+  actions on the right.
 - **Shadows** — two only: `shadow-card` (hairline lift at rest) and
   `shadow-pop` (menus, side panels, dialogs).
 - **Scrim** behind overlays: `bg-scrim/50`.
@@ -174,7 +253,7 @@ IBM Carbon tokens: durations `fast-01` 70 ms, `fast-02` 110 ms, `moderate-01`
 150 ms (productive: hover, press, small reveals), `moderate-02` 240 ms and
 `slow-01` 400 ms (expressive: panels, page-level change). Easings
 `productive-*` and `expressive-*` (`--ease-*`). The default transition is
-110 ms productive-standard. Under `prefers-reduced-motion: reduce`, all
+150 ms productive-standard. Under `prefers-reduced-motion: reduce`, all
 animation and transition durations collapse to ~0.
 
 ## Interaction rules
