@@ -37,6 +37,7 @@ export default function App() {
               <RequireRole roles={['admin', 'management']}>{page(<DashboardPage />)}</RequireRole>
             }
           />
+          <Route path="ceo-dashboard" element={<Navigate to="/dashboard" replace />} />
           <Route path="submissions" element={page(<SubmissionsPage />)} />
           <Route
             path="submissions/new"

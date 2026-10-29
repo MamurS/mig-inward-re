@@ -1,10 +1,10 @@
 # MIG Inward Reinsurance (MGA) System
 
 Internal system for Mosaic Insurance Group (Tashkent) to register, assess, offer and track inward
-reinsurance shares from MGA partners, with a CEO dashboard of all MGA business.
+reinsurance shares from MGA partners, with a dashboard of all MGA business for management.
 
 **Phase 0–1 (done):** submissions register, form and detail page, status machine, documents,
-follow-ups with a daily job, My agenda, CEO dashboard, counterparty (MGA / broker) pages, admin,
+follow-ups with a daily job, My agenda, Dashboard, counterparty (MGA / broker) pages, admin,
 EN / RU / UZ.
 **Later phases (designed for, not built):** premium & installments (2), claims (3), binders &
 bordereaux (4), AI email parsing (5).
@@ -21,7 +21,7 @@ Cloudflare Pages.
 src/
   features/submissions     register, form, detail, status dialog, Excel export
   features/followups       agenda page, follow-up dialogs
-  features/dashboard       CEO dashboard
+  features/dashboard       Dashboard (management + admin)
   features/counterparties  list + MGA / broker page
   features/admin           users, reference data, FX, settings, jobs
   features/documents       generic documents panel (any entity type)
@@ -101,7 +101,7 @@ follow-up per expired offer; if `auto_no_response_enabled`, offers older than
 | `underwriter` | Create / edit submissions, status changes, documents, follow-ups, add / edit counterparties |
 | `finance` | Read everything; close follow-ups assigned to them (premium phase will add write access) |
 | `claims` | Read everything; close follow-ups assigned to them (claims phase will add write access) |
-| `management` (CEO) | Read everything + CEO dashboard + anyone's agenda + job log |
+| `management` (CEO) | Read everything + Dashboard + anyone's agenda + job log |
 
 A login without a role sees only "waiting for access". All rules are enforced by RLS in the database.
 

@@ -1,6 +1,14 @@
-import type { ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
 
 export function PageHeader({ title, subtitle, actions }: { title: string; subtitle?: string; actions?: ReactNode }) {
+  // Browser tab title follows the page title (and the UI language)
+  useEffect(() => {
+    document.title = `${title} · MIG Inward Re`
+    return () => {
+      document.title = 'MIG Inward Re'
+    }
+  }, [title])
+
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
       <div>
