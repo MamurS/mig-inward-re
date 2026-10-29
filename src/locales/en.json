@@ -53,7 +53,7 @@
   },
   "pages": {
     "dashboard": {
-      "title": "CEO dashboard",
+      "title": "Dashboard",
       "subtitle": "All MGA business at a glance"
     },
     "submissions": {
