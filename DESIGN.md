@@ -222,12 +222,62 @@ All under `src/components/`; screens compose them, never re-style them.
 - Long forms have a sticky footer with the state («Unsaved changes», «Fix
   the highlighted fields (2)») and the outcome button, always in reach.
 
+## Signature screens
+
+| screen | what makes it the reference |
+|---|---|
+| Dashboard | Greeting with the date; one row of five KPI cards (delta + sparkline, each a link); the oldest unanswered offers as an action list with days waiting on the ageing scale, next to the ageing stacked bar; two charts only (bound premium by month, the status funnel in status colours); hit ratio and by-MGA / by-line one tab away. |
+| Submissions register | Search + status chips with their colour dots; less-used filters behind «More filters» (badge shows how many are on, opens itself when any is); table v2 with quick view, bulk export, highlight. |
+| Submission detail | Insured as the title, reference in the subtitle; a summary card with the status stepper (received → under review → offered → bound, each in its status colour with the date reached; an ended submission shows its outcome in place) and the five figures that matter. |
+| Submission form | Grouped sections, labels above, segmented business type, live figures pinned on the right, sticky footer with the required-fields meter («Required: 4 of 5»), form state and the outcome button. |
+| Agenda | Tighter rows: title + type + days-overdue badge; the submission line; amount at human scale and due / owner in aligned right-hand columns; quick view on hover; «All caught up» moment when the last item is closed. |
+| Counterparty page | Summary card: type and open-items badges, six figures in one row, status-mix bar; their submissions in table v2; contacts as quick facts; details edited in a side panel. |
+| Login | Branded split screen: navy panel with the layered-arcs pattern (or the owner's own photograph via `VITE_LOGIN_PHOTO`, under a ≥ 70 % navy veil that keeps white text ≥ 6 : 1 even over a white photo), product line in the display face; the form on white with today's date. Photography: owner's own only — no stock. |
+
+## Tone of voice
+
+Short, direct, active; the same register in EN, RU and UZ; polite (RU «вы»
+form, UZ «siz» form, without capitalising them); name the outcome, not the
+mechanism. Personality lives at the edges (login, empty states, completion
+moments); tables, decision forms and errors stay plain and respectful — no
+jokes, no codes.
+
+**Rules**
+
+1. Buttons say what will happen: verb + object («Create submission», «Close
+   follow-up»). Never «OK», «Submit», a bare «Save» on a long form.
+2. Errors say what to do next, in the user's terms («Enter a valid email
+   address»), never a database message or code.
+3. Empty states say what will appear here and how («New follow-ups appear
+   here as they fall due»), positively.
+4. Numbers carry their unit and baseline («+12 % vs same days last month»).
+5. Use the business's words: submission, offer, bound, signed share, MGA —
+   the same term on every screen (see `src/locales/*.json`).
+6. Counts as «Label: N» in RU / UZ, so one string reads right for any number.
+7. UZ uses oʻ / gʻ (U+02BB) and ’ (U+2019); RU uses «ёлочки» and ё where it
+   matters (подтверждённая).
+
+**Ten reference strings**
+
+| # | Moment | EN | RU | UZ |
+|---|---|---|---|---|
+| 1 | Primary action, new record | Create submission | Создать заявку | Ariza yaratish |
+| 2 | Primary action, edit | Save changes | Сохранить изменения | Oʻzgarishlarni saqlash |
+| 3 | Closing a task | Close follow-up | Закрыть напоминание | Eslatmani yopish |
+| 4 | Inline success | Saved | Сохранено | Saqlandi |
+| 5 | Validation | Enter a valid email address | Введите корректный адрес эл. почты | Toʻgʻri elektron pochta manzilini kiriting |
+| 6 | Sign-in failure | Wrong email or password | Неверная эл. почта или пароль | Elektron pochta yoki parol notoʻgʻri |
+| 7 | Empty, filtered | No submissions match the filters. Try fewer filters or a shorter search. | Нет заявок по выбранным фильтрам. Уберите часть фильтров или сократите запрос. | Filtrlarga mos ariza yoʻq. Filtrlarni kamaytiring yoki qidiruvni qisqartiring. |
+| 8 | Completion moment | All caught up — new follow-ups appear here as they fall due. | Всё сделано — новые напоминания появятся здесь, когда подойдёт срок. | Hammasi bajarildi — yangi eslatmalar muddati kelganda shu yerda paydo boʻladi. |
+| 9 | Greeting | Good morning, Rustam · Thursday, 29 October | Доброе утро, Рустам · четверг, 29 октября | Xayrli tong, Rustam · payshanba, 29-oktabr |
+| 10 | KPI baseline | +12 % vs same days last month | +12 % к тем же дням прошлого месяца | oʻtgan oyning shu kunlariga nisbatan +12 % |
+
 ## Language
 
 - UZ text uses oʻ / gʻ (U+02BB) and ’ (U+2019) for the tutuq belgisi, never
   the ASCII `'`.
 - RU uses «ёлочки» quotes, never straight double quotes.
-- Tone guide (10 strings per language): added in Phase 3.
+- Dates in UZ are written out in code (`formatDate`, `formatLongDate`): «21-fev, 2026», «payshanba, 29-oktabr» — some browsers lack Uzbek month names and print «M02».
 
 ## Guards (run in CI and locally)
 

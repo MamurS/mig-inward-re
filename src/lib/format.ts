@@ -32,17 +32,48 @@ export function formatPct(value: number | string | null | undefined): string {
   return `${new Intl.NumberFormat(locale(), { maximumFractionDigits: 6 }).format(n)} %`
 }
 
+/*
+ * Uzbek (Latin) dates are written out here instead of left to Intl: browsers
+ * ship uneven Uzbek data, and some fall back to «2026 M02 21». The pattern
+ * matches CLDR: «21-fev, 2026», «shanba, 21-fevral».
+ */
+const UZ_MONTHS = ['yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun', 'iyul', 'avgust', 'sentabr', 'oktabr', 'noyabr', 'dekabr']
+const UZ_MONTHS_SHORT = ['yan', 'fev', 'mar', 'apr', 'may', 'iyn', 'iyl', 'avg', 'sen', 'okt', 'noy', 'dek']
+const UZ_WEEKDAYS = ['yakshanba', 'dushanba', 'seshanba', 'chorshanba', 'payshanba', 'juma', 'shanba']
+const isUz = () => locale().startsWith('uz')
+const pad = (n: number) => String(n).padStart(2, '0')
+
+function toDate(value: string) {
+  return value.length === 10 ? new Date(`${value}T00:00:00`) : new Date(value)
+}
+
 export function formatDate(value: string | null | undefined): string {
   if (!value) return '—'
-  const d = value.length === 10 ? new Date(`${value}T00:00:00`) : new Date(value)
+  const d = toDate(value)
+  if (isUz()) return `${pad(d.getDate())}-${UZ_MONTHS_SHORT[d.getMonth()]}, ${d.getFullYear()}`
   return new Intl.DateTimeFormat(locale(), { day: '2-digit', month: 'short', year: 'numeric' }).format(d)
 }
 
 export function formatDateTime(value: string | null | undefined): string {
   if (!value) return '—'
-  return new Intl.DateTimeFormat(locale(), { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(
-    new Date(value),
-  )
+  const d = new Date(value)
+  if (isUz()) return `${formatDate(value)}, ${pad(d.getHours())}:${pad(d.getMinutes())}`
+  return new Intl.DateTimeFormat(locale(), { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(d)
+}
+
+/** «Jan», «янв.», «Yan» — chart axes. */
+export function formatMonthShort(year: number, monthIndex: number): string {
+  if (isUz()) {
+    const m = UZ_MONTHS_SHORT[monthIndex]
+    return m.charAt(0).toUpperCase() + m.slice(1)
+  }
+  return new Intl.DateTimeFormat(locale(), { month: 'short' }).format(new Date(year, monthIndex, 1))
+}
+
+/** «Thursday, 29 October 2026» (with `year`) — greetings and the login screen. */
+export function formatLongDate(d: Date = new Date(), withYear = false): string {
+  if (isUz()) return `${UZ_WEEKDAYS[d.getDay()]}, ${d.getDate()}-${UZ_MONTHS[d.getMonth()]}${withYear ? `, ${d.getFullYear()}` : ''}`
+  return new Intl.DateTimeFormat(locale(), { weekday: 'long', day: 'numeric', month: 'long', ...(withYear ? { year: 'numeric' } : {}) }).format(d)
 }
 
 export function formatBytes(bytes: number | null | undefined): string {

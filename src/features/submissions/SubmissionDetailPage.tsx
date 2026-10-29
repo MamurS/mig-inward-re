@@ -1,15 +1,19 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { AlertTriangle, ArrowLeft, ArrowRight, FileText, Pencil } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, ArrowRight, Clock, FileText, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { StatusBadge } from '@/components/StatusBadge'
+import { Badge } from '@/components/ui/badge'
+import { Amount } from '@/components/Amount'
+import { cn } from '@/lib/utils'
+import { StatusStepper } from './StatusStepper'
 import { InfoItem } from '@/components/Field'
-import { FullPageSpinner } from '@/components/FullPageSpinner'
+import { Skeleton } from '@/components/Skeleton'
 import { useAuth } from '@/auth/AuthProvider'
 import { can } from '@/lib/roles'
 import { NEXT_STATUSES, type SubmissionStatus } from '@/lib/status'
@@ -41,7 +45,17 @@ export function SubmissionDetailPage() {
   const [closing, setClosing] = useState<FollowUp | null>(null)
   const [rescheduling, setRescheduling] = useState<FollowUp | null>(null)
 
-  if (sub.isLoading) return <FullPageSpinner />
+  if (sub.isLoading)
+    return (
+      <div className="grid gap-4" aria-busy>
+        <Skeleton className="h-16 w-2/3" />
+        <Skeleton className="h-56 rounded-xl" />
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <Skeleton className="h-96 rounded-xl" />
+          <Skeleton className="h-96 rounded-xl" />
+        </div>
+      </div>
+    )
   if (sub.error) return <p className="p-6 text-body text-destructive">{errorMessage(sub.error)}</p>
   if (!sub.data) return <p className="p-6 text-body text-muted-foreground">{t('sub.notFound')}</p>
 
@@ -51,6 +65,9 @@ export function SubmissionDetailPage() {
   const usersById = new Map(users.data?.map((u) => [u.id, u]))
   const country = countries.data?.find((c) => c.code === s.insured_country)
   const docsById = new Map(docs.data?.map((d) => [d.id, d]))
+  // The first time each status was reached (history is newest first)
+  const reachedAt: Partial<Record<SubmissionStatus, string>> = { received: s.received_at ?? undefined }
+  for (const h of [...(history.data ?? [])].reverse()) reachedAt[h.to_status] ??= h.changed_at
 
   // Human-readable values in the change log (names instead of ids, formatted dates)
   const fmtValue = (field: string, v: unknown): string => {
@@ -75,8 +92,8 @@ export function SubmissionDetailPage() {
         </Link>
       </div>
       <PageHeader
-        title={`${s.ref_no} · ${s.insured_name}`}
-        subtitle={[s.mga_name, s.lob_name, s.currency].filter(Boolean).join(' · ')}
+        title={s.insured_name ?? s.ref_no ?? ''}
+        subtitle={[s.ref_no, s.mga_name, s.lob_name, s.currency].filter(Boolean).join(' · ')}
         actions={
           editable && (
             <Button variant="outline" asChild>
@@ -89,24 +106,51 @@ export function SubmissionDetailPage() {
         }
       />
 
-      {/* Status bar */}
-      <Card className="mb-4 py-4">
-        <CardContent className="flex flex-wrap items-center gap-3">
-          <StatusBadge status={s.status} className="px-3 py-1 text-body" />
-          <span className="text-caption text-muted-foreground">{t('sub.since', { date: formatDateTime(s.status_changed_at) })}</span>
-          {s.offer_expired && (
-            <span className="inline-flex items-center gap-1 rounded bg-warning-100 px-2 py-0.5 text-caption text-warning-700">
-              <AlertTriangle className="size-3.5" />
-              {t('sub.offerExpiredOn', { date: formatDate(s.offer_valid_until) })}
-            </span>
-          )}
-          {s.decision_reason && <span className="text-body text-muted-foreground">“{s.decision_reason}”</span>}
-          <div className="flex-1" />
-          {editable && next.map((n) => (
-            <Button key={n} size="sm" variant={n === 'declined' || n === 'ntu' ? 'outline' : 'default'} onClick={() => setTarget(n)}>
-              {t(`statusAction.${n}`)}
-            </Button>
-          ))}
+      {/* Summary: where it stands, how it got here, what it is worth, what is next */}
+      <Card className="mb-4 gap-0 py-0">
+        <CardContent className="grid gap-5 p-5">
+          <div className="flex flex-wrap items-center gap-3">
+            <StatusBadge status={s.status} className="px-3 py-1 text-body" />
+            <span className="text-caption text-muted-foreground">{t('sub.since', { date: formatDateTime(s.status_changed_at) })}</span>
+            {s.offer_expired && (
+              <Badge tone="warning">
+                <AlertTriangle />
+                {t('sub.offerExpiredOn', { date: formatDate(s.offer_valid_until) })}
+              </Badge>
+            )}
+            {s.decision_reason && <span className="text-body text-muted-foreground">“{s.decision_reason}”</span>}
+            <div className="flex-1" />
+            {editable && next.map((n) => (
+              <Button key={n} size="sm" variant={n === 'declined' || n === 'ntu' ? 'outline' : 'default'} onClick={() => setTarget(n)}>
+                {t(`statusAction.${n}`)}
+              </Button>
+            ))}
+          </div>
+          {s.status && <StatusStepper status={s.status} reachedAt={reachedAt} />}
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-4 border-t pt-4 md:grid-cols-3 xl:grid-cols-5">
+            <InfoItem label={`${t('fields.ourGrossPremium')}`}>
+              <Amount value={s.our_gross_premium} currency={s.currency} className="text-lead font-semibold" />
+            </InfoItem>
+            <InfoItem label={t('fields.ourNetPremium')}>
+              <Amount value={s.our_net_premium} currency={s.currency} className="text-lead font-semibold" />
+            </InfoItem>
+            <InfoItem label={t('fields.ourGrossUsd')}>
+              <Amount value={s.our_gross_premium_usd} currency="USD" human className="text-lead font-semibold" />
+            </InfoItem>
+            <InfoItem label={s.status === 'bound' ? t('fields.signedSharePct') : t('fields.writtenSharePct')}>
+              <span className="text-lead font-semibold num">{formatPct(s.share_pct)}</span>
+            </InfoItem>
+            <InfoItem label={t('fields.nextFollowUp')}>
+              {s.next_follow_up_at ? (
+                <span className={cn('inline-flex items-center gap-1 text-lead font-semibold', s.follow_up_overdue && 'text-destructive')}>
+                  {s.follow_up_overdue && <Clock className="size-4" />}
+                  {formatDate(s.next_follow_up_at)}
+                </span>
+              ) : (
+                <span className="text-lead text-muted-foreground">—</span>
+              )}
+            </InfoItem>
+          </dl>
         </CardContent>
       </Card>
 

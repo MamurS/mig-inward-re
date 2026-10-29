@@ -14,6 +14,7 @@ import { SegmentedControl } from '@/components/SegmentedControl'
 import { StatusBadge } from '@/components/StatusBadge'
 import { Badge } from '@/components/ui/badge'
 import { AgingBadge } from '@/components/AgingBadge'
+import { Amount } from '@/components/Amount'
 import { useAuth } from '@/auth/AuthProvider'
 import { supabase } from '@/lib/supabase'
 import { addDays, formatDate, isoDate } from '@/lib/format'
@@ -324,12 +325,16 @@ export function AddFollowUpButton({
 export function FollowUpItem({
   followUp: f,
   showEntity,
+  amount,
   onDone,
   onReschedule,
   onPeek,
 }: {
   followUp: FollowUp
+  /** Agenda layout: the submission it belongs to, and due / owner in a right-hand column. */
   showEntity?: boolean
+  /** Our gross premium of the submission, shown at human scale. */
+  amount?: { value: number | null; currency: string | null }
   onDone?: (f: FollowUp) => void
   onReschedule?: (f: FollowUp) => void
   /** Opens the related submission in a side panel. */
@@ -343,9 +348,15 @@ export function FollowUpItem({
   const assignee = f.assigned_to_name ?? userName(users.data?.find((u) => u.id === f.assigned_to))
   const actionable = !f.done_at && canAct(f)
 
+  const due = (
+    <span className={cn(overdue ? 'font-medium text-destructive' : 'text-foreground')}>
+      {formatDate(f.due_at)}
+    </span>
+  )
+
   return (
-    <div className={cn('group rounded-md border bg-card p-3 text-body transition-colors hover:border-input', f.done_at && 'bg-muted/30', overdue && 'border-danger-200')}>
-      <div className="flex flex-wrap items-start gap-2">
+    <div className={cn('group rounded-md border bg-card px-3 py-2 text-body transition-colors hover:border-input', f.done_at && 'bg-muted/30', overdue && 'border-danger-200')}>
+      <div className="flex items-start gap-3">
         {f.done_at ? (
           <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success-600" />
         ) : overdue ? (
@@ -353,15 +364,15 @@ export function FollowUpItem({
         ) : (
           <Circle className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
         )}
-        <div className="min-w-0 flex-1">
+        <div className="grid min-w-0 flex-1 gap-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <span className="font-medium">{f.title || t(`fuType.${f.type}`)}</span>
             <Badge>{t(`fuType.${f.type}`)}</Badge>
             {overdue && daysOverdue > 0 && <AgingBadge days={daysOverdue} />}
           </div>
           {showEntity && f.entity_ref && (
-            <div className="mt-1 flex flex-wrap items-center gap-2 text-caption">
-              <Link to={`/submissions/${f.entity_id}`} className="font-medium text-primary hover:underline">
+            <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-caption">
+              <Link to={`/submissions/${f.entity_id}`} className="font-medium text-link hover:underline num">
                 {f.entity_ref}
               </Link>
               <span className="truncate">{f.entity_label}</span>
@@ -369,44 +380,54 @@ export function FollowUpItem({
               <StatusBadge status={f.submission_status ?? null} />
             </div>
           )}
-          <div className={cn('mt-1 text-caption', overdue ? 'font-medium text-destructive' : 'text-muted-foreground')}>
-            {t('fu.due')}: {formatDate(f.due_at)}
-            {overdue && ` · ${t('fu.daysOverdue', { count: daysOverdue })}`} · {assignee}
-          </div>
+          {!showEntity && (
+            <div className="text-caption text-muted-foreground">
+              {t('fu.due')}: {due} · {assignee}
+            </div>
+          )}
           {f.done_at && (
-            <div className="mt-1 text-caption text-muted-foreground">
+            <div className="text-caption text-muted-foreground">
               {t('fu.doneOn', { date: formatDate(f.done_at) })}
               {f.done_by_name ? ` (${f.done_by_name})` : ''}: {f.outcome}
             </div>
           )}
         </div>
-        {onPeek && f.entity_type === 'submission' && (
-          <Button
-            size="sm"
-            variant="ghost"
-            className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
-            onClick={() => onPeek(f)}
-            title={t('ui.quickView')}
-            aria-label={t('ui.quickView')}
-          >
-            <Eye />
-          </Button>
+        {showEntity && (
+          <>
+            <div className="hidden w-24 shrink-0 text-right md:block">
+              {amount && amount.value !== null && <Amount value={amount.value} currency={amount.currency} human className="text-body" />}
+            </div>
+            <div className="hidden w-32 shrink-0 text-right text-caption md:block">
+              <div>{due}</div>
+              <div className="truncate text-muted-foreground">{assignee}</div>
+            </div>
+          </>
         )}
-        {actionable && (onDone || onReschedule) && (
-          <div className="flex gap-2">
-            {onReschedule && (
-              <Button size="sm" variant="ghost" onClick={() => onReschedule(f)} title={t('fu.rescheduleTitle')}>
-                <CalendarClock />
-              </Button>
-            )}
-            {onDone && (
-              <Button size="sm" variant="outline" onClick={() => onDone(f)}>
-                <CheckCircle2 />
-                {t('fu.markDone')}
-              </Button>
-            )}
-          </div>
-        )}
+        <div className="flex shrink-0 items-center gap-1">
+          {onPeek && f.entity_type === 'submission' && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+              onClick={() => onPeek(f)}
+              title={t('ui.quickView')}
+              aria-label={t('ui.quickView')}
+            >
+              <Eye />
+            </Button>
+          )}
+          {actionable && onReschedule && (
+            <Button size="sm" variant="ghost" onClick={() => onReschedule(f)} title={t('fu.rescheduleTitle')} aria-label={t('fu.rescheduleTitle')}>
+              <CalendarClock />
+            </Button>
+          )}
+          {actionable && onDone && (
+            <Button size="sm" variant="outline" onClick={() => onDone(f)}>
+              <CheckCircle2 />
+              {t('fu.markDone')}
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   )

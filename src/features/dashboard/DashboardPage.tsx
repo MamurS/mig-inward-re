@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { Bar, BarChart, CartesianGrid, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
@@ -7,16 +7,18 @@ import { AlertTriangle } from 'lucide-react'
 import { PageHeader } from '@/components/PageHeader'
 import { KpiCard } from '@/components/KpiCard'
 import { Skeleton } from '@/components/Skeleton'
-import { Amount } from '@/components/Amount'
+import { Amount, formatHuman } from '@/components/Amount'
+import { AgingBadge } from '@/components/AgingBadge'
+import { EmptyState } from '@/components/EmptyState'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { NativeSelect } from '@/components/ui/native-select'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { StatusBadge } from '@/components/StatusBadge'
 import { supabase } from '@/lib/supabase'
-import { formatAmount, formatCompactUsd, formatDate, isoDate, locale } from '@/lib/format'
+import { useAuth } from '@/auth/AuthProvider'
+import { formatAmount, formatDate, formatLongDate, formatMonthShort, isoDate, locale } from '@/lib/format'
 import { errorMessage } from '@/lib/errors'
-import { cn } from '@/lib/utils'
-import type { SubmissionStatus } from '@/lib/status'
+import { STATUS_SOLID, type SubmissionStatus } from '@/lib/status'
 
 type Row = {
   id: string
@@ -35,11 +37,17 @@ type Row = {
   offer_expired: boolean
 }
 
+const partOfDay = () => {
+  const h = new Date().getHours()
+  return h < 12 ? 'morning' : h < 18 ? 'afternoon' : 'evening'
+}
+
 const COLUMNS =
   'id, ref_no, insured_name, status, received_at, offered_at, bound_at, offer_valid_until, mga_id, mga_name, lob_name, our_gross_premium_usd, follow_up_overdue, offer_expired'
 
 const BAR = 'var(--color-navy-500)'
-const BAR_MUTED = 'var(--color-navy-300)'
+/** Axis text: slate-600 reads at 6.5 : 1 on white. */
+const TICK = { fontSize: 12, fill: 'var(--color-slate-600)' }
 
 function useDashboardRows() {
   return useQuery({
@@ -61,7 +69,7 @@ function useDashboardRows() {
 
 export function DashboardPage() {
   const { t } = useTranslation()
-  const navigate = useNavigate()
+  const { profile } = useAuth()
   const { data, isLoading, error } = useDashboardRows()
   const thisYear = new Date().getFullYear()
   const [year, setYear] = useState<string>(String(thisYear))
@@ -111,11 +119,11 @@ export function DashboardPage() {
     const decided = offered.filter((r) => ['bound', 'ntu', 'no_response'].includes(r.status))
     const hitRatioDecided = decided.length ? boundFromOffered.length / decided.length : null
 
-    const funnel = [
-      { name: t('dash.funnel.received'), value: received.length },
-      { name: t('dash.funnel.reviewed'), value: reviewed.length },
-      { name: t('dash.funnel.offered'), value: received.filter((r) => r.offered_at).length },
-      { name: t('dash.funnel.bound'), value: received.filter((r) => r.status === 'bound').length },
+    const funnel: { name: string; value: number; status: SubmissionStatus }[] = [
+      { name: t('dash.funnel.received'), value: received.length, status: 'received' },
+      { name: t('dash.funnel.reviewed'), value: reviewed.length, status: 'under_review' },
+      { name: t('dash.funnel.offered'), value: received.filter((r) => r.offered_at).length, status: 'offered' },
+      { name: t('dash.funnel.bound'), value: received.filter((r) => r.status === 'bound').length, status: 'bound' },
     ]
 
     const sumBy = (key: (r: Row) => string) => {
@@ -126,7 +134,6 @@ export function DashboardPage() {
     const byMga = sumBy((r) => r.mga_name)
     const byLob = sumBy((r) => r.lob_name ?? '—')
 
-    const monthFmt = new Intl.DateTimeFormat(locale(), { month: 'short' })
     const byMonth =
       year === 'all'
         ? years.slice().reverse().map((y) => ({
@@ -134,7 +141,7 @@ export function DashboardPage() {
             value: bound.filter((r) => r.bound_at!.startsWith(String(y))).reduce((s, r) => s + (r.our_gross_premium_usd ?? 0), 0),
           }))
         : Array.from({ length: 12 }, (_, i) => ({
-            name: monthFmt.format(new Date(Number(year), i, 1)),
+            name: formatMonthShort(Number(year), i),
             value: bound.filter((r) => Number(r.bound_at!.slice(5, 7)) === i + 1).reduce((s, r) => s + (r.our_gross_premium_usd ?? 0), 0),
           }))
 
@@ -152,10 +159,12 @@ export function DashboardPage() {
     }
   }, [data, year, years, thisYear, t])
 
+  const greeting = `${t(`ui.greeting.${partOfDay()}`, { name: profile?.full_name?.split(' ')[0] ?? '' })} · ${formatLongDate()}`
+
   if (isLoading)
     return (
       <>
-        <PageHeader title={t('pages.dashboard.title')} subtitle={t('pages.dashboard.subtitle')} />
+        <PageHeader title={t('pages.dashboard.title')} subtitle={greeting} />
         <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
           {[0, 1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-36 rounded-xl" />)}
         </div>
@@ -174,7 +183,7 @@ export function DashboardPage() {
     <>
       <PageHeader
         title={t('pages.dashboard.title')}
-        subtitle={t('pages.dashboard.subtitle')}
+        subtitle={greeting}
         actions={
           <div className="flex items-center gap-2 text-body text-muted-foreground">
             {t('dash.period')}
@@ -212,168 +221,175 @@ export function DashboardPage() {
         />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      {/* What needs an answer first, then how we are doing */}
+      <div className="mb-4 grid gap-4 xl:grid-cols-3">
+        <Card className="gap-0 py-0 xl:col-span-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-2 py-4">
+            <CardTitle>{t('dash.oldestOffers')}</CardTitle>
+            <Link to="/submissions?status=offered,no_response&sort=received_at&dir=asc" className="text-body text-link hover:underline">{t('dash.openInRegister')}</Link>
+          </CardHeader>
+          {m.oldestOffers.length === 0 ? (
+            <EmptyState pictogram="done" title={t('dash.noOpenOffers')} compact />
+          ) : (
+            <ul className="border-t">
+              {m.oldestOffers.map((r) => {
+                const days = daysSince(r.offered_at) ?? 0
+                return (
+                  <li key={r.id}>
+                    <Link to={`/submissions/${r.id}`} className="flex items-center gap-3 border-b px-5 py-2 text-body transition-colors last:border-0 hover:bg-slate-50">
+                      <span className="w-32 shrink-0 font-medium whitespace-nowrap text-link num">{r.ref_no}</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate">{r.insured_name}</span>
+                        <span className="block truncate text-caption text-muted-foreground">{r.mga_name}</span>
+                      </span>
+                      <StatusBadge status={r.status} className="hidden md:inline-flex" />
+                      {r.offer_expired && (
+                        <span title={t('sub.offerExpiredOn', { date: formatDate(r.offer_valid_until) })}><AlertTriangle className="size-4 text-warning-600" /></span>
+                      )}
+                      <span className="w-24 shrink-0 text-right"><AgingBadge days={Math.max(days, 1)} label={t('ui.daysWaiting', { count: days })} /></span>
+                      <span className="w-20 shrink-0 text-right"><Amount value={r.our_gross_premium_usd} human /></span>
+                    </Link>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </Card>
+
+        <Card>
+          <CardHeader><CardTitle>{t('dash.awaitingByAge')}</CardTitle></CardHeader>
+          <CardContent>
+            <AgeBuckets rows={(data ?? []).filter((r) => r.status === 'offered' || r.status === 'no_response')} />
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="mb-4 grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader className="flex flex-row items-baseline justify-between gap-2">
+            <CardTitle>{t('dash.byMonth')}</CardTitle>
+            <Amount value={m.boundUsd} currency="USD" human className="text-body font-semibold" />
+          </CardHeader>
+          <CardContent>
+            {m.boundUsd === 0 ? (
+              <EmptyState pictogram="chart" title={t('dash.noBound')} compact />
+            ) : (
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart data={m.byMonth} margin={{ top: 8, right: 4, left: 4 }}>
+                  <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="var(--color-slate-200)" />
+                  <XAxis dataKey="name" tickLine={false} axisLine={false} tick={TICK} interval={0} />
+                  <YAxis tickFormatter={(v) => formatHuman(v as number)} tickLine={false} axisLine={false} tick={TICK} width={48} />
+                  <Tooltip formatter={(v) => [formatAmount(v as number), t('dash.ourGrossUsd')]} cursor={{ fill: 'var(--color-slate-50)' }} />
+                  <Bar dataKey="value" fill={BAR} radius={[3, 3, 0, 0]} isAnimationActive={false} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader><CardTitle>{t('dash.funnelTitle')}</CardTitle></CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={240}>
               <BarChart data={m.funnel} layout="vertical" margin={{ left: 8, right: 40 }}>
                 <XAxis type="number" hide allowDecimals={false} />
-                <YAxis type="category" dataKey="name" width={110} tickLine={false} axisLine={false} fontSize={12} />
+                <YAxis type="category" dataKey="name" width={120} tickLine={false} axisLine={false} tick={TICK} />
                 <Tooltip formatter={(v) => [v as number, t('dash.count')]} cursor={{ fill: 'transparent' }} />
                 <Bar dataKey="value" radius={[0, 4, 4, 0]} isAnimationActive={false}>
-                  {m.funnel.map((_, i) => <Cell key={i} fill={i === m.funnel.length - 1 ? BAR : BAR_MUTED} />)}
-                  <LabelList dataKey="value" position="right" fontSize={12} />
+                  {m.funnel.map((f) => <Cell key={f.status} fill={STATUS_SOLID[f.status]} />)}
+                  <LabelList dataKey="value" position="right" fontSize={12} fill="var(--color-slate-700)" />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader><CardTitle>{t('dash.hitRatio')}</CardTitle></CardHeader>
-          <CardContent className="grid gap-4">
-            <div>
-              <div className="text-display font-semibold tabular-nums">{pct(m.hitRatio)}</div>
-              <p className="mt-1 text-body text-muted-foreground">{t('dash.hitRatioExplain', { bound: m.boundFromOffered, offered: m.offeredCount })}</p>
-            </div>
-            <div className="border-t pt-3">
-              <div className="text-title font-semibold tabular-nums">{pct(m.hitRatioDecided)}</div>
-              <p className="mt-1 text-caption text-muted-foreground">{t('dash.hitRatioDecided')}</p>
-            </div>
-            <div className="border-t pt-3">
-              <div className="text-title font-semibold tabular-nums">{formatCompactUsd(m.boundUsd)}</div>
-              <p className="mt-1 text-caption text-muted-foreground">{t('dash.boundPremiumPeriod')}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader><CardTitle>{t('dash.byMonth')}</CardTitle></CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={m.byMonth} margin={{ top: 8, right: 4, left: 4 }}>
-                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="var(--color-slate-100)" />
-                <XAxis dataKey="name" tickLine={false} axisLine={false} fontSize={11} interval={0} />
-                <YAxis tickFormatter={(v) => formatCompactUsd(v as number)} tickLine={false} axisLine={false} fontSize={11} width={56} />
-                <Tooltip formatter={(v) => [formatAmount(v as number), t('dash.ourGrossUsd')]} cursor={{ fill: 'var(--color-slate-50)' }} />
-                <Bar dataKey="value" fill={BAR} radius={[3, 3, 0, 0]} isAnimationActive={false} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <RankChart title={t('dash.byMga')} data={m.byMga} empty={t('dash.noBound')} />
-        <RankChart title={t('dash.byLob')} data={m.byLob} empty={t('dash.noBound')} />
-
-        <Card className="lg:col-span-1">
-          <CardHeader><CardTitle>{t('dash.awaitingByAge')}</CardTitle></CardHeader>
-          <CardContent>
-            <AgeBuckets rows={m.oldestOffers.length ? (data ?? []).filter((r) => r.status === 'offered' || r.status === 'no_response') : []} />
-          </CardContent>
-        </Card>
       </div>
 
-      <Card className="mt-4 gap-2">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>{t('dash.oldestOffers')}</CardTitle>
-          <Link to="/submissions?status=offered,no_response&sort=received_at&dir=asc" className="text-body text-primary hover:underline">{t('dash.openInRegister')}</Link>
-        </CardHeader>
-        <CardContent className="px-0">
-          {m.oldestOffers.length === 0 ? (
-            <p className="px-5 py-4 text-body text-muted-foreground">{t('dash.noOpenOffers')}</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="hover:bg-transparent">
-                  <TableHead className="pl-5">{t('fields.refNo')}</TableHead>
-                  <TableHead>{t('fields.insuredName')}</TableHead>
-                  <TableHead>{t('fields.mga')}</TableHead>
-                  <TableHead>{t('fields.status')}</TableHead>
-                  <TableHead>{t('dash.offeredOn')}</TableHead>
-                  <TableHead className="text-right">{t('dash.daysWaiting')}</TableHead>
-                  <TableHead>{t('fields.offerValidUntil')}</TableHead>
-                  <TableHead className="pr-5 text-right">{t('fields.ourGrossUsd')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {m.oldestOffers.map((r) => (
-                  <TableRow key={r.id} className="cursor-pointer" onClick={() => navigate(`/submissions/${r.id}`)}>
-                    <TableCell className="pl-5 font-medium text-primary">{r.ref_no}</TableCell>
-                    <TableCell className="max-w-64 truncate">{r.insured_name}</TableCell>
-                    <TableCell className="max-w-48 truncate">{r.mga_name}</TableCell>
-                    <TableCell><StatusBadge status={r.status} /></TableCell>
-                    <TableCell>{formatDate(r.offered_at)}</TableCell>
-                    <TableCell className="text-right font-medium tabular-nums">{daysSince(r.offered_at)}</TableCell>
-                    <TableCell>
-                      <span className={cn('inline-flex items-center gap-1', r.offer_expired && 'text-warning-600')}>
-                        {r.offer_expired && <AlertTriangle className="size-3.5" />}
-                        {formatDate(r.offer_valid_until)}
-                      </span>
-                    </TableCell>
-                    <TableCell className="pr-5 text-right tabular-nums">{formatAmount(r.our_gross_premium_usd)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+      {/* Deeper analysis, one click away */}
+      <Card>
+        <CardContent>
+          <Tabs defaultValue="hit">
+            <TabsList>
+              <TabsTrigger value="hit">{t('dash.hitRatio')}</TabsTrigger>
+              <TabsTrigger value="mga">{t('dash.byMga')}</TabsTrigger>
+              <TabsTrigger value="lob">{t('dash.byLob')}</TabsTrigger>
+            </TabsList>
+            <TabsContent value="hit">
+              <div className="grid gap-6 pt-2 md:grid-cols-3">
+                <div>
+                  <div className="font-display-bold text-display num">{pct(m.hitRatio)}</div>
+                  <p className="mt-1 text-body text-muted-foreground">{t('dash.hitRatioExplain', { bound: m.boundFromOffered, offered: m.offeredCount })}</p>
+                </div>
+                <div>
+                  <div className="font-display-bold text-headline num">{pct(m.hitRatioDecided)}</div>
+                  <p className="mt-1 text-body text-muted-foreground">{t('dash.hitRatioDecided')}</p>
+                </div>
+                <div>
+                  <div className="font-display-bold text-headline"><Amount value={m.boundUsd} currency="USD" human /></div>
+                  <p className="mt-1 text-body text-muted-foreground">{t('dash.boundPremiumPeriod')}</p>
+                </div>
+              </div>
+            </TabsContent>
+            <TabsContent value="mga"><RankChart data={m.byMga} empty={t('dash.noBound')} /></TabsContent>
+            <TabsContent value="lob"><RankChart data={m.byLob} empty={t('dash.noBound')} /></TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </>
   )
 }
 
-function RankChart({ title, data, empty }: { title: string; data: { name: string; value: number }[]; empty: string }) {
+function RankChart({ data, empty }: { data: { name: string; value: number }[]; empty: string }) {
   const { t } = useTranslation()
   const top = data.slice(0, 8)
+  if (top.length === 0) return <EmptyState pictogram="chart" title={empty} compact />
   return (
-    <Card>
-      <CardHeader><CardTitle>{title}</CardTitle></CardHeader>
-      <CardContent>
-        {top.length === 0 ? (
-          <p className="py-16 text-center text-body text-muted-foreground">{empty}</p>
-        ) : (
-          <ResponsiveContainer width="100%" height={Math.max(120, top.length * 34 + 20)}>
-            <BarChart data={top} layout="vertical" margin={{ left: 8, right: 56 }}>
-              <XAxis type="number" hide />
-              <YAxis type="category" dataKey="name" width={140} tickLine={false} axisLine={false} fontSize={11} tickFormatter={(v: string) => (v.length > 22 ? `${v.slice(0, 21)}…` : v)} />
-              <Tooltip formatter={(v) => [formatAmount(v as number), t('dash.ourGrossUsd')]} cursor={{ fill: 'var(--color-slate-50)' }} />
-              <Bar dataKey="value" fill={BAR} radius={[0, 4, 4, 0]} isAnimationActive={false}>
-                <LabelList dataKey="value" position="right" fontSize={11} formatter={(v) => formatCompactUsd(v as number)} />
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        )}
-      </CardContent>
-    </Card>
+    <ResponsiveContainer width="100%" height={Math.max(120, top.length * 36 + 20)}>
+      <BarChart data={top} layout="vertical" margin={{ left: 8, right: 64 }}>
+        <XAxis type="number" hide />
+        <YAxis type="category" dataKey="name" width={200} tickLine={false} axisLine={false} tick={TICK} tickFormatter={(v: string) => (v.length > 30 ? `${v.slice(0, 29)}…` : v)} />
+        <Tooltip formatter={(v) => [formatAmount(v as number), t('dash.ourGrossUsd')]} cursor={{ fill: 'var(--color-slate-50)' }} />
+        <Bar dataKey="value" fill={BAR} radius={[0, 4, 4, 0]} isAnimationActive={false}>
+          <LabelList dataKey="value" position="right" fontSize={12} fill="var(--color-slate-700)" formatter={(v) => formatHuman(v as number)} />
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
   )
 }
 
+const AGE_BUCKETS = [
+  { key: '0-30', label: '0–30', min: 0, max: 30, colour: 'var(--color-aging-0to30)' },
+  { key: '31-60', label: '31–60', min: 31, max: 60, colour: 'var(--color-aging-31to60)' },
+  { key: '61-90', label: '61–90', min: 61, max: 90, colour: 'var(--color-aging-61to90)' },
+  { key: '90+', label: '90+', min: 91, max: Infinity, colour: 'var(--color-aging-90plus)' },
+] as const
+
+/** Open offers by days since offered, on the ageing scale: one stacked bar, then the four buckets. */
 function AgeBuckets({ rows }: { rows: Row[] }) {
   const { t } = useTranslation()
-  const buckets = [
-    { key: '0–30', min: 0, max: 30 },
-    { key: '31–60', min: 31, max: 60 },
-    { key: '61–90', min: 61, max: 90 },
-    { key: '90+', min: 91, max: Infinity },
-  ].map((b) => {
+  const buckets = AGE_BUCKETS.map((b) => {
     const items = rows.filter((r) => {
       const d = r.offered_at ? Math.floor((Date.now() - new Date(r.offered_at).getTime()) / 86_400_000) : 0
       return d >= b.min && d <= b.max
     })
-    return { name: t('dash.days', { range: b.key }), value: items.length, usd: items.reduce((s, r) => s + (r.our_gross_premium_usd ?? 0), 0) }
+    return { ...b, name: t('dash.days', { range: b.label }), value: items.length, usd: items.reduce((s, r) => s + (r.our_gross_premium_usd ?? 0), 0) }
   })
+  const total = buckets.reduce((s, b) => s + b.value, 0)
   return (
-    <div className="grid gap-2">
-      {buckets.map((b) => (
-        <div key={b.name} className="flex items-center justify-between rounded-md border px-3 py-2 text-body">
-          <span>{b.name}</span>
-          <span className="tabular-nums">
-            <span className="font-semibold">{b.value}</span>
-            <span className="ml-2 text-caption text-muted-foreground">{formatCompactUsd(b.usd)}</span>
-          </span>
-        </div>
-      ))}
+    <div className="grid gap-4">
+      <div className="flex h-3 overflow-hidden rounded-full bg-slate-100" aria-hidden>
+        {total > 0 && buckets.map((b) => b.value > 0 && <span key={b.key} style={{ width: `${(b.value / total) * 100}%`, background: b.colour }} />)}
+      </div>
+      <ul className="grid gap-1">
+        {buckets.map((b) => (
+          <li key={b.key} className="flex items-center gap-3 rounded-md px-2 py-2 text-body">
+            <span className="size-3 shrink-0 rounded-sm" style={{ background: b.colour }} />
+            <span className="flex-1">{b.name}</span>
+            <span className="w-8 text-right font-semibold num">{b.value}</span>
+            <span className="w-20 text-right text-caption text-muted-foreground"><Amount value={b.usd} human /></span>
+          </li>
+        ))}
+      </ul>
       <p className="text-caption text-muted-foreground">{t('dash.ageNote')}</p>
     </div>
   )

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { PageHeader } from '@/components/PageHeader'
@@ -71,6 +71,29 @@ export function AgendaPage() {
     },
   })
 
+  // Our gross premium of the submissions on the list, for the amount column (read-only lookup)
+  const entityIds = [...new Set((open.data ?? []).filter((f) => f.entity_type === 'submission').map((f) => f.entity_id))]
+  const amounts = useQuery({
+    queryKey: ['agenda', 'amounts', entityIds],
+    enabled: entityIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase.from('submissions_v').select('id, our_gross_premium_usd').in('id', entityIds)
+      if (error) throw error
+      return new Map((data ?? []).map((r) => [r.id as string, r.our_gross_premium_usd as number | null]))
+    },
+  })
+  const amountOf = (f: FollowUp) => (f.entity_type === 'submission' ? { value: amounts.data?.get(f.entity_id) ?? null, currency: 'USD' } : undefined)
+
+  // Completion moment: the list was emptied in this visit
+  const lastCount = useRef<number | null>(null)
+  const [justCleared, setJustCleared] = useState(false)
+  useEffect(() => {
+    const n = open.data?.length
+    if (n === undefined) return
+    if (lastCount.current !== null && lastCount.current > 0 && n === 0) setJustCleared(true)
+    lastCount.current = n
+  }, [open.data?.length])
+
   const groups: Record<Bucket, FollowUp[]> = { overdue: [], today: [], week: [], later: [] }
   for (const f of open.data ?? []) groups[bucketOf(f.due_at)].push(f)
   // Overdue first, most overdue at the top
@@ -114,7 +137,15 @@ export function AgendaPage() {
           )}
           {open.error && <p className="text-body text-destructive">{errorMessage(open.error)}</p>}
           {open.data && open.data.length === 0 && (
-            <Card><EmptyState pictogram="done" title={t('agenda.nothingOpen')}>{t('ui.agendaClear')}</EmptyState></Card>
+            <Card>
+              <EmptyState
+                pictogram="done"
+                title={justCleared ? t('ui.allCaughtUp') : t('agenda.nothingOpen')}
+                className={justCleared ? 'duration-(--duration-slow-01) ease-(--ease-expressive-entrance) animate-in fade-in-0 zoom-in-95' : undefined}
+              >
+                {t('ui.agendaClear')}
+              </EmptyState>
+            </Card>
           )}
           {order.map((b) =>
             groups[b].length ? (
@@ -126,7 +157,7 @@ export function AgendaPage() {
                 </CardHeader>
                 <CardContent className="grid gap-2">
                   {groups[b].map((f) => (
-                    <FollowUpItem key={f.id} followUp={f} showEntity onDone={setClosing} onReschedule={setRescheduling} onPeek={(x) => setPeekId(x.entity_id)} />
+                    <FollowUpItem key={f.id} followUp={f} showEntity amount={amountOf(f)} onDone={setClosing} onReschedule={setRescheduling} onPeek={(x) => setPeekId(x.entity_id)} />
                   ))}
                 </CardContent>
               </Card>

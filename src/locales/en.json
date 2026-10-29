@@ -28,7 +28,9 @@
     "invalidEmail": "Enter a valid email address",
     "passwordRequired": "Enter your password",
     "notConfigured": "The app is not connected to the database. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.",
-    "invalidCredentials": "Wrong email or password"
+    "invalidCredentials": "Wrong email or password",
+    "brandLine": "Every inward risk, from first email to bound line.",
+    "brandSub": "Submissions, offers, follow-ups and the numbers behind them — in one place, in three languages."
   },
   "access": {
     "noAccessTitle": "Waiting for access",
@@ -550,7 +552,8 @@
       "saveDetails": "Save details",
       "saveSettings": "Save settings",
       "unsaved": "Unsaved changes",
-      "closeFollowUp": "Close follow-up"
+      "closeFollowUp": "Close follow-up",
+      "requiredProgress": "Required: {{done}} of {{total}}"
     },
     "kpi": {
       "followUpsPastDue": "follow-ups past due",
@@ -566,6 +569,20 @@
       "placeholder": "Type a page, a reference or a name…",
       "switchLanguage": "Switch language to {{lng}}",
       "title": "Search and commands"
-    }
+    },
+    "allCaughtUp": "All caught up",
+    "greeting": {
+      "morning": "Good morning, {{name}}",
+      "afternoon": "Good afternoon, {{name}}",
+      "evening": "Good evening, {{name}}"
+    },
+    "daysWaiting": "{{count}} d waiting",
+    "editDetails": "Edit details",
+    "thisYear": "this year",
+    "openOffers": "Open offers: {{count}}",
+    "overdueFollowUps": "Overdue follow-ups: {{count}}",
+    "noSubmissionsYet": "No submissions from them yet",
+    "moreFilters": "More filters",
+    "resetColumns": "Reset to default"
   }
 }

@@ -28,7 +28,9 @@
     "invalidEmail": "Введите корректный адрес эл. почты",
     "passwordRequired": "Введите пароль",
     "notConfigured": "Приложение не подключено к базе данных. Задайте VITE_SUPABASE_URL и VITE_SUPABASE_ANON_KEY.",
-    "invalidCredentials": "Неверная эл. почта или пароль"
+    "invalidCredentials": "Неверная эл. почта или пароль",
+    "brandLine": "Каждый входящий риск — от первого письма до подписанной доли.",
+    "brandSub": "Заявки, предложения, напоминания и цифры за ними — в одном месте, на трёх языках."
   },
   "access": {
     "noAccessTitle": "Ожидание доступа",
@@ -550,7 +552,8 @@
       "saveDetails": "Сохранить данные",
       "saveSettings": "Сохранить настройки",
       "unsaved": "Есть несохранённые изменения",
-      "closeFollowUp": "Закрыть напоминание"
+      "closeFollowUp": "Закрыть напоминание",
+      "requiredProgress": "Обязательные: {{done}} из {{total}}"
     },
     "kpi": {
       "followUpsPastDue": "напоминаний просрочено",
@@ -566,6 +569,20 @@
       "placeholder": "Страница, номер или название…",
       "switchLanguage": "Сменить язык на {{lng}}",
       "title": "Поиск и команды"
-    }
+    },
+    "allCaughtUp": "Всё сделано",
+    "greeting": {
+      "morning": "Доброе утро, {{name}}",
+      "afternoon": "Добрый день, {{name}}",
+      "evening": "Добрый вечер, {{name}}"
+    },
+    "daysWaiting": "ждёт {{count}} дн.",
+    "editDetails": "Изменить данные",
+    "thisYear": "в этом году",
+    "openOffers": "Открытых предложений: {{count}}",
+    "overdueFollowUps": "Просроченных напоминаний: {{count}}",
+    "noSubmissionsYet": "От них ещё не было заявок",
+    "moreFilters": "Ещё фильтры",
+    "resetColumns": "Сбросить по умолчанию"
   }
 }

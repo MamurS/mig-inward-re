@@ -27,9 +27,9 @@ export function Amount({
   const n = typeof value === 'string' ? Number(value) : value
   const full = formatAmount(value)
   const ccy = currency ? <span className="ml-1 text-muted-foreground">{currency}</span> : null
-  if (!human || Math.abs(n) < 10_000) {
-    return <span className={cn('num whitespace-nowrap', className)}>{full}{ccy}</span>
-  }
+  if (!human) return <span className={cn('num whitespace-nowrap', className)}>{full}{ccy}</span>
+  // Small figures are already human: no tooltip needed, but the same compact style as their neighbours
+  if (Math.abs(n) < 10_000) return <span className={cn('num whitespace-nowrap', className)}>{formatHuman(n)}{ccy}</span>
   return (
     <Tooltip content={<span className="num">{full}{currency ? ` ${currency}` : ''}</span>}>
       <span tabIndex={0} className={cn('num cursor-default whitespace-nowrap underline decoration-slate-300 decoration-dotted underline-offset-4', className)}>

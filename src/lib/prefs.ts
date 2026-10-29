@@ -7,8 +7,10 @@ import { useAuth } from '@/auth/AuthProvider'
  * computer keep their own settings. Purely visual — never business data.
  */
 export function usePref<T>(name: string, fallback: T): [T, (value: T) => void] {
-  const { profile } = useAuth()
-  const key = `mig.pref.${profile?.id ?? 'anon'}.${name}`
+  // The session's user id is there before any data renders (the profile row comes later),
+  // so the saved value applies on the first paint — no jump from the default.
+  const { session } = useAuth()
+  const key = `mig.pref.${session?.user.id ?? 'anon'}.${name}`
   const read = useCallback((): T => {
     try {
       const raw = localStorage.getItem(key)

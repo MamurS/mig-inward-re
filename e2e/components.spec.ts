@@ -81,6 +81,8 @@ test.describe('table v2 on the register', () => {
     const page = await context.newPage()
     await page.goto('/submissions')
     await page.locator('main tbody tr').first().waitFor()
+    await page.waitForLoadState('networkidle')
+    await page.evaluate(() => document.fonts.ready)
     const before = await page.locator('main table').boundingBox()
     await page.getByRole('checkbox', { name: 'Select row' }).nth(0).check()
     await page.getByRole('checkbox', { name: 'Select row' }).nth(2).check()

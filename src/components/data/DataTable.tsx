@@ -1,11 +1,12 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ArrowDown, ArrowUp, ChevronsUpDown, Columns3, Rows3, X } from 'lucide-react'
+import { ArrowDown, ArrowUp, ChevronsUpDown, Columns3, RotateCcw, Rows3, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
@@ -149,6 +150,11 @@ export function DataTable<T>({
                   {c.header}
                 </DropdownMenuCheckboxItem>
               ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={() => setHidden(defaultHidden)}>
+                <RotateCcw />
+                {t('ui.resetColumns')}
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

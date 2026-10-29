@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { Eye, FileSpreadsheet, FilterX, Loader2, Pencil, Plus, Search, AlertTriangle, Clock } from 'lucide-react'
+import { Eye, FileSpreadsheet, SlidersHorizontal, FilterX, Loader2, Pencil, Plus, Search, AlertTriangle, Clock } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/PageHeader'
 import { Button } from '@/components/ui/button'
@@ -12,10 +12,12 @@ import { DataTable, type Column } from '@/components/data/DataTable'
 import { highlight } from '@/components/data/highlight'
 import { EmptyState } from '@/components/EmptyState'
 import { Amount } from '@/components/Amount'
+import { Badge } from '@/components/ui/badge'
+import { usePref } from '@/lib/prefs'
 import { StatusBadge } from '@/components/StatusBadge'
 import { useAuth } from '@/auth/AuthProvider'
 import { can } from '@/lib/roles'
-import { STATUSES, STATUS_STYLES } from '@/lib/status'
+import { STATUSES, STATUS_SOLID, STATUS_STYLES } from '@/lib/status'
 import { formatAmount, formatDate, formatPct } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { errorMessage } from '@/lib/errors'
@@ -63,6 +65,9 @@ export function SubmissionsPage() {
   const filterCount = activeFilterCount(filters)
 
   const [peek, setPeek] = useState<SubmissionRow | null>(null)
+  const [moreOpen, setMoreOpen] = usePref('register.moreFilters', false)
+  const moreCount = [filters.mga, filters.broker, filters.lob, filters.uw, filters.ccy, filters.from, filters.to].filter(Boolean).length
+  const showMore = moreOpen || moreCount > 0
   const clearFilters = () => {
     setSearch('')
     setParams(filtersToParams({ ...EMPTY_FILTERS, sort: filters.sort, dir: filters.dir }), { replace: true })
@@ -164,42 +169,51 @@ export function SubmissionsPage() {
                   key={s}
                   type="button"
                   onClick={() => toggleStatus(s)}
+                  aria-pressed={on}
                   className={cn(
-                    'rounded-md border px-2 py-1 text-caption font-medium transition-colors',
-                    on ? STATUS_STYLES[s] + ' ring-1 ring-current/30' : 'bg-background text-muted-foreground hover:bg-muted',
+                    'inline-flex h-8 items-center gap-2 rounded-md border px-3 text-caption font-medium transition-colors',
+                    on ? STATUS_STYLES[s] : 'bg-background text-foreground hover:bg-muted',
                   )}
                 >
+                  <span className="size-2 rounded-full" style={{ background: STATUS_SOLID[s] }} />
                   {t(`status.${s}`)}
                 </button>
               )
             })}
           </div>
+          <Button variant="ghost" size="sm" className="ml-auto" aria-expanded={showMore} onClick={() => setMoreOpen(!showMore)}>
+            <SlidersHorizontal />
+            {t('ui.moreFilters')}
+            {moreCount > 0 && <Badge tone="brand" className="num">{moreCount}</Badge>}
+          </Button>
         </div>
-        <div className="grid grid-cols-2 gap-2 px-4 md:grid-cols-4 xl:grid-cols-7">
-          <NativeSelect value={filters.mga} onChange={(e) => setFilters({ mga: e.target.value })} aria-label={t('fields.mga')}>
-            <option value="">{t('sub.allMgas')}</option>
-            {mgas.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </NativeSelect>
-          <NativeSelect value={filters.broker} onChange={(e) => setFilters({ broker: e.target.value })} aria-label={t('fields.broker')}>
-            <option value="">{t('sub.allBrokers')}</option>
-            <option value="none">{t('sub.directNoBroker')}</option>
-            {brokers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </NativeSelect>
-          <NativeSelect value={filters.lob} onChange={(e) => setFilters({ lob: e.target.value })} aria-label={t('fields.lob')}>
-            <option value="">{t('sub.allLobs')}</option>
-            {lobs.data?.map((l) => <option key={l.id} value={l.id}>{localName(l)}</option>)}
-          </NativeSelect>
-          <NativeSelect value={filters.uw} onChange={(e) => setFilters({ uw: e.target.value })} aria-label={t('fields.underwriter')}>
-            <option value="">{t('sub.allUnderwriters')}</option>
-            {underwriters.map((u) => <option key={u.id} value={u.id}>{userName(u)}</option>)}
-          </NativeSelect>
-          <NativeSelect value={filters.ccy} onChange={(e) => setFilters({ ccy: e.target.value })} aria-label={t('fields.currency')}>
-            <option value="">{t('sub.allCurrencies')}</option>
-            {currencies.data?.map((c) => <option key={c.code} value={c.code}>{c.code}</option>)}
-          </NativeSelect>
-          <Input type="date" value={filters.from} onChange={(e) => setFilters({ from: e.target.value })} aria-label={t('sub.receivedFrom')} title={t('sub.receivedFrom')} />
-          <Input type="date" value={filters.to} onChange={(e) => setFilters({ to: e.target.value })} aria-label={t('sub.receivedTo')} title={t('sub.receivedTo')} />
-        </div>
+        {showMore && (
+          <div className="grid grid-cols-2 gap-2 px-4 md:grid-cols-4 xl:grid-cols-7">
+            <NativeSelect value={filters.mga} onChange={(e) => setFilters({ mga: e.target.value })} aria-label={t('fields.mga')}>
+              <option value="">{t('sub.allMgas')}</option>
+              {mgas.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </NativeSelect>
+            <NativeSelect value={filters.broker} onChange={(e) => setFilters({ broker: e.target.value })} aria-label={t('fields.broker')}>
+              <option value="">{t('sub.allBrokers')}</option>
+              <option value="none">{t('sub.directNoBroker')}</option>
+              {brokers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </NativeSelect>
+            <NativeSelect value={filters.lob} onChange={(e) => setFilters({ lob: e.target.value })} aria-label={t('fields.lob')}>
+              <option value="">{t('sub.allLobs')}</option>
+              {lobs.data?.map((l) => <option key={l.id} value={l.id}>{localName(l)}</option>)}
+            </NativeSelect>
+            <NativeSelect value={filters.uw} onChange={(e) => setFilters({ uw: e.target.value })} aria-label={t('fields.underwriter')}>
+              <option value="">{t('sub.allUnderwriters')}</option>
+              {underwriters.map((u) => <option key={u.id} value={u.id}>{userName(u)}</option>)}
+            </NativeSelect>
+            <NativeSelect value={filters.ccy} onChange={(e) => setFilters({ ccy: e.target.value })} aria-label={t('fields.currency')}>
+              <option value="">{t('sub.allCurrencies')}</option>
+              {currencies.data?.map((c) => <option key={c.code} value={c.code}>{c.code}</option>)}
+            </NativeSelect>
+            <Input type="date" value={filters.from} onChange={(e) => setFilters({ from: e.target.value })} aria-label={t('sub.receivedFrom')} title={t('sub.receivedFrom')} />
+            <Input type="date" value={filters.to} onChange={(e) => setFilters({ to: e.target.value })} aria-label={t('sub.receivedTo')} title={t('sub.receivedTo')} />
+          </div>
+        )}
         <div className="flex flex-wrap items-center justify-between gap-2 px-4 text-caption text-muted-foreground">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <label className="flex items-center gap-2 whitespace-nowrap text-foreground">

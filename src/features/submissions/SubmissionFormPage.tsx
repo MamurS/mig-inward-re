@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { NativeSelect } from '@/components/ui/native-select'
 import { SegmentedControl } from '@/components/SegmentedControl'
+import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field } from '@/components/Field'
 import { StatusBadge } from '@/components/StatusBadge'
@@ -83,6 +84,9 @@ type FormValues = z.infer<typeof schema>
 const toStr = (v: number | string | null | undefined) => (v === null || v === undefined ? '' : String(v))
 const orNull = (v: string) => (v.trim() === '' ? null : v.trim())
 const decOrNull = (v: string) => (v.trim() === '' ? null : cleanDecimal(v))
+
+/** The fields the form marks as required — the footer shows how many are filled. */
+const REQUIRED = ['received_at', 'mga_id', 'source_party_id', 'insured_name', 'currency'] as const
 
 function rowToForm(r: SubmissionRow): FormValues {
   return {
@@ -224,6 +228,8 @@ function SubmissionForm({ existing }: { existing: SubmissionRow | null }) {
     brokeragePct: v.brokerage_pct && isDecimal(v.brokerage_pct, 6) ? v.brokerage_pct : '0',
     fxRateToUsd: fx.data ?? null,
   })
+
+  const requiredDone = REQUIRED.filter((k) => Boolean(v[k])).length
 
   const err = (name: keyof FormValues) => {
     const m = errors[name]?.message
@@ -449,7 +455,13 @@ function SubmissionForm({ existing }: { existing: SubmissionRow | null }) {
 
       {/* Sticky footer: the outcome button is always in reach, whatever the scroll */}
       <div className="sticky bottom-0 z-20 -mx-4 mt-6 flex flex-wrap items-center justify-end gap-3 border-t bg-background/95 px-4 py-3 backdrop-blur md:-mx-6 md:px-6">
-        <span className="mr-auto text-caption text-muted-foreground">
+        <span className="mr-auto flex items-center gap-3 text-caption text-muted-foreground">
+          <span className="inline-flex items-center gap-2" aria-label={t('ui.form.requiredProgress', { done: requiredDone, total: REQUIRED.length })}>
+            <span className="flex gap-0.5" aria-hidden>
+              {REQUIRED.map((k) => <span key={k} className={cn('h-1.5 w-4 rounded-full', v[k] ? 'bg-success-600' : 'bg-slate-200')} />)}
+            </span>
+            <span className="num">{t('ui.form.requiredProgress', { done: requiredDone, total: REQUIRED.length })}</span>
+          </span>
           {Object.keys(errors).length > 0 ? (
             <span className="font-medium text-destructive">{t('ui.form.fixErrors', { count: Object.keys(errors).length })}</span>
           ) : isDirty ? (

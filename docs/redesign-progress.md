@@ -23,7 +23,7 @@ npm test
 ```
 
 ```bash
-npx playwright test layout-stability
+npx playwright test
 ```
 
 Screenshots (offline mock data, no Supabase): `SHOTS=docs/redesign/screenshots/after npx playwright test screenshots`.
@@ -57,12 +57,15 @@ The mock harness is `e2e/support/mockSupabase.ts` + `fixtures.ts`.
 - [x] `e2e/components.spec.ts` (10 tests)
 - Found and fixed: `cn()` dropped custom type sizes next to a text colour (tailwind-merge config + `utils.test.ts`); the mock didn't expose `content-range`, so counts read 0 in screenshots.
 
-## Phase 3 — signature screens ⏳
+## Phase 3 — signature screens ✅
 
-- [ ] Dashboard, Submissions register, Submission detail, Submission form, Agenda, Counterparty page, Login (branded split screen, owner-photo slot)
-- [ ] Tone guide, 10 strings per language, in `DESIGN.md`
-- [ ] After screenshots EN/RU/UZ (`docs/redesign/screenshots/after`), incl. token page
-- [ ] Final report: per phase changes, commits, checks; palette; audit; decisions + how to reverse
+- [x] Dashboard, Submissions register, Submission detail, Submission form, Agenda, Counterparty page, Login (branded split screen, owner-photo slot `VITE_LOGIN_PHOTO`)
+- [x] Tone guide, 10 strings per language, in `DESIGN.md`
+- [x] After screenshots EN/RU/UZ (`docs/redesign/screenshots/after`), incl. token page
+- [x] Feedback-time test (`e2e/feedback.spec.ts`), e2e on a production build
+- [x] Final report: `docs/redesign-report-2026-10.md`
+
+**The redesign is complete.** Next on the roadmap: Phase 2 — Premium receivables (approved plan, 6 steps, stop for review after each).
 
 ## Decisions so far (and how to reverse)
 
@@ -84,3 +87,5 @@ The mock harness is `e2e/support/mockSupabase.ts` + `fixtures.ts`.
 | 14 | KPI deltas compare to the same stretch of the previous month / year; state counts (under review, awaiting, overdue) show no delta (no history) | `DashboardPage` KPI block |
 | 15 | Validation `onTouched` (first on blur, then live) | `mode` in `useForm` |
 | 16 | In-place saves show an inline «Saved ✓» instead of a toast | `SavedCheck` → `toast.success` |
+
+Decisions 17–25 (Phase 3) are in `docs/redesign-report-2026-10.md`.

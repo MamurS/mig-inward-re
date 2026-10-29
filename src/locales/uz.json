@@ -28,7 +28,9 @@
     "invalidEmail": "Toʻgʻri elektron pochta manzilini kiriting",
     "passwordRequired": "Parolni kiriting",
     "notConfigured": "Ilova ma’lumotlar bazasiga ulanmagan. VITE_SUPABASE_URL va VITE_SUPABASE_ANON_KEY ni sozlang.",
-    "invalidCredentials": "Elektron pochta yoki parol notoʻgʻri"
+    "invalidCredentials": "Elektron pochta yoki parol notoʻgʻri",
+    "brandLine": "Har bir kiruvchi risk — birinchi xatdan tasdiqlangan ulushgacha.",
+    "brandSub": "Arizalar, takliflar, eslatmalar va ularning raqamlari — bir joyda, uch tilda."
   },
   "access": {
     "noAccessTitle": "Ruxsat kutilmoqda",
@@ -550,7 +552,8 @@
       "saveDetails": "Maʼlumotlarni saqlash",
       "saveSettings": "Sozlamalarni saqlash",
       "unsaved": "Saqlanmagan oʻzgarishlar bor",
-      "closeFollowUp": "Eslatmani yopish"
+      "closeFollowUp": "Eslatmani yopish",
+      "requiredProgress": "Majburiy: {{done}} / {{total}}"
     },
     "kpi": {
       "followUpsPastDue": "eslatma muddati oʻtgan",
@@ -566,6 +569,20 @@
       "placeholder": "Sahifa, raqam yoki nom…",
       "switchLanguage": "Tilni {{lng}} ga almashtirish",
       "title": "Qidiruv va buyruqlar"
-    }
+    },
+    "allCaughtUp": "Hammasi bajarildi",
+    "greeting": {
+      "morning": "Xayrli tong, {{name}}",
+      "afternoon": "Xayrli kun, {{name}}",
+      "evening": "Xayrli kech, {{name}}"
+    },
+    "daysWaiting": "{{count}} kun kutmoqda",
+    "editDetails": "Maʼlumotlarni tahrirlash",
+    "thisYear": "bu yil",
+    "openOffers": "Ochiq takliflar: {{count}}",
+    "overdueFollowUps": "Muddati oʻtgan eslatmalar: {{count}}",
+    "noSubmissionsYet": "Ulardan hali ariza kelmagan",
+    "moreFilters": "Qoʻshimcha filtrlar",
+    "resetColumns": "Standart holatga qaytarish"
   }
 }
