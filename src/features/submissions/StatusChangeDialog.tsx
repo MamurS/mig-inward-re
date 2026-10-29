@@ -133,7 +133,7 @@ export function StatusChangeDialog({ submission, target, documents, onClose }: P
               <Field label={t('fields.offerValidUntil')} required>
                 <Input type="date" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} />
               </Field>
-              <p className="text-xs text-muted-foreground sm:col-span-2">{t('statusDlg.offerFollowUpNote')}</p>
+              <p className="text-caption text-muted-foreground sm:col-span-2">{t('statusDlg.offerFollowUpNote')}</p>
             </div>
           )}
 
@@ -148,7 +148,7 @@ export function StatusChangeDialog({ submission, target, documents, onClose }: P
                 </Field>
               </div>
               <div className="grid gap-3 rounded-md border border-dashed p-3">
-                <div className="flex items-center gap-2 text-sm font-medium">
+                <div className="flex items-center gap-2 text-body font-medium">
                   <Paperclip className="size-4" />
                   {t('statusDlg.confirmationDoc')}
                 </div>
@@ -162,7 +162,7 @@ export function StatusChangeDialog({ submission, target, documents, onClose }: P
                     </NativeSelect>
                   </Field>
                 )}
-                <div className="grid gap-2 sm:grid-cols-[1fr_160px]">
+                <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_160px]">
                   <Field label={t('statusDlg.orUpload')}>
                     <Input type="file" onChange={(e) => { setFile(e.target.files?.[0] ?? null); if (e.target.files?.[0]) setDocId('') }} />
                   </Field>
@@ -173,7 +173,7 @@ export function StatusChangeDialog({ submission, target, documents, onClose }: P
                   </Field>
                 </div>
                 {!docId && !file && (
-                  <label className="flex items-start gap-2 rounded bg-amber-50 p-2 text-xs text-amber-900">
+                  <label className="flex items-start gap-2 rounded bg-warning-100 p-2 text-caption text-warning-700">
                     <input type="checkbox" className="mt-0.5" checked={noDocOk} onChange={(e) => setNoDocOk(e.target.checked)} />
                     {t('statusDlg.bindWithoutDoc')}
                   </label>
@@ -187,7 +187,7 @@ export function StatusChangeDialog({ submission, target, documents, onClose }: P
           </Field>
 
           {error && (
-            <p className="flex items-start gap-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+            <p className="flex items-start gap-2 rounded-md bg-destructive/10 p-3 text-body text-destructive">
               <AlertTriangle className="mt-0.5 size-4 shrink-0" />
               {error}
             </p>

@@ -72,7 +72,7 @@ export function QuickAddCounterparty({
               {countries.data?.map((c) => <option key={c.code} value={c.code}>{localName(c)}</option>)}
             </NativeSelect>
           </Field>
-          <p className="text-xs text-muted-foreground">{t('cp.moreLater')}</p>
+          <p className="text-caption text-muted-foreground">{t('cp.moreLater')}</p>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>{t('common.cancel')}</Button>

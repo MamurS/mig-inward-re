@@ -6,7 +6,7 @@ export function NotFoundPage() {
   const { t } = useTranslation()
   return (
     <div className="py-16 text-center">
-      <h1 className="text-xl font-semibold">{t('access.notFoundTitle')}</h1>
+      <h1 className="text-title font-semibold">{t('access.notFoundTitle')}</h1>
       <Button asChild className="mt-6" variant="outline">
         <Link to="/">{t('access.goHome')}</Link>
       </Button>

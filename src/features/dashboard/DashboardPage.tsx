@@ -35,8 +35,8 @@ type Row = {
 const COLUMNS =
   'id, ref_no, insured_name, status, received_at, offered_at, bound_at, offer_valid_until, mga_id, mga_name, lob_name, our_gross_premium_usd, follow_up_overdue, offer_expired'
 
-const BAR = 'oklch(0.42 0.09 255)'
-const BAR_MUTED = 'oklch(0.75 0.05 255)'
+const BAR = 'var(--color-navy-500)'
+const BAR_MUTED = 'var(--color-navy-300)'
 
 function useDashboardRows() {
   return useQuery({
@@ -136,7 +136,7 @@ export function DashboardPage() {
   }, [data, year, years, thisYear, t])
 
   if (isLoading) return <div className="flex justify-center p-10"><Loader2 className="size-6 animate-spin text-muted-foreground" /></div>
-  if (error) return <p className="p-6 text-sm text-destructive">{errorMessage(error)}</p>
+  if (error) return <p className="p-6 text-body text-destructive">{errorMessage(error)}</p>
 
   const pct = (v: number | null) => (v === null ? '—' : `${new Intl.NumberFormat(locale(), { maximumFractionDigits: 0 }).format(v * 100)} %`)
   const daysSince = (iso: string | null) => (iso ? Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000) : null)
@@ -147,7 +147,7 @@ export function DashboardPage() {
         title={t('pages.dashboard.title')}
         subtitle={t('pages.dashboard.subtitle')}
         actions={
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2 text-body text-muted-foreground">
             {t('dash.period')}
             <div className="w-32">
               <NativeSelect value={year} onChange={(e) => setYear(e.target.value)}>
@@ -196,16 +196,16 @@ export function DashboardPage() {
           <CardHeader><CardTitle>{t('dash.hitRatio')}</CardTitle></CardHeader>
           <CardContent className="grid gap-4">
             <div>
-              <div className="text-4xl font-semibold tabular-nums">{pct(m.hitRatio)}</div>
-              <p className="mt-1 text-sm text-muted-foreground">{t('dash.hitRatioExplain', { bound: m.boundFromOffered, offered: m.offeredCount })}</p>
+              <div className="text-display font-semibold tabular-nums">{pct(m.hitRatio)}</div>
+              <p className="mt-1 text-body text-muted-foreground">{t('dash.hitRatioExplain', { bound: m.boundFromOffered, offered: m.offeredCount })}</p>
             </div>
             <div className="border-t pt-3">
-              <div className="text-xl font-semibold tabular-nums">{pct(m.hitRatioDecided)}</div>
-              <p className="mt-1 text-xs text-muted-foreground">{t('dash.hitRatioDecided')}</p>
+              <div className="text-title font-semibold tabular-nums">{pct(m.hitRatioDecided)}</div>
+              <p className="mt-1 text-caption text-muted-foreground">{t('dash.hitRatioDecided')}</p>
             </div>
             <div className="border-t pt-3">
-              <div className="text-xl font-semibold tabular-nums">{formatCompactUsd(m.boundUsd)}</div>
-              <p className="mt-1 text-xs text-muted-foreground">{t('dash.boundPremiumPeriod')}</p>
+              <div className="text-title font-semibold tabular-nums">{formatCompactUsd(m.boundUsd)}</div>
+              <p className="mt-1 text-caption text-muted-foreground">{t('dash.boundPremiumPeriod')}</p>
             </div>
           </CardContent>
         </Card>
@@ -215,10 +215,10 @@ export function DashboardPage() {
           <CardContent>
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={m.byMonth} margin={{ top: 8, right: 4, left: 4 }}>
-                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="oklch(0.92 0.01 255)" />
+                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="var(--color-slate-100)" />
                 <XAxis dataKey="name" tickLine={false} axisLine={false} fontSize={11} interval={0} />
                 <YAxis tickFormatter={(v) => formatCompactUsd(v as number)} tickLine={false} axisLine={false} fontSize={11} width={56} />
-                <Tooltip formatter={(v) => [formatAmount(v as number), t('dash.ourGrossUsd')]} cursor={{ fill: 'oklch(0.96 0.01 255)' }} />
+                <Tooltip formatter={(v) => [formatAmount(v as number), t('dash.ourGrossUsd')]} cursor={{ fill: 'var(--color-slate-50)' }} />
                 <Bar dataKey="value" fill={BAR} radius={[3, 3, 0, 0]} isAnimationActive={false} />
               </BarChart>
             </ResponsiveContainer>
@@ -239,11 +239,11 @@ export function DashboardPage() {
       <Card className="mt-4 gap-2">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>{t('dash.oldestOffers')}</CardTitle>
-          <Link to="/submissions?status=offered,no_response&sort=received_at&dir=asc" className="text-sm text-primary hover:underline">{t('dash.openInRegister')}</Link>
+          <Link to="/submissions?status=offered,no_response&sort=received_at&dir=asc" className="text-body text-primary hover:underline">{t('dash.openInRegister')}</Link>
         </CardHeader>
         <CardContent className="px-0">
           {m.oldestOffers.length === 0 ? (
-            <p className="px-5 py-4 text-sm text-muted-foreground">{t('dash.noOpenOffers')}</p>
+            <p className="px-5 py-4 text-body text-muted-foreground">{t('dash.noOpenOffers')}</p>
           ) : (
             <Table>
               <TableHeader>
@@ -268,7 +268,7 @@ export function DashboardPage() {
                     <TableCell>{formatDate(r.offered_at)}</TableCell>
                     <TableCell className="text-right font-medium tabular-nums">{daysSince(r.offered_at)}</TableCell>
                     <TableCell>
-                      <span className={cn('inline-flex items-center gap-1', r.offer_expired && 'text-amber-700')}>
+                      <span className={cn('inline-flex items-center gap-1', r.offer_expired && 'text-warning-600')}>
                         {r.offer_expired && <AlertTriangle className="size-3.5" />}
                         {formatDate(r.offer_valid_until)}
                       </span>
@@ -304,12 +304,12 @@ function Tile({
     <Link to={to} className="group">
       <Card className={cn('h-full gap-2 py-4 transition-shadow group-hover:shadow-md', danger && 'border-destructive/40')}>
         <CardContent className="grid gap-1 px-4">
-          <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+          <div className="flex items-center gap-2 text-caption font-medium text-muted-foreground">
             <Icon className={cn('size-4', danger && 'text-destructive')} />
             {label}
           </div>
-          <div className={cn('text-3xl font-semibold tabular-nums', danger && 'text-destructive')}>{value}</div>
-          {sub && <div className="text-xs text-muted-foreground">{sub}</div>}
+          <div className={cn('text-headline font-semibold tabular-nums', danger && 'text-destructive')}>{value}</div>
+          {sub && <div className="text-caption text-muted-foreground">{sub}</div>}
         </CardContent>
       </Card>
     </Link>
@@ -324,13 +324,13 @@ function RankChart({ title, data, empty }: { title: string; data: { name: string
       <CardHeader><CardTitle>{title}</CardTitle></CardHeader>
       <CardContent>
         {top.length === 0 ? (
-          <p className="py-16 text-center text-sm text-muted-foreground">{empty}</p>
+          <p className="py-16 text-center text-body text-muted-foreground">{empty}</p>
         ) : (
           <ResponsiveContainer width="100%" height={Math.max(120, top.length * 34 + 20)}>
             <BarChart data={top} layout="vertical" margin={{ left: 8, right: 56 }}>
               <XAxis type="number" hide />
               <YAxis type="category" dataKey="name" width={140} tickLine={false} axisLine={false} fontSize={11} tickFormatter={(v: string) => (v.length > 22 ? `${v.slice(0, 21)}…` : v)} />
-              <Tooltip formatter={(v) => [formatAmount(v as number), t('dash.ourGrossUsd')]} cursor={{ fill: 'oklch(0.96 0.01 255)' }} />
+              <Tooltip formatter={(v) => [formatAmount(v as number), t('dash.ourGrossUsd')]} cursor={{ fill: 'var(--color-slate-50)' }} />
               <Bar dataKey="value" fill={BAR} radius={[0, 4, 4, 0]} isAnimationActive={false}>
                 <LabelList dataKey="value" position="right" fontSize={11} formatter={(v) => formatCompactUsd(v as number)} />
               </Bar>
@@ -359,15 +359,15 @@ function AgeBuckets({ rows }: { rows: Row[] }) {
   return (
     <div className="grid gap-2">
       {buckets.map((b) => (
-        <div key={b.name} className="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
+        <div key={b.name} className="flex items-center justify-between rounded-md border px-3 py-2 text-body">
           <span>{b.name}</span>
           <span className="tabular-nums">
             <span className="font-semibold">{b.value}</span>
-            <span className="ml-2 text-xs text-muted-foreground">{formatCompactUsd(b.usd)}</span>
+            <span className="ml-2 text-caption text-muted-foreground">{formatCompactUsd(b.usd)}</span>
           </span>
         </div>
       ))}
-      <p className="text-xs text-muted-foreground">{t('dash.ageNote')}</p>
+      <p className="text-caption text-muted-foreground">{t('dash.ageNote')}</p>
     </div>
   )
 }

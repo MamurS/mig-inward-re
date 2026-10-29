@@ -92,9 +92,9 @@ export function AgendaPage() {
 
         <TabsContent value="open" className="grid gap-4">
           {open.isLoading && <Loader2 className="mx-auto size-5 animate-spin text-muted-foreground" />}
-          {open.error && <p className="text-sm text-destructive">{errorMessage(open.error)}</p>}
+          {open.error && <p className="text-body text-destructive">{errorMessage(open.error)}</p>}
           {open.data && open.data.length === 0 && (
-            <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">{t('agenda.nothingOpen')}</CardContent></Card>
+            <Card><CardContent className="py-10 text-center text-body text-muted-foreground">{t('agenda.nothingOpen')}</CardContent></Card>
           )}
           {order.map((b) =>
             groups[b].length ? (
@@ -115,7 +115,7 @@ export function AgendaPage() {
         </TabsContent>
 
         <TabsContent value="done" className="grid gap-2">
-          {done.data?.length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">{t('agenda.nothingDone')}</p>}
+          {done.data?.length === 0 && <p className="py-6 text-center text-body text-muted-foreground">{t('agenda.nothingDone')}</p>}
           {done.data?.map((f) => <FollowUpItem key={f.id} followUp={f} showEntity />)}
         </TabsContent>
       </Tabs>

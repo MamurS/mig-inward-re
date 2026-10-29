@@ -37,7 +37,7 @@ export function AppLayout() {
           to={to}
           className={({ isActive }) =>
             cn(
-              'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground',
+              'flex items-center gap-3 rounded-md px-3 py-2 text-body font-medium text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground',
               isActive && 'bg-sidebar-accent text-sidebar-foreground',
             )
           }
@@ -45,7 +45,7 @@ export function AppLayout() {
           <Icon className="size-4" />
           <span className="flex-1">{t(labelKey)}</span>
           {to === '/agenda' && (overdue.data ?? 0) > 0 && (
-            <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] leading-none font-semibold text-white" title={t('agenda.bucket.overdue')}>
+            <span className="rounded-full bg-danger-600 px-2 py-0.5 text-caption leading-none font-semibold text-white" title={t('agenda.bucket.overdue')}>
               {overdue.data}
             </span>
           )}
@@ -56,10 +56,10 @@ export function AppLayout() {
 
   const brand = (
     <div className="flex h-14 items-center gap-2 border-b border-white/10 px-5">
-      <div className="flex size-7 items-center justify-center rounded bg-white/10 text-[10px] font-bold text-white">MIG</div>
+      <div className="flex size-7 items-center justify-center rounded bg-white/10 text-caption font-display-bold text-white">MIG</div>
       <div className="min-w-0 leading-tight">
-        <div className="text-sm font-semibold text-white">{t('app.name')}</div>
-        <div className="truncate text-[11px] text-sidebar-muted">{t('app.tagline')}</div>
+        <div className="text-body font-semibold text-white">{t('app.name')}</div>
+        <div className="truncate text-caption text-sidebar-muted">{t('app.tagline')}</div>
       </div>
     </div>
   )
@@ -75,7 +75,7 @@ export function AppLayout() {
       {/* Mobile sidebar */}
       {mobileOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setMobileOpen(false)} />
+          <div className="absolute inset-0 bg-scrim/50" onClick={() => setMobileOpen(false)} />
           <aside className="absolute inset-y-0 left-0 w-64 bg-sidebar">
             {brand}
             {nav}

@@ -6,7 +6,7 @@ export function StatusBadge({ status, className }: { status: SubmissionStatus | 
   const { t } = useTranslation()
   if (!status) return null
   return (
-    <span className={cn('inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium whitespace-nowrap', STATUS_STYLES[status], className)}>
+    <span className={cn('inline-flex items-center rounded-md border px-2 py-0.5 text-caption font-medium whitespace-nowrap', STATUS_STYLES[status], className)}>
       {t(`status.${status}`)}
     </span>
   )

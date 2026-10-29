@@ -10,7 +10,7 @@ function TabsTrigger({ className, ...props }: React.ComponentProps<typeof P.Trig
   return (
     <P.Trigger
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-md px-3 py-1 text-sm font-medium whitespace-nowrap transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm',
+        'inline-flex items-center gap-2 rounded-md px-3 py-1 text-body font-medium whitespace-nowrap transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm',
         className,
       )}
       {...props}

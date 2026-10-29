@@ -494,5 +494,27 @@
       "none": "No runs yet.",
       "result": "{{repeats}} new reminders, {{expiry}} expired offers flagged, {{noresp}} moved to \"No response\""
     }
+  },
+  "tokens": {
+    "title": "Design tokens",
+    "subtitle": "Colours, scales, type, spacing and motion — the values every screen uses",
+    "ramps": "Colour ramps (OKLCH, equal lightness per step)",
+    "pairing": "Pairing rule: text needs 5 steps between colours (worst pair {{text}} : 1, need {{tmin}}); icons and large text need 4 (worst {{icon}} : 1, need {{gmin}}).",
+    "canvas": "Page background",
+    "statusScale": "Submission status scale",
+    "agingScale": "Overdue ageing scale",
+    "inkOnTint": "text on tint",
+    "solidOnWhite": "solid on white",
+    "whiteOnSolid": "white on solid",
+    "days": "{{range}} days",
+    "data": "Chart colours: categorical and sequential",
+    "type": "Type scale",
+    "sample": "Premium received 1 250 000.00",
+    "glyphs": "Cyrillic and Uzbek glyphs",
+    "spaceMotion": "Spacing (4 px grid) and motion",
+    "playMotion": "Play motion",
+    "reducedMotion": "With «reduce motion» switched on in the system, everything moves instantly.",
+    "sampleTable": "Sample table",
+    "amount": "Amount"
   }
 }

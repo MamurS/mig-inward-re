@@ -134,7 +134,7 @@ export function CloseFollowUpDialog({ followUp, onClose }: { followUp: FollowUp 
           <Field label={t('fu.outcome')} required hint={t('fu.outcomeHint')}>
             <Textarea rows={3} value={outcome} onChange={(e) => setOutcome(e.target.value)} autoFocus />
           </Field>
-          <label className="flex items-center gap-2 text-sm">
+          <label className="flex items-center gap-2 text-body">
             <input type="checkbox" checked={scheduleNext} onChange={(e) => setScheduleNext(e.target.checked)} />
             {t('fu.scheduleNext')}
           </label>
@@ -143,7 +143,7 @@ export function CloseFollowUpDialog({ followUp, onClose }: { followUp: FollowUp 
               <Input type="date" value={nextDate} onChange={(e) => setNextDate(e.target.value)} min={isoDate()} />
             </Field>
           )}
-          {error && <p className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
+          {error && <p className="rounded-md bg-destructive/10 p-3 text-body text-destructive">{error}</p>}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={busy}>{t('common.cancel')}</Button>
@@ -340,10 +340,10 @@ export function FollowUpItem({
   const actionable = !f.done_at && canAct(f)
 
   return (
-    <div className={cn('rounded-md border p-3 text-sm', f.done_at && 'bg-muted/30', overdue && 'border-destructive/40 bg-destructive/5')}>
+    <div className={cn('rounded-md border p-3 text-body', f.done_at && 'bg-muted/30', overdue && 'border-destructive/40 bg-destructive/5')}>
       <div className="flex flex-wrap items-start gap-2">
         {f.done_at ? (
-          <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" />
+          <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success-600" />
         ) : overdue ? (
           <Clock className="mt-0.5 size-4 shrink-0 text-destructive" />
         ) : (
@@ -352,10 +352,10 @@ export function FollowUpItem({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <span className="font-medium">{f.title || t(`fuType.${f.type}`)}</span>
-            <span className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">{t(`fuType.${f.type}`)}</span>
+            <span className="rounded bg-muted px-2 py-0.5 text-caption text-muted-foreground">{t(`fuType.${f.type}`)}</span>
           </div>
           {showEntity && f.entity_ref && (
-            <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
+            <div className="mt-1 flex flex-wrap items-center gap-2 text-caption">
               <Link to={`/submissions/${f.entity_id}`} className="font-medium text-primary hover:underline">
                 {f.entity_ref}
               </Link>
@@ -364,19 +364,19 @@ export function FollowUpItem({
               <StatusBadge status={f.submission_status ?? null} />
             </div>
           )}
-          <div className={cn('mt-1 text-xs', overdue ? 'font-medium text-destructive' : 'text-muted-foreground')}>
+          <div className={cn('mt-1 text-caption', overdue ? 'font-medium text-destructive' : 'text-muted-foreground')}>
             {t('fu.due')}: {formatDate(f.due_at)}
             {overdue && ` · ${t('fu.daysOverdue', { count: daysOverdue })}`} · {assignee}
           </div>
           {f.done_at && (
-            <div className="mt-1 text-xs text-muted-foreground">
+            <div className="mt-1 text-caption text-muted-foreground">
               {t('fu.doneOn', { date: formatDate(f.done_at) })}
               {f.done_by_name ? ` (${f.done_by_name})` : ''}: {f.outcome}
             </div>
           )}
         </div>
         {actionable && (onDone || onReschedule) && (
-          <div className="flex gap-1.5">
+          <div className="flex gap-2">
             {onReschedule && (
               <Button size="sm" variant="ghost" onClick={() => onReschedule(f)} title={t('fu.rescheduleTitle')}>
                 <CalendarClock />

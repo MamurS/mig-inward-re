@@ -147,7 +147,7 @@ export function SubmissionFormPage() {
   const isEdit = Boolean(id)
   const existing = useSubmission(id)
   if (isEdit && existing.isLoading) return <FullPageSpinner />
-  if (isEdit && !existing.data) return <p className="p-6 text-sm text-muted-foreground">—</p>
+  if (isEdit && !existing.data) return <p className="p-6 text-body text-muted-foreground">—</p>
   return <SubmissionForm existing={existing.data ?? null} />
 }
 
@@ -279,14 +279,14 @@ function SubmissionForm({ existing }: { existing: SubmissionRow | null }) {
       />
 
       {existing && (
-        <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="mb-4 flex items-center gap-2 text-body text-muted-foreground">
           <StatusBadge status={existing.status} />
           <Info className="size-4" />
           {t('sub.statusViaActions')}
         </div>
       )}
 
-      <div className="grid gap-4 xl:grid-cols-[1fr_340px]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="grid gap-4">
           {/* Source */}
           <Card>
@@ -437,7 +437,7 @@ function SubmissionForm({ existing }: { existing: SubmissionRow | null }) {
           <Card>
             <CardHeader>
               <CardTitle>{t('sub.liveFigures')}</CardTitle>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-caption text-muted-foreground">
                 {isBound ? t('sub.basisSigned', { pct: formatPct(shareForCalc) }) : shareForCalc ? t('sub.basisWritten', { pct: formatPct(shareForCalc) }) : t('sub.enterShare')}
               </p>
             </CardHeader>
@@ -467,7 +467,7 @@ export function FiguresTable({
 }) {
   const { t } = useTranslation()
   const Row = ({ label, value, strong, muted }: { label: string; value: string; strong?: boolean; muted?: boolean }) => (
-    <div className={`flex items-baseline justify-between gap-3 py-1.5 text-sm ${strong ? 'font-semibold' : ''} ${muted ? 'text-muted-foreground' : ''}`}>
+    <div className={`flex items-baseline justify-between gap-3 py-2 text-body ${strong ? 'font-semibold' : ''} ${muted ? 'text-muted-foreground' : ''}`}>
       <span>{label}</span>
       <span className="tabular-nums">{value}</span>
     </div>
@@ -487,7 +487,7 @@ export function FiguresTable({
       <div>
         <Row label={t('fields.ourGrossUsd')} value={formatAmount(figures.ourGrossUsd)} />
         <Row label={t('fields.ourNetUsd')} value={formatAmount(figures.ourNetUsd)} />
-        <p className="pt-1 text-xs text-muted-foreground">
+        <p className="pt-1 text-caption text-muted-foreground">
           {currency === 'USD' ? '' : fxLoading ? t('common.loading') : fxRate ? t('sub.fxUsed', { rate: fxRate, currency }) : t('sub.noFx', { currency })}
         </p>
       </div>

@@ -101,7 +101,7 @@ export function SubmissionsPage() {
             <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('sub.searchPlaceholder')} className="pl-8" />
           </div>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-2">
             {STATUSES.map((s) => {
               const on = filters.status.includes(s)
               return (
@@ -110,7 +110,7 @@ export function SubmissionsPage() {
                   type="button"
                   onClick={() => toggleStatus(s)}
                   className={cn(
-                    'rounded-md border px-2 py-1 text-xs font-medium transition-colors',
+                    'rounded-md border px-2 py-1 text-caption font-medium transition-colors',
                     on ? STATUS_STYLES[s] + ' ring-1 ring-current/30' : 'bg-background text-muted-foreground hover:bg-muted',
                   )}
                 >
@@ -145,24 +145,24 @@ export function SubmissionsPage() {
           <Input type="date" value={filters.from} onChange={(e) => setFilters({ from: e.target.value })} aria-label={t('sub.receivedFrom')} title={t('sub.receivedFrom')} />
           <Input type="date" value={filters.to} onChange={(e) => setFilters({ to: e.target.value })} aria-label={t('sub.receivedTo')} title={t('sub.receivedTo')} />
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-2 px-4 text-xs text-muted-foreground">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-4 text-caption text-muted-foreground">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-            <label className="flex items-center gap-1.5 whitespace-nowrap text-foreground">
+            <label className="flex items-center gap-2 whitespace-nowrap text-foreground">
               <input type="checkbox" checked={filters.overdue} onChange={(e) => setFilters({ overdue: e.target.checked })} />
               {t('sub.overdueOnly')}
             </label>
-            <label className="flex items-center gap-1.5 whitespace-nowrap text-foreground">
+            <label className="flex items-center gap-2 whitespace-nowrap text-foreground">
               <input type="checkbox" checked={filters.expired} onChange={(e) => setFilters({ expired: e.target.checked })} />
               {t('sub.expiredOnly')}
             </label>
             {isFetching && <Loader2 className="size-3.5 animate-spin" />}
             {t('sub.resultCount', { count: data?.count ?? 0 })}
             {(filters.boundFrom || filters.boundTo) && (
-              <span className="rounded bg-muted px-1.5 py-0.5">
+              <span className="rounded bg-muted px-2 py-0.5">
                 {t('sub.boundBetween', { from: filters.boundFrom ? formatDate(filters.boundFrom) : '…', to: filters.boundTo ? formatDate(filters.boundTo) : '…' })}
               </span>
             )}
-            {(data?.count ?? 0) > MAX_ROWS && <span className="text-amber-700">{t('sub.tooMany', { max: MAX_ROWS })}</span>}
+            {(data?.count ?? 0) > MAX_ROWS && <span className="text-warning-600">{t('sub.tooMany', { max: MAX_ROWS })}</span>}
           </div>
           {filterCount > 0 && (
             <Button variant="ghost" size="sm" onClick={() => { setSearch(''); setParams(filtersToParams({ ...EMPTY_FILTERS, sort: filters.sort, dir: filters.dir }), { replace: true }) }}>
@@ -176,11 +176,11 @@ export function SubmissionsPage() {
       {/* Table */}
       <Card className="gap-0 py-0">
         {error ? (
-          <p className="p-6 text-sm text-destructive">{errorMessage(error)}</p>
+          <p className="p-6 text-body text-destructive">{errorMessage(error)}</p>
         ) : isLoading ? (
           <div className="flex justify-center p-10"><Loader2 className="size-5 animate-spin text-muted-foreground" /></div>
         ) : rows.length === 0 ? (
-          <p className="p-10 text-center text-sm text-muted-foreground">{t('sub.noResults')}</p>
+          <p className="p-10 text-center text-body text-muted-foreground">{t('sub.noResults')}</p>
         ) : (
           <Table>
             <TableHeader>
@@ -217,7 +217,7 @@ export function SubmissionsPage() {
                   <TableCell>
                     <div className="flex items-center gap-1">
                       <StatusBadge status={r.status} />
-                      {r.offer_expired && <span title={t('sub.offerExpired')}><AlertTriangle className="size-3.5 text-amber-600" /></span>}
+                      {r.offer_expired && <span title={t('sub.offerExpired')}><AlertTriangle className="size-3.5 text-warning-600" /></span>}
                     </div>
                   </TableCell>
                   <TableCell>{r.currency}</TableCell>
@@ -239,7 +239,7 @@ export function SubmissionsPage() {
             </TableBody>
             <tfoot>
               <TableRow className="bg-muted/40 font-medium hover:bg-muted/40">
-                <TableCell colSpan={11} className="text-right text-xs text-muted-foreground">{t('sub.totalOurGrossUsd')}</TableCell>
+                <TableCell colSpan={11} className="text-right text-caption text-muted-foreground">{t('sub.totalOurGrossUsd')}</TableCell>
                 <TableCell className="text-right tabular-nums">{formatAmount(totalUsd)}</TableCell>
                 <TableCell colSpan={2} />
               </TableRow>

@@ -111,7 +111,7 @@ export function CounterpartyDetailPage() {
   }, [subs.data])
 
   if (party.isLoading) return <FullPageSpinner />
-  if (!party.data || !form) return <p className="p-6 text-sm text-muted-foreground">{t('cp.notFound')}</p>
+  if (!party.data || !form) return <p className="p-6 text-body text-muted-foreground">{t('cp.notFound')}</p>
 
   const p = party.data
   const registerLink = p.type === 'mga' ? `/submissions?mga=${p.id}` : p.type === 'broker' ? `/submissions?broker=${p.id}` : '/submissions'
@@ -146,7 +146,7 @@ export function CounterpartyDetailPage() {
   return (
     <>
       <div className="mb-2">
-        <Link to="/counterparties" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+        <Link to="/counterparties" className="inline-flex items-center gap-1 text-body text-muted-foreground hover:text-foreground">
           <ArrowLeft className="size-4" />
           {t('pages.counterparties.title')}
         </Link>
@@ -171,7 +171,7 @@ export function CounterpartyDetailPage() {
         <Kpi label={t('cp.kpi.avgShare')} value={kpi.avgSigned === null ? '—' : formatPct(Math.round(kpi.avgSigned * 100) / 100)} sub={`${t('fields.writtenSharePct')}: ${kpi.avgWritten === null ? '—' : formatPct(Math.round(kpi.avgWritten * 100) / 100)}`} />
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[1fr_420px]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
         <Card className="gap-0 py-0">
           <CardHeader className="py-4"><CardTitle>{t('cp.theirSubmissions')}</CardTitle></CardHeader>
           {subs.isLoading ? (
@@ -195,7 +195,7 @@ export function CounterpartyDetailPage() {
                     <TableCell className="font-medium text-primary">{r.ref_no}</TableCell>
                     <TableCell>{formatDate(r.received_at)}</TableCell>
                     <TableCell className="max-w-56 truncate">{r.insured_name}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
+                    <TableCell className="text-caption text-muted-foreground">
                       {[r.mga_id === p.id && t('counterpartyType.mga'), r.broker_id === p.id && t('counterpartyType.broker'), r.source_party_id === p.id && t('cp.sender')].filter(Boolean).join(', ')}
                     </TableCell>
                     <TableCell><StatusBadge status={r.status} /></TableCell>
@@ -233,14 +233,14 @@ export function CounterpartyDetailPage() {
             <Field label={t('fields.notes')}>
               <Textarea rows={2} value={form.notes} disabled={!editable} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
             </Field>
-            <label className="flex items-center gap-2 text-sm">
+            <label className="flex items-center gap-2 text-body">
               <input type="checkbox" checked={form.active} disabled={!editable} onChange={(e) => setForm({ ...form, active: e.target.checked })} />
               {t('common.active')}
             </label>
 
             <div className="grid gap-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">{t('cp.contacts')}</span>
+                <span className="text-body font-medium">{t('cp.contacts')}</span>
                 {editable && (
                   <Button size="sm" variant="ghost" onClick={() => setForm({ ...form, contacts: [...form.contacts, { name: '', role: '', email: '', phone: '' }] })}>
                     <Plus />
@@ -248,7 +248,7 @@ export function CounterpartyDetailPage() {
                   </Button>
                 )}
               </div>
-              {form.contacts.length === 0 && <p className="text-xs text-muted-foreground">{t('cp.noContacts')}</p>}
+              {form.contacts.length === 0 && <p className="text-caption text-muted-foreground">{t('cp.noContacts')}</p>}
               {form.contacts.map((c, i) => (
                 <div key={i} className="grid grid-cols-2 gap-2 rounded-md border p-2">
                   <Input placeholder={t('cp.contactName')} value={c.name} disabled={!editable} onChange={(e) => setContact(i, { name: e.target.value })} />
@@ -283,9 +283,9 @@ function Kpi({ label, value, sub }: { label: string; value: string; sub?: string
   return (
     <Card className="gap-1 py-4">
       <CardContent className="px-4">
-        <div className="text-xs font-medium text-muted-foreground">{label}</div>
-        <div className="mt-1 text-2xl font-semibold tabular-nums">{value}</div>
-        {sub && <div className="mt-0.5 text-xs text-muted-foreground">{sub}</div>}
+        <div className="text-caption font-medium text-muted-foreground">{label}</div>
+        <div className="mt-1 text-headline font-semibold tabular-nums">{value}</div>
+        {sub && <div className="mt-0.5 text-caption text-muted-foreground">{sub}</div>}
       </CardContent>
     </Card>
   )

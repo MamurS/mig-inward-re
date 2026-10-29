@@ -108,7 +108,7 @@ function UsersTab() {
       <CardHeader className="flex flex-row items-center justify-between py-4">
         <div>
           <CardTitle>{t('admin.tabs.users')}</CardTitle>
-          <p className="mt-1 text-xs text-muted-foreground">{t('admin.users.help')}</p>
+          <p className="mt-1 text-caption text-muted-foreground">{t('admin.users.help')}</p>
         </div>
         <Button onClick={() => setCreating(true)}>
           <UserPlus />
@@ -132,9 +132,9 @@ function UsersTab() {
             if (!e) return null
             const changed = e.full_name !== (u.full_name ?? '') || e.role !== (u.role ?? '') || e.active !== u.active
             return (
-              <TableRow key={u.id} className={!u.role || !u.active ? 'bg-amber-50/50' : undefined}>
+              <TableRow key={u.id} className={!u.role || !u.active ? 'bg-warning-50' : undefined}>
                 <TableCell><Input value={e.full_name} onChange={(ev) => setEdits({ ...edits, [u.id]: { ...e, full_name: ev.target.value } })} className="h-8 w-48" /></TableCell>
-                <TableCell className="text-sm">{u.email}</TableCell>
+                <TableCell className="text-body">{u.email}</TableCell>
                 <TableCell>
                   <div className="w-40">
                     <NativeSelect value={e.role} onChange={(ev) => setEdits({ ...edits, [u.id]: { ...e, role: ev.target.value as AppRole } })} className="h-8">
@@ -146,7 +146,7 @@ function UsersTab() {
                 <TableCell>
                   <input type="checkbox" checked={e.active} disabled={u.id === me?.id} onChange={(ev) => setEdits({ ...edits, [u.id]: { ...e, active: ev.target.checked } })} />
                 </TableCell>
-                <TableCell className="text-xs text-muted-foreground">{formatDate(u.created_at)}</TableCell>
+                <TableCell className="text-caption text-muted-foreground">{formatDate(u.created_at)}</TableCell>
                 <TableCell className="text-right whitespace-nowrap">
                   <Button size="sm" variant="ghost" onClick={() => setPwFor(u)} title={t('admin.users.setPassword')}>
                     <KeyRound />
@@ -223,7 +223,7 @@ function CreateUserDialog({ open, onClose }: { open: boolean; onClose: () => voi
           <Field label={t('admin.users.tempPassword')} hint={t('admin.users.tempPasswordHint')}>
             <Input value={password} onChange={(e) => setPassword(e.target.value)} className="font-mono" disabled={created} />
           </Field>
-          {created && <p className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-800">{t('admin.users.passOn', { email, password })}</p>}
+          {created && <p className="rounded-md bg-success-100 p-3 text-body text-success-700">{t('admin.users.passOn', { email, password })}</p>}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={busy}>{created ? t('common.close') : t('common.cancel')}</Button>
@@ -355,7 +355,7 @@ function RefTable({
                   {cols.map((c) => (
                     <TableCell key={c.key} className="py-1">
                       {c.key === pk && pk === 'code' ? (
-                        <span className="font-mono text-sm">{String(r[c.key])}</span>
+                        <span className="font-mono text-body">{String(r[c.key])}</span>
                       ) : (
                         <Input
                           className={`h-8 ${c.width ?? 'w-40'}`}
@@ -441,7 +441,7 @@ function ReferenceTab() {
           ]}
         />
       </div>
-      <p className="text-xs text-muted-foreground">{t('admin.ref.counterpartiesHint')}</p>
+      <p className="text-caption text-muted-foreground">{t('admin.ref.counterpartiesHint')}</p>
     </div>
   )
 }
@@ -492,7 +492,7 @@ function FxTab() {
       <Card>
         <CardHeader>
           <CardTitle>{t('admin.fx.add')}</CardTitle>
-          <p className="text-xs text-muted-foreground">{t('admin.fx.help')}</p>
+          <p className="text-caption text-muted-foreground">{t('admin.fx.help')}</p>
         </CardHeader>
         <CardContent className="flex flex-wrap items-end gap-3">
           <Field label={t('fields.currency')}>
@@ -542,7 +542,7 @@ function FxTab() {
                   <TableCell className="font-mono">{r.currency}</TableCell>
                   <TableCell>{formatDate(r.rate_date)}</TableCell>
                   <TableCell className="text-right font-mono tabular-nums">{String(r.rate_to_usd)}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{r.source ?? '—'}</TableCell>
+                  <TableCell className="text-caption text-muted-foreground">{r.source ?? '—'}</TableCell>
                   <TableCell className="text-right">
                     <Button size="icon" variant="ghost" onClick={() => void remove(r)} aria-label={t('common.delete')}>
                       <Trash2 />
@@ -608,7 +608,7 @@ function SettingsTab() {
         <Field label={t('admin.settings.repeatDays')} hint={t('admin.settings.repeatDaysHint')}>
           <Input type="number" min={1} max={365} className="w-32" value={String(vals.follow_up_repeat_days ?? '')} onChange={(e) => setVals({ ...vals, follow_up_repeat_days: e.target.value })} />
         </Field>
-        <label className="flex items-center gap-2 text-sm">
+        <label className="flex items-center gap-2 text-body">
           <input type="checkbox" checked={Boolean(vals.auto_no_response_enabled)} onChange={(e) => setVals({ ...vals, auto_no_response_enabled: e.target.checked })} />
           {t('admin.settings.autoEnabled')}
         </label>
@@ -658,7 +658,7 @@ function JobsTab() {
       <CardHeader className="flex flex-row items-center justify-between py-4">
         <div>
           <CardTitle>{t('admin.jobs.title')}</CardTitle>
-          <p className="mt-1 text-xs text-muted-foreground">{t('admin.jobs.help')}</p>
+          <p className="mt-1 text-caption text-muted-foreground">{t('admin.jobs.help')}</p>
         </div>
         <Button onClick={() => void runNow()} disabled={busy}>
           {busy ? <Loader2 className="animate-spin" /> : <Play />}
@@ -679,8 +679,8 @@ function JobsTab() {
             return (
               <TableRow key={r.id}>
                 <TableCell>{formatDateTime(r.started_at)}</TableCell>
-                <TableCell className="text-xs text-muted-foreground">{r.started_by ? t('admin.jobs.manual') : t('admin.jobs.scheduled')}</TableCell>
-                <TableCell className="text-sm">
+                <TableCell className="text-caption text-muted-foreground">{r.started_by ? t('admin.jobs.manual') : t('admin.jobs.scheduled')}</TableCell>
+                <TableCell className="text-body">
                   {r.error ? (
                     <span className="text-destructive">{r.error}</span>
                   ) : (

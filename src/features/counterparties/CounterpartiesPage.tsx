@@ -70,7 +70,7 @@ export function CounterpartiesPage() {
           can.editSubmissions(role) && (
             <div className="flex gap-2">
               {(['mga', 'broker', 'cedent'] as const).map((tp) => (
-                <div key={tp} className="flex items-center gap-1.5 text-sm">
+                <div key={tp} className="flex items-center gap-2 text-body">
                   <QuickAddCounterparty type={tp} onCreated={(id) => navigate(`/counterparties/${id}`)} />
                   <span className="hidden text-muted-foreground lg:inline">{t(`counterpartyType.${tp}`)}</span>
                 </div>
@@ -90,7 +90,7 @@ export function CounterpartiesPage() {
             {(['mga', 'broker', 'cedent'] as const).map((tp) => <option key={tp} value={tp}>{t(`counterpartyType.${tp}`)}</option>)}
           </NativeSelect>
         </div>
-        <label className="flex items-center gap-1.5 text-sm">
+        <label className="flex items-center gap-2 text-body">
           <input type="checkbox" checked={showInactive} onChange={(e) => setShowInactive(e.target.checked)} />
           {t('cp.showInactive')}
         </label>
@@ -117,7 +117,7 @@ export function CounterpartiesPage() {
                   <TableRow key={c.id} className="cursor-pointer" onClick={() => navigate(`/counterparties/${c.id}`)}>
                     <TableCell className="font-medium">
                       <Link to={`/counterparties/${c.id}`} className="text-primary hover:underline" onClick={(e) => e.stopPropagation()}>{c.name}</Link>
-                      {!c.active && <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">{t('common.inactive')}</span>}
+                      {!c.active && <span className="ml-2 rounded bg-muted px-2 py-0.5 text-caption text-muted-foreground">{t('common.inactive')}</span>}
                     </TableCell>
                     <TableCell>{t(`counterpartyType.${c.type}`)}</TableCell>
                     <TableCell>{localName(countries.data?.find((x) => x.code === c.country_code)) }</TableCell>
