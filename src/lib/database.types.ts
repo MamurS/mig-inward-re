@@ -1,5 +1,6 @@
-// Generated from the Supabase schema (project mig-inward-re). Regenerate after each migration.
-// Hand edit kept: numeric RPC arguments of change_submission_status also accept exact decimal strings.
+// Generated from the Supabase schema (project mig-inward-re). Regenerate after each migration
+// with scripts/write-db-types.mjs, which keeps the hand edit: numeric share arguments of
+// change_submission_status also accept exact decimal strings.
 export type Json =
   | string
   | number
@@ -500,6 +501,7 @@ export type Database = {
           updated_at: string
           updated_by: string | null
           written_off_at: string | null
+          written_off_by: string | null
           written_off_reason: string | null
         }
         Insert: {
@@ -522,6 +524,7 @@ export type Database = {
           updated_at?: string
           updated_by?: string | null
           written_off_at?: string | null
+          written_off_by?: string | null
           written_off_reason?: string | null
         }
         Update: {
@@ -544,6 +547,7 @@ export type Database = {
           updated_at?: string
           updated_by?: string | null
           written_off_at?: string | null
+          written_off_by?: string | null
           written_off_reason?: string | null
         }
         Relationships: [
@@ -592,6 +596,13 @@ export type Database = {
           {
             foreignKeyName: "premium_installments_updated_by_fkey"
             columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "premium_installments_written_off_by_fkey"
+            columns: ["written_off_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -1113,6 +1124,8 @@ export type Database = {
           outstanding_amount: number | null
           outstanding_usd: number | null
           paid_amount: number | null
+          payable_amount: number | null
+          payable_usd: number | null
           ref_no: string | null
           settled_at: string | null
           signed_share_pct: number | null
@@ -1127,6 +1140,8 @@ export type Database = {
           updated_at: string | null
           updated_by: string | null
           written_off_at: string | null
+          written_off_by: string | null
+          written_off_by_name: string | null
           written_off_reason: string | null
         }
         Relationships: [
@@ -1175,6 +1190,13 @@ export type Database = {
           {
             foreignKeyName: "premium_installments_updated_by_fkey"
             columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "premium_installments_written_off_by_fkey"
+            columns: ["written_off_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -1264,6 +1286,7 @@ export type Database = {
           expected_net: number | null
           has_schedule: boolean | null
           installment_count: number | null
+          payable_total: number | null
           ref_no: string | null
           scheduled_gross: number | null
           scheduled_net: number | null
@@ -1586,6 +1609,7 @@ export type Database = {
           updated_at: string
           updated_by: string | null
           written_off_at: string | null
+          written_off_by: string | null
           written_off_reason: string | null
         }[]
         SetofOptions: {
