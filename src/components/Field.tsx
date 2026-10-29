@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { cloneElement, isValidElement, useId, type ReactElement, type ReactNode } from 'react'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 
@@ -20,14 +20,28 @@ export function Field({
   className?: string
   children: ReactNode
 }) {
+  // A single control without its own id is linked to the label (and its error / hint) automatically
+  const auto = useId()
+  const single = isValidElement(children) ? (children as ReactElement<{ id?: string; 'aria-describedby'?: string }>) : null
+  const controlId = htmlFor ?? single?.props.id ?? (single ? auto : undefined)
+  const noteId = `${auto}-note`
+  const note = error ?? hint
+  const control =
+    single && !htmlFor && !single.props.id
+      ? cloneElement(single, { id: controlId, 'aria-describedby': note ? noteId : undefined })
+      : children
   return (
     <div className={cn('grid content-start gap-2', className)}>
-      <Label htmlFor={htmlFor} className="text-small font-medium text-foreground">
+      <Label htmlFor={controlId} className="text-small font-medium text-foreground">
         {label}
         {required && <span className="text-destructive" aria-hidden>*</span>}
       </Label>
-      {children}
-      {error ? <p role="alert" className="text-caption text-destructive">{error}</p> : hint ? <p className="text-caption text-muted-foreground">{hint}</p> : null}
+      {control}
+      {error ? (
+        <p id={noteId} role="alert" className="text-caption text-destructive">{error}</p>
+      ) : hint ? (
+        <p id={noteId} className="text-caption text-muted-foreground">{hint}</p>
+      ) : null}
     </div>
   )
 }

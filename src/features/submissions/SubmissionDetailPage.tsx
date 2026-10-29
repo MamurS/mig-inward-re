@@ -26,6 +26,8 @@ import { useAuditLog, useEntityDocuments, useEntityFollowUps, useSubmission, use
 import { StatusChangeDialog } from './StatusChangeDialog'
 import { AddFollowUpButton, CloseFollowUpDialog, FollowUpItem, RescheduleFollowUpDialog, type FollowUp } from '@/features/followups/FollowUps'
 import { FiguresTable } from './SubmissionFormPage'
+import { PremiumTab } from '@/features/premium/PremiumTab'
+import { usePremiumInstallments } from '@/features/premium/api'
 
 export function SubmissionDetailPage() {
   const { id } = useParams()
@@ -36,6 +38,7 @@ export function SubmissionDetailPage() {
   const docs = useEntityDocuments('submission', id)
   const followUps = useEntityFollowUps('submission', id)
   const audit = useAuditLog('submissions', id)
+  const premiumRows = usePremiumInstallments(id)
   const users = useUsers()
   const countries = useCountries()
   const counterparties = useCounterparties()
@@ -44,6 +47,8 @@ export function SubmissionDetailPage() {
   const [target, setTarget] = useState<SubmissionStatus | null>(null)
   const [closing, setClosing] = useState<FollowUp | null>(null)
   const [rescheduling, setRescheduling] = useState<FollowUp | null>(null)
+  const [tab, setTab] = useState<string | null>(null)
+  const [scheduleStep, setScheduleStep] = useState(false)
 
   if (sub.isLoading)
     return (
@@ -65,6 +70,10 @@ export function SubmissionDetailPage() {
   const usersById = new Map(users.data?.map((u) => [u.id, u]))
   const country = countries.data?.find((c) => c.code === s.insured_country)
   const docsById = new Map(docs.data?.map((d) => [d.id, d]))
+  // Premium lives on bound submissions (and on any that already have installments)
+  const showPremium = s.status === 'bound' || (premiumRows.data?.length ?? 0) > 0
+  // Bound submissions open on Premium unless the user picked another tab
+  const activeTab = tab === null ? (showPremium ? 'premium' : 'timeline') : tab === 'premium' && !showPremium ? 'timeline' : tab
   // The first time each status was reached (history is newest first)
   const reachedAt: Partial<Record<SubmissionStatus, string>> = { received: s.received_at ?? undefined }
   for (const h of [...(history.data ?? [])].reverse()) reachedAt[h.to_status] ??= h.changed_at
@@ -198,12 +207,19 @@ export function SubmissionDetailPage() {
 
           <Card>
             <CardContent>
-              <Tabs defaultValue="timeline">
+              <Tabs value={activeTab} onValueChange={setTab}>
                 <TabsList>
+                  {showPremium && <TabsTrigger value="premium">{t('prem.tab')}</TabsTrigger>}
                   <TabsTrigger value="timeline">{t('sub.tabs.timeline')}</TabsTrigger>
                   <TabsTrigger value="documents">{t('sub.tabs.documents')} ({docs.data?.length ?? 0})</TabsTrigger>
                   <TabsTrigger value="changes">{t('sub.tabs.changes')}</TabsTrigger>
                 </TabsList>
+
+                {showPremium && (
+                  <TabsContent value="premium">
+                    <PremiumTab submission={s} startEditor={scheduleStep} onEditorStarted={() => setScheduleStep(false)} />
+                  </TabsContent>
+                )}
 
                 <TabsContent value="timeline">
                   <ol className="relative ml-2 border-l pl-6">
@@ -318,7 +334,18 @@ export function SubmissionDetailPage() {
         </div>
       </div>
 
-      <StatusChangeDialog submission={s} target={target} documents={docs.data ?? []} onClose={() => setTarget(null)} />
+      <StatusChangeDialog
+        submission={s}
+        target={target}
+        documents={docs.data ?? []}
+        onClose={() => setTarget(null)}
+        onDone={(to) => {
+          if (to === 'bound') {
+            setTab('premium')
+            setScheduleStep(true)
+          }
+        }}
+      />
       <CloseFollowUpDialog followUp={closing} onClose={() => setClosing(null)} />
       <RescheduleFollowUpDialog followUp={rescheduling} onClose={() => setRescheduling(null)} />
     </>

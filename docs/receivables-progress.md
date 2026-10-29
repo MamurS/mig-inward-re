@@ -7,7 +7,7 @@ Approved plan: 6 steps, stop for review after each. Target Supabase project:
 | step | scope | state |
 |---|---|---|
 | 1 | migrations and logic | ✅ applied and tested |
-| 2 | schedule on bind + Premium tab on submission detail | — |
+| 2 | schedule on bind + Premium tab on submission detail | ✅ |
 | 3 | receipts register + new receipt with allocation | — |
 | 4 | receivables register, ageing, follow-ups on the agenda | — |
 | 5 | dashboard and counterparty additions | — |
@@ -63,3 +63,79 @@ views (days overdue 242 / 211, bucket 90+, difference 0.00, unallocated
 2,666.67); job created 2 follow-ups for finance, then 0 on re-run; write-off
 closed its follow-up; signed share change flagged (`basis_mismatch`), not
 recalculated; deleting a receipt reopened its installment; 19 audit rows.
+
+## Step 2 — schedule on bind, Premium tab
+
+Migration `20261029120456_premium_payable_writeoff` (additive):
+- **Return premium is payable, not receivable.** `premium_installments_v.outstanding_amount`
+  is receivable only (original + additional); return premium appears in the new
+  `payable_amount` / `payable_usd`. `premium_schedule_check_v.total_net` counts
+  receivables only; new `payable_total`. Screens show the two side by side and
+  never net them.
+- **Write-off records who.** `premium_installments.written_off_by`, set by the
+  trigger to the user who wrote it off (not grantable); the view adds
+  `written_off_by_name`. A reason is required (check constraint) — tested:
+  refused without one; written off «by Test Finance»; undo clears who / reason.
+
+Screens:
+- **Premium tab** (opens first on bound submissions): expected vs scheduled net
+  and the difference; paid; receivable with the worst ageing badge; payable to
+  the MGA. Installments with type, due date, net (gross − deductions under it),
+  paid, left to settle, status + days-overdue badge, write-off details (who,
+  when, reason). Receipts allocated to the submission. «No longer matches»
+  warning with **Regenerate** when the signed share changed.
+- **Schedule editor** (side panel): one / equal (count, first due date, every
+  month / quarter / half-year) / custom rows; live preview with the database's
+  exact rounding (`src/features/premium/schedule.ts`, unit-tested against the
+  step-1 DB results); a total that differs from the expected premium is allowed
+  and flagged.
+- **After binding** the page switches to Premium and opens the editor.
+- **Additional / return premium** (positive amount entered; return stored
+  negative), **write off** (reason required), **undo write-off**, **mark return
+  premium paid to MGA** — the last three for finance / admin only.
+- `Field` now links its label to the control automatically (screen readers and
+  tests find every field by its label).
+- Offline mock: premium tables, the three views computed on read,
+  `generate_premium_schedule`, and status changes (`e2e/support/premium.ts`).
+- Tests: `e2e/premium.spec.ts` (7) — payable shown separately (1,400.00 owed to
+  the MGA), equal schedule matches the expected premium, a differing custom
+  schedule is flagged, binding opens the schedule step, write-off needs a reason
+  and shows «Written off by Nodira Saidova», return premium settles, underwriter
+  and management see no finance actions. Totals: vitest 13, Playwright 39.
+
+## Review items (asked with step 2)
+
+1. **SECURITY DEFINER functions the advisor lists** — all 11 have
+   `search_path = ''`, EXECUTE revoked from `public` and `anon` (checked in
+   `pg_proc` with `has_function_privilege`):
+
+   | function | what it checks inside |
+   |---|---|
+   | `admin_update_user` | raises unless `has_role('admin')`; refuses removing your own admin access |
+   | `change_submission_status` | raises unless `has_role('admin','underwriter')`; then the status machine's own rules |
+   | `generate_premium_schedule` | raises unless `can_edit_premium_schedule` (admin, finance, or the submission's own underwriter); bound only; refuses once money is allocated |
+   | `run_daily_follow_ups_now` | raises unless `has_role('admin')` |
+   | `run_daily_premium_follow_ups_now` | raises unless `has_role('admin')` |
+   | `auth_role` | returns only the caller's own role (`auth.uid()`), null if inactive |
+   | `has_role` | true / false about the caller's own role |
+   | `is_app_user` | true / false: caller has an active role |
+   | `can_write_entity` | true / false: may the caller write that entity type |
+   | `can_edit_premium_schedule` | true / false about the caller and one submission |
+   | `is_own_installment` | true / false: the caller is the underwriter of that installment's submission (UUID-checked input) |
+
+   The last six are policy helpers: definer so RLS on `profiles` doesn't
+   recurse; they only answer questions about the caller and reveal no data.
+   The other 29 definer functions (triggers, internal workers, the cron jobs)
+   are not executable by `anon` or `authenticated` at all.
+2. **Return premium as payable** — done (above).
+3. **Cross-currency allocation preview** (converted amount, rate both ways) —
+   in step 3 with the allocation form.
+4. **Finance team follow-ups** — closing one records who closed it already
+   (`follow_ups.done_by` is set by the trigger to `auth.uid()`, not grantable;
+   `follow_ups_v.done_by_name`); showing them on every finance user's agenda is
+   in step 4 with the agenda changes.
+5. **Write-off reason, who and when** — done (above).
+6. **Status RPC share-argument typing** — restored and now kept by
+   `scripts/write-db-types.mjs` (`p_written_share_pct` / `p_signed_share_pct`:
+   `number | string`); the build fails if it is ever lost (the bind dialog
+   passes exact decimal strings).

@@ -9,4 +9,6 @@ export const can = {
   viewDashboard: (r: AppRole | null) => r === 'admin' || r === 'management',
   editSubmissions: (r: AppRole | null) => r === 'admin' || r === 'underwriter',
   manageAdmin: (r: AppRole | null) => r === 'admin',
+  /** Receipts, allocations, write-offs, settling return premium. */
+  manageFinance: (r: AppRole | null) => r === 'admin' || r === 'finance',
 }

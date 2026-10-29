@@ -24,10 +24,12 @@ type Props = {
   target: SubmissionStatus | null
   documents: Tables<'documents'>[]
   onClose: () => void
+  /** Called after a status change succeeded (the page opens the premium schedule step after binding). */
+  onDone?: (status: SubmissionStatus) => void
 }
 
 /** Collects exactly what each transition needs; the database re-checks every rule. */
-export function StatusChangeDialog({ submission, target, documents, onClose }: Props) {
+export function StatusChangeDialog({ submission, target, documents, onClose, onDone }: Props) {
   const { t } = useTranslation()
   const qc = useQueryClient()
   const [comment, setComment] = useState('')
@@ -107,6 +109,7 @@ export function StatusChangeDialog({ submission, target, documents, onClose }: P
       ])
       toast.success(t('statusDlg.done', { status: t(`status.${target}`) }))
       onClose()
+      onDone?.(target!)
     } catch (e) {
       setError(errorMessage(e))
     } finally {

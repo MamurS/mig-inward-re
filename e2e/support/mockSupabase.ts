@@ -7,6 +7,7 @@
  */
 import type { BrowserContext, Route } from '@playwright/test'
 import { TABLES, USERS, fxRate, type FixtureRole } from './fixtures'
+import { generateSchedule, normalizePremium, premiumSeed, premiumViews } from './premium'
 
 const PROJECT_REF = 'jltrtqwaxvsrnqmjemzc'
 type Row = Record<string, unknown>
@@ -128,6 +129,9 @@ function sortRows(rows: Row[], order: string | null): Row[] {
 /** Installs the mock and a signed-in session for `role` on a browser context. */
 export async function installMock(context: BrowserContext, role: FixtureRole | null = 'admin', lang: 'en' | 'ru' | 'uz' = 'en') {
   const db: Record<string, Row[]> = Object.fromEntries(Object.entries(TABLES).map(([k, v]) => [k, structuredClone(v)]))
+  Object.assign(db, premiumSeed(db.submissions_v))
+  normalizePremium(db, null)
+  const PREMIUM_VIEWS = new Set(['premium_installments_v', 'premium_receipts_v', 'premium_schedule_check_v'])
 
   const user = role ? authUser(role) : null
   await context.addInitScript(
@@ -173,17 +177,45 @@ export async function installMock(context: BrowserContext, role: FixtureRole | n
     if (rpc) {
       const args = (req.postDataJSON() ?? {}) as Record<string, string>
       if (rpc[1] === 'fx_rate_to_usd') return json(fxRate(args.p_currency, args.p_date))
+      if (rpc[1] === 'change_submission_status') {
+        const a = args as unknown as { p_submission_id: string; p_to_status: string; p_signed_share_pct?: string; p_written_share_pct?: string; p_offer_valid_until?: string }
+        const now = new Date().toISOString()
+        for (const t of ['submissions', 'submissions_v']) {
+          const r = db[t].find((x) => x.id === a.p_submission_id)
+          if (!r) continue
+          r.status = a.p_to_status
+          r.status_changed_at = now
+          if (a.p_written_share_pct) r.written_share_pct = Number(a.p_written_share_pct)
+          if (a.p_offer_valid_until) r.offer_valid_until = a.p_offer_valid_until
+          if (a.p_to_status === 'bound') {
+            r.signed_share_pct = Number(a.p_signed_share_pct ?? r.written_share_pct)
+            r.share_pct = r.signed_share_pct
+            r.bound_at = now
+          }
+        }
+        return json(db.submissions.find((x) => x.id === a.p_submission_id) ?? {})
+      }
+      if (rpc[1] === 'generate_premium_schedule') {
+        const out = generateSchedule(db, args.p_submission_id, (args as unknown as { p_installments?: { due_date: string; gross_amount: string }[] }).p_installments ?? null)
+        normalizePremium(db, user?.id ?? null)
+        return out.error ? json({ message: out.error, code: '23514' }, 400) : json(out.data)
+      }
       return json({})
     }
 
     const m = /^\/rest\/v1\/([a-z_]+)$/.exec(url.pathname)
     if (!m) return json({ message: 'not found' }, 404)
     const table = m[1]
+    if (PREMIUM_VIEWS.has(table)) Object.assign(db, premiumViews(db, fxRate))
     const rows = (db[table] ??= [])
     const params = url.searchParams
 
     if (method === 'GET' || method === 'HEAD') {
       let out = sortRows(filterRows(rows, params), params.get('order'))
+      // embedded receipt on allocations: select=*,premium_receipts(...)
+      if (table === 'premium_allocations' && (params.get('select') ?? '').includes('premium_receipts(')) {
+        out = out.map((a) => ({ ...a, premium_receipts: (db.premium_receipts ?? []).find((r) => r.id === a.receipt_id) ?? null }))
+      }
       const total = out.length
       const offset = Number(params.get('offset') ?? 0)
       const limit = params.get('limit') ? Number(params.get('limit')) : undefined
@@ -200,12 +232,14 @@ export async function installMock(context: BrowserContext, role: FixtureRole | n
       const items = (Array.isArray(body) ? body : [body]) as Row[]
       const created = items.map((i) => ({ id: crypto.randomUUID(), created_at: new Date().toISOString(), ...i }))
       rows.push(...created)
+      if (table.startsWith('premium_')) normalizePremium(db, user?.id ?? null)
       return json((req.headers()['accept'] ?? '').includes('vnd.pgrst.object') ? created[0] : created, 201)
     }
     if (method === 'PATCH') {
       const patch = req.postDataJSON() as Row
       const hit = filterRows(rows, params)
       for (const r of hit) Object.assign(r, patch)
+      if (table.startsWith('premium_')) normalizePremium(db, user?.id ?? null)
       return json((req.headers()['accept'] ?? '').includes('vnd.pgrst.object') ? hit[0] ?? null : hit)
     }
     if (method === 'DELETE') {
