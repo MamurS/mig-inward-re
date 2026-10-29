@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 
-/** Label + control + error message, used by all forms. */
+/** Label above the control, then the error (after blur) or a hint — used by all forms. */
 export function Field({
   label,
   htmlFor,
@@ -21,13 +21,13 @@ export function Field({
   children: ReactNode
 }) {
   return (
-    <div className={cn('grid content-start gap-1.5', className)}>
-      <Label htmlFor={htmlFor} className="text-xs font-medium text-muted-foreground">
+    <div className={cn('grid content-start gap-2', className)}>
+      <Label htmlFor={htmlFor} className="text-small font-medium text-foreground">
         {label}
-        {required && <span className="text-destructive">*</span>}
+        {required && <span className="text-destructive" aria-hidden>*</span>}
       </Label>
       {children}
-      {error ? <p className="text-xs text-destructive">{error}</p> : hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
+      {error ? <p role="alert" className="text-caption text-destructive">{error}</p> : hint ? <p className="text-caption text-muted-foreground">{hint}</p> : null}
     </div>
   )
 }
@@ -36,8 +36,8 @@ export function Field({
 export function InfoItem({ label, children, className }: { label: string; children: ReactNode; className?: string }) {
   return (
     <div className={cn('min-w-0', className)}>
-      <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className="mt-0.5 text-sm break-words">{children ?? '—'}</dd>
+      <dt className="text-caption text-muted-foreground">{label}</dt>
+      <dd className="mt-0.5 text-body break-words">{children ?? '—'}</dd>
     </div>
   )
 }

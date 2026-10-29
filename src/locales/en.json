@@ -28,7 +28,9 @@
     "invalidEmail": "Enter a valid email address",
     "passwordRequired": "Enter your password",
     "notConfigured": "The app is not connected to the database. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.",
-    "invalidCredentials": "Wrong email or password"
+    "invalidCredentials": "Wrong email or password",
+    "brandLine": "Every inward risk, from first email to bound line.",
+    "brandSub": "Submissions, offers, follow-ups and the numbers behind them — in one place, in three languages."
   },
   "access": {
     "noAccessTitle": "Waiting for access",
@@ -494,5 +496,93 @@
       "none": "No runs yet.",
       "result": "{{repeats}} new reminders, {{expiry}} expired offers flagged, {{noresp}} moved to \"No response\""
     }
+  },
+  "tokens": {
+    "title": "Design tokens",
+    "subtitle": "Colours, scales, type, spacing and motion — the values every screen uses",
+    "ramps": "Colour ramps (OKLCH, equal lightness per step)",
+    "pairing": "Pairing rule: text needs 5 steps between colours (worst pair {{text}} : 1, need {{tmin}}); icons and large text need 4 (worst {{icon}} : 1, need {{gmin}}).",
+    "canvas": "Page background",
+    "statusScale": "Submission status scale",
+    "agingScale": "Overdue ageing scale",
+    "inkOnTint": "text on tint",
+    "solidOnWhite": "solid on white",
+    "whiteOnSolid": "white on solid",
+    "days": "{{range}} days",
+    "data": "Chart colours: categorical and sequential",
+    "type": "Type scale",
+    "sample": "Premium received 1 250 000.00",
+    "glyphs": "Cyrillic and Uzbek glyphs",
+    "spaceMotion": "Spacing (4 px grid) and motion",
+    "playMotion": "Play motion",
+    "reducedMotion": "With «reduce motion» switched on in the system, everything moves instantly.",
+    "sampleTable": "Sample table",
+    "amount": "Amount"
+  },
+  "ui": {
+    "actions": "Actions",
+    "agendaClear": "Nothing is waiting on you — new follow-ups appear here as they fall due.",
+    "agingBucket": "{{bucket}} days overdue",
+    "bulkActions": "Actions for selected rows",
+    "clearSelection": "Clear",
+    "columns": "Columns",
+    "daysOverdue": "{{count}} d overdue",
+    "density": "Density",
+    "densityComfortable": "Comfortable · 56 px",
+    "densityCompact": "Compact · 40 px",
+    "densityDefault": "Standard · 48 px",
+    "editSubmission": "Edit",
+    "emptyFiltered": "Try fewer filters or a shorter search.",
+    "exportSelected": "Export selected",
+    "openCounterparty": "Open counterparty",
+    "openSubmission": "Open submission",
+    "quickView": "Quick view",
+    "rows": "Rows: {{count}}",
+    "saved": "Saved",
+    "selectAll": "Select all rows",
+    "selectRow": "Select row",
+    "selected": "{{count}} selected",
+    "showColumns": "Show columns",
+    "form": {
+      "createSubmission": "Create submission",
+      "fixErrors": "Fix the highlighted fields ({{count}})",
+      "moveFollowUp": "Move follow-up",
+      "noChanges": "No changes yet",
+      "saveChanges": "Save changes",
+      "saveDetails": "Save details",
+      "saveSettings": "Save settings",
+      "unsaved": "Unsaved changes",
+      "closeFollowUp": "Close follow-up",
+      "requiredProgress": "Required: {{done}} of {{total}}"
+    },
+    "kpi": {
+      "followUpsPastDue": "follow-ups past due",
+      "offeredOrNoResponse": "offered or no response",
+      "vsLastMonth": "vs same days last month",
+      "vsLastYear": "vs same date last year"
+    },
+    "palette": {
+      "actions": "Actions",
+      "button": "Search or jump to…",
+      "goTo": "Go to",
+      "nothing": "Nothing found. Try a reference like SUB-2026 or a name.",
+      "placeholder": "Type a page, a reference or a name…",
+      "switchLanguage": "Switch language to {{lng}}",
+      "title": "Search and commands"
+    },
+    "allCaughtUp": "All caught up",
+    "greeting": {
+      "morning": "Good morning, {{name}}",
+      "afternoon": "Good afternoon, {{name}}",
+      "evening": "Good evening, {{name}}"
+    },
+    "daysWaiting": "{{count}} d waiting",
+    "editDetails": "Edit details",
+    "thisYear": "this year",
+    "openOffers": "Open offers: {{count}}",
+    "overdueFollowUps": "Overdue follow-ups: {{count}}",
+    "noSubmissionsYet": "No submissions from them yet",
+    "moreFilters": "More filters",
+    "resetColumns": "Reset to default"
   }
 }

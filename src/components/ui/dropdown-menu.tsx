@@ -27,7 +27,7 @@ function DropdownMenuItem({ className, ...props }: React.ComponentProps<typeof P
   return (
     <P.Item
       className={cn(
-        "relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none select-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg:not([class*='size-'])]:size-4",
+        "relative flex cursor-default items-center gap-2 rounded-sm px-2 py-2 text-body outline-none select-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg:not([class*='size-'])]:size-4",
         className,
       )}
       {...props}
@@ -39,7 +39,7 @@ function DropdownMenuRadioItem({ className, children, ...props }: React.Componen
   return (
     <P.RadioItem
       className={cn(
-        'relative flex cursor-default items-center gap-2 rounded-sm py-1.5 pr-2 pl-8 text-sm outline-none select-none focus:bg-accent focus:text-accent-foreground',
+        'relative flex cursor-default items-center gap-2 rounded-sm py-2 pr-2 pl-8 text-body outline-none select-none focus:bg-accent focus:text-accent-foreground',
         className,
       )}
       {...props}
@@ -54,8 +54,27 @@ function DropdownMenuRadioItem({ className, children, ...props }: React.Componen
   )
 }
 
+function DropdownMenuCheckboxItem({ className, children, ...props }: React.ComponentProps<typeof P.CheckboxItem>) {
+  return (
+    <P.CheckboxItem
+      className={cn(
+        'relative flex cursor-default items-center gap-2 rounded-sm py-2 pr-2 pl-8 text-body outline-none select-none focus:bg-accent focus:text-accent-foreground data-[disabled]:opacity-50',
+        className,
+      )}
+      {...props}
+    >
+      <span className="pointer-events-none absolute left-2 flex size-4 items-center justify-center">
+        <P.ItemIndicator>
+          <CheckIcon className="size-4" />
+        </P.ItemIndicator>
+      </span>
+      {children}
+    </P.CheckboxItem>
+  )
+}
+
 function DropdownMenuLabel({ className, ...props }: React.ComponentProps<typeof P.Label>) {
-  return <P.Label className={cn('px-2 py-1.5 text-sm font-medium', className)} {...props} />
+  return <P.Label className={cn('px-2 py-2 text-body font-medium', className)} {...props} />
 }
 
 function DropdownMenuSeparator({ className, ...props }: React.ComponentProps<typeof P.Separator>) {
@@ -70,6 +89,7 @@ export {
   DropdownMenuItem,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
+  DropdownMenuCheckboxItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
 }

@@ -15,14 +15,27 @@ export const NEXT_STATUSES: Record<SubmissionStatus, SubmissionStatus[]> = {
   ntu: [],
 }
 
+/** Badge classes per status: the status scale's tint, hairline and ink
+ * (DESIGN.md «Submission status scale»). One fixed colour per meaning. */
 export const STATUS_STYLES: Record<SubmissionStatus, string> = {
-  received: 'bg-slate-100 text-slate-700 border-slate-200',
-  under_review: 'bg-sky-50 text-sky-700 border-sky-200',
-  offered: 'bg-amber-50 text-amber-800 border-amber-200',
-  no_response: 'bg-orange-50 text-orange-800 border-orange-200',
-  bound: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  declined: 'bg-rose-50 text-rose-700 border-rose-200',
-  ntu: 'bg-zinc-100 text-zinc-600 border-zinc-200',
+  received: 'bg-status-received-tint text-status-received-deep border-status-received-line',
+  under_review: 'bg-status-under-review-tint text-status-under-review-deep border-status-under-review-line',
+  offered: 'bg-status-offered-tint text-status-offered-deep border-status-offered-line',
+  no_response: 'bg-status-no-response-tint text-status-no-response-deep border-status-no-response-line',
+  bound: 'bg-status-bound-tint text-status-bound-deep border-status-bound-line',
+  declined: 'bg-status-declined-tint text-status-declined-deep border-status-declined-line',
+  ntu: 'bg-status-ntu-tint text-status-ntu-deep border-status-ntu-line',
+}
+
+/** The solid of each status (funnel bars, chart marks, dots). */
+export const STATUS_SOLID: Record<SubmissionStatus, string> = {
+  received: 'var(--color-status-received)',
+  under_review: 'var(--color-status-under-review)',
+  offered: 'var(--color-status-offered)',
+  no_response: 'var(--color-status-no-response)',
+  bound: 'var(--color-status-bound)',
+  declined: 'var(--color-status-declined)',
+  ntu: 'var(--color-status-ntu)',
 }
 
 export const DOC_TYPES: Enums<'doc_type'>[] = [

@@ -27,8 +27,8 @@ export function UserMenu() {
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel className="font-normal">
           <div className="truncate font-medium">{name}</div>
-          <div className="truncate text-xs text-muted-foreground">{profile?.email}</div>
-          {role && <div className="mt-1 text-xs text-muted-foreground">{t(`roles.${role}`)}</div>}
+          <div className="truncate text-caption text-muted-foreground">{profile?.email}</div>
+          {role && <div className="mt-1 text-caption text-muted-foreground">{t(`roles.${role}`)}</div>}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={() => void signOut()}>

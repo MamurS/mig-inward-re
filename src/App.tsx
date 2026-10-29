@@ -15,6 +15,7 @@ const DashboardPage = lazy(() => import('@/features/dashboard/DashboardPage').th
 const CounterpartiesPage = lazy(() => import('@/features/counterparties/CounterpartiesPage').then((m) => ({ default: m.CounterpartiesPage })))
 const CounterpartyDetailPage = lazy(() => import('@/features/counterparties/CounterpartyDetailPage').then((m) => ({ default: m.CounterpartyDetailPage })))
 const AdminPage = lazy(() => import('@/features/admin/AdminPage').then((m) => ({ default: m.AdminPage })))
+const TokensPage = lazy(() => import('@/features/admin/TokensPage').then((m) => ({ default: m.TokensPage })))
 const SubmissionDetailPage = lazy(() => import('@/features/submissions/SubmissionDetailPage').then((m) => ({ default: m.SubmissionDetailPage })))
 
 function HomeRedirect() {
@@ -55,6 +56,12 @@ export default function App() {
             path="admin"
             element={
               <RequireRole roles={['admin']}>{page(<AdminPage />)}</RequireRole>
+            }
+          />
+          <Route
+            path="admin/tokens"
+            element={
+              <RequireRole roles={['admin']}>{page(<TokensPage />)}</RequireRole>
             }
           />
           <Route path="*" element={<NotFoundPage />} />

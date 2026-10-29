@@ -111,13 +111,13 @@ export function DocumentsPanel({
           onDrop={(e) => { e.preventDefault(); setDragOver(false); addFiles(e.dataTransfer.files) }}
           onClick={() => inputRef.current?.click()}
           className={cn(
-            'flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-6 text-center text-sm text-muted-foreground transition-colors',
+            'flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-6 text-center text-body text-muted-foreground transition-colors',
             dragOver ? 'border-primary bg-primary/5' : 'hover:bg-muted/50',
           )}
         >
           <UploadCloud className="size-6" />
           <span>{t('docs.dropHere')}</span>
-          <span className="text-xs">{t('docs.maxSize')}</span>
+          <span className="text-caption">{t('docs.maxSize')}</span>
           <input ref={inputRef} type="file" multiple hidden onChange={(e) => { addFiles(e.target.files); e.target.value = '' }} />
         </div>
       )}
@@ -127,8 +127,8 @@ export function DocumentsPanel({
           {staged.map((s) => (
             <div key={s.key} className="flex flex-wrap items-center gap-2">
               <FileText className="size-4 shrink-0 text-muted-foreground" />
-              <span className="min-w-0 flex-1 truncate text-sm" title={s.file.name}>{s.file.name}</span>
-              <span className="text-xs text-muted-foreground">{formatBytes(s.file.size)}</span>
+              <span className="min-w-0 flex-1 truncate text-body" title={s.file.name}>{s.file.name}</span>
+              <span className="text-caption text-muted-foreground">{formatBytes(s.file.size)}</span>
               <div className="w-44">
                 <NativeSelect
                   value={s.docType}
@@ -154,7 +154,7 @@ export function DocumentsPanel({
       )}
 
       {documents.length === 0 ? (
-        <p className="py-4 text-center text-sm text-muted-foreground">{t('docs.none')}</p>
+        <p className="py-4 text-center text-body text-muted-foreground">{t('docs.none')}</p>
       ) : (
         <Table>
           <TableHeader>
@@ -178,11 +178,11 @@ export function DocumentsPanel({
                 </TableCell>
                 <TableCell>
                   {t(`docType.${d.doc_type}`)}
-                  {evidenceIds?.has(d.id) && <span className="ml-1.5 rounded bg-emerald-50 px-1.5 py-0.5 text-xs text-emerald-700">{t('docs.evidence')}</span>}
+                  {evidenceIds?.has(d.id) && <span className="ml-2 rounded bg-success-100 px-2 py-0.5 text-caption text-success-700">{t('docs.evidence')}</span>}
                 </TableCell>
                 <TableCell>v{d.version}</TableCell>
                 <TableCell>{formatBytes(d.size_bytes)}</TableCell>
-                <TableCell className="text-xs text-muted-foreground">
+                <TableCell className="text-caption text-muted-foreground">
                   {userName(usersById.get(d.uploaded_by ?? ''))}
                   <br />
                   {formatDateTime(d.uploaded_at)}

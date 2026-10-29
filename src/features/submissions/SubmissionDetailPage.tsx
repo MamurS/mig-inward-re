@@ -1,15 +1,19 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { AlertTriangle, ArrowLeft, ArrowRight, FileText, Pencil } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, ArrowRight, Clock, FileText, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { StatusBadge } from '@/components/StatusBadge'
+import { Badge } from '@/components/ui/badge'
+import { Amount } from '@/components/Amount'
+import { cn } from '@/lib/utils'
+import { StatusStepper } from './StatusStepper'
 import { InfoItem } from '@/components/Field'
-import { FullPageSpinner } from '@/components/FullPageSpinner'
+import { Skeleton } from '@/components/Skeleton'
 import { useAuth } from '@/auth/AuthProvider'
 import { can } from '@/lib/roles'
 import { NEXT_STATUSES, type SubmissionStatus } from '@/lib/status'
@@ -41,9 +45,19 @@ export function SubmissionDetailPage() {
   const [closing, setClosing] = useState<FollowUp | null>(null)
   const [rescheduling, setRescheduling] = useState<FollowUp | null>(null)
 
-  if (sub.isLoading) return <FullPageSpinner />
-  if (sub.error) return <p className="p-6 text-sm text-destructive">{errorMessage(sub.error)}</p>
-  if (!sub.data) return <p className="p-6 text-sm text-muted-foreground">{t('sub.notFound')}</p>
+  if (sub.isLoading)
+    return (
+      <div className="grid gap-4" aria-busy>
+        <Skeleton className="h-16 w-2/3" />
+        <Skeleton className="h-56 rounded-xl" />
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <Skeleton className="h-96 rounded-xl" />
+          <Skeleton className="h-96 rounded-xl" />
+        </div>
+      </div>
+    )
+  if (sub.error) return <p className="p-6 text-body text-destructive">{errorMessage(sub.error)}</p>
+  if (!sub.data) return <p className="p-6 text-body text-muted-foreground">{t('sub.notFound')}</p>
 
   const s = sub.data
   const editable = can.editSubmissions(role)
@@ -51,6 +65,9 @@ export function SubmissionDetailPage() {
   const usersById = new Map(users.data?.map((u) => [u.id, u]))
   const country = countries.data?.find((c) => c.code === s.insured_country)
   const docsById = new Map(docs.data?.map((d) => [d.id, d]))
+  // The first time each status was reached (history is newest first)
+  const reachedAt: Partial<Record<SubmissionStatus, string>> = { received: s.received_at ?? undefined }
+  for (const h of [...(history.data ?? [])].reverse()) reachedAt[h.to_status] ??= h.changed_at
 
   // Human-readable values in the change log (names instead of ids, formatted dates)
   const fmtValue = (field: string, v: unknown): string => {
@@ -69,14 +86,14 @@ export function SubmissionDetailPage() {
   return (
     <>
       <div className="mb-2">
-        <Link to="/submissions" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+        <Link to="/submissions" className="inline-flex items-center gap-1 text-body text-muted-foreground hover:text-foreground">
           <ArrowLeft className="size-4" />
           {t('pages.submissions.title')}
         </Link>
       </div>
       <PageHeader
-        title={`${s.ref_no} · ${s.insured_name}`}
-        subtitle={[s.mga_name, s.lob_name, s.currency].filter(Boolean).join(' · ')}
+        title={s.insured_name ?? s.ref_no ?? ''}
+        subtitle={[s.ref_no, s.mga_name, s.lob_name, s.currency].filter(Boolean).join(' · ')}
         actions={
           editable && (
             <Button variant="outline" asChild>
@@ -89,28 +106,55 @@ export function SubmissionDetailPage() {
         }
       />
 
-      {/* Status bar */}
-      <Card className="mb-4 py-4">
-        <CardContent className="flex flex-wrap items-center gap-3">
-          <StatusBadge status={s.status} className="px-3 py-1 text-sm" />
-          <span className="text-xs text-muted-foreground">{t('sub.since', { date: formatDateTime(s.status_changed_at) })}</span>
-          {s.offer_expired && (
-            <span className="inline-flex items-center gap-1 rounded bg-amber-50 px-2 py-0.5 text-xs text-amber-800">
-              <AlertTriangle className="size-3.5" />
-              {t('sub.offerExpiredOn', { date: formatDate(s.offer_valid_until) })}
-            </span>
-          )}
-          {s.decision_reason && <span className="text-sm text-muted-foreground">“{s.decision_reason}”</span>}
-          <div className="flex-1" />
-          {editable && next.map((n) => (
-            <Button key={n} size="sm" variant={n === 'declined' || n === 'ntu' ? 'outline' : 'default'} onClick={() => setTarget(n)}>
-              {t(`statusAction.${n}`)}
-            </Button>
-          ))}
+      {/* Summary: where it stands, how it got here, what it is worth, what is next */}
+      <Card className="mb-4 gap-0 py-0">
+        <CardContent className="grid gap-5 p-5">
+          <div className="flex flex-wrap items-center gap-3">
+            <StatusBadge status={s.status} className="px-3 py-1 text-body" />
+            <span className="text-caption text-muted-foreground">{t('sub.since', { date: formatDateTime(s.status_changed_at) })}</span>
+            {s.offer_expired && (
+              <Badge tone="warning">
+                <AlertTriangle />
+                {t('sub.offerExpiredOn', { date: formatDate(s.offer_valid_until) })}
+              </Badge>
+            )}
+            {s.decision_reason && <span className="text-body text-muted-foreground">“{s.decision_reason}”</span>}
+            <div className="flex-1" />
+            {editable && next.map((n) => (
+              <Button key={n} size="sm" variant={n === 'declined' || n === 'ntu' ? 'outline' : 'default'} onClick={() => setTarget(n)}>
+                {t(`statusAction.${n}`)}
+              </Button>
+            ))}
+          </div>
+          {s.status && <StatusStepper status={s.status} reachedAt={reachedAt} />}
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-4 border-t pt-4 md:grid-cols-3 xl:grid-cols-5">
+            <InfoItem label={`${t('fields.ourGrossPremium')}`}>
+              <Amount value={s.our_gross_premium} currency={s.currency} className="text-lead font-semibold" />
+            </InfoItem>
+            <InfoItem label={t('fields.ourNetPremium')}>
+              <Amount value={s.our_net_premium} currency={s.currency} className="text-lead font-semibold" />
+            </InfoItem>
+            <InfoItem label={t('fields.ourGrossUsd')}>
+              <Amount value={s.our_gross_premium_usd} currency="USD" human className="text-lead font-semibold" />
+            </InfoItem>
+            <InfoItem label={s.status === 'bound' ? t('fields.signedSharePct') : t('fields.writtenSharePct')}>
+              <span className="text-lead font-semibold num">{formatPct(s.share_pct)}</span>
+            </InfoItem>
+            <InfoItem label={t('fields.nextFollowUp')}>
+              {s.next_follow_up_at ? (
+                <span className={cn('inline-flex items-center gap-1 text-lead font-semibold', s.follow_up_overdue && 'text-destructive')}>
+                  {s.follow_up_overdue && <Clock className="size-4" />}
+                  {formatDate(s.next_follow_up_at)}
+                </span>
+              ) : (
+                <span className="text-lead text-muted-foreground">—</span>
+              )}
+            </InfoItem>
+          </dl>
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 xl:grid-cols-[1fr_360px]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="grid min-w-0 gap-4">
           <Card>
             <CardHeader><CardTitle>{t('sub.section.source')} & {t('sub.section.risk')}</CardTitle></CardHeader>
@@ -168,22 +212,22 @@ export function SubmissionDetailPage() {
                       return (
                         <li key={h.id} className="relative pb-5 last:pb-0">
                           <span className="absolute top-1 -left-[31px] flex size-3 items-center justify-center rounded-full border-2 border-background bg-primary" />
-                          <div className="flex flex-wrap items-center gap-2 text-sm">
+                          <div className="flex flex-wrap items-center gap-2 text-body">
                             {h.from_status && <><StatusBadge status={h.from_status} /><ArrowRight className="size-3.5 text-muted-foreground" /></>}
                             <StatusBadge status={h.to_status} />
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-caption text-muted-foreground">
                               {formatDateTime(h.changed_at)} · {h.changed_by ? userName(usersById.get(h.changed_by)) : t('sub.system')}
                             </span>
                           </div>
                           {(h.written_share_pct !== null || h.signed_share_pct !== null) && h.to_status !== 'received' && (
-                            <p className="mt-1 text-xs text-muted-foreground">
+                            <p className="mt-1 text-caption text-muted-foreground">
                               {t('fields.writtenSharePct')}: {formatPct(h.written_share_pct)}
                               {h.signed_share_pct !== null && ` · ${t('fields.signedSharePct')}: ${formatPct(h.signed_share_pct)}`}
                             </p>
                           )}
-                          {h.comment && <p className="mt-1 text-sm">{h.comment}</p>}
+                          {h.comment && <p className="mt-1 text-body">{h.comment}</p>}
                           {doc && (
-                            <button type="button" className="mt-1 inline-flex items-center gap-1 text-xs text-primary hover:underline" onClick={() => openDocument(doc).catch((e) => toast.error(errorMessage(e)))}>
+                            <button type="button" className="mt-1 inline-flex items-center gap-1 text-caption text-primary hover:underline" onClick={() => openDocument(doc).catch((e) => toast.error(errorMessage(e)))}>
                               <FileText className="size-3.5" />
                               {doc.file_name}
                             </button>
@@ -206,10 +250,10 @@ export function SubmissionDetailPage() {
 
                 <TabsContent value="changes">
                   {audit.data?.length ? (
-                    <ul className="grid gap-3 text-sm">
+                    <ul className="grid gap-3 text-body">
                       {audit.data.map((a) => (
                         <li key={a.id} className="border-b pb-2 last:border-0">
-                          <div className="text-xs text-muted-foreground">
+                          <div className="text-caption text-muted-foreground">
                             {formatDateTime(a.changed_at)} · {a.changed_by ? userName(usersById.get(a.changed_by)) : t('sub.system')} · {t(`audit.${a.action}`)}
                           </div>
                           {a.action === 'UPDATE' && a.changed_fields && (
@@ -218,7 +262,7 @@ export function SubmissionDetailPage() {
                                 const oldV = (a.old_data as Record<string, unknown> | null)?.[f]
                                 const newV = (a.new_data as Record<string, unknown> | null)?.[f]
                                 return (
-                                  <div key={f} className="text-xs">
+                                  <div key={f} className="text-caption">
                                     <span className="font-medium">{t(`auditField.${f}`, { defaultValue: f })}</span>:{' '}
                                     <span className="text-muted-foreground line-through">{fmtValue(f, oldV)}</span> → <span>{fmtValue(f, newV)}</span>
                                   </div>
@@ -230,7 +274,7 @@ export function SubmissionDetailPage() {
                       ))}
                     </ul>
                   ) : (
-                    <p className="py-4 text-center text-sm text-muted-foreground">{t('sub.noChanges')}</p>
+                    <p className="py-4 text-center text-body text-muted-foreground">{t('sub.noChanges')}</p>
                   )}
                 </TabsContent>
               </Tabs>
@@ -243,7 +287,7 @@ export function SubmissionDetailPage() {
           <Card>
             <CardHeader>
               <CardTitle>{t('sub.ourShare')}</CardTitle>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-caption text-muted-foreground">
                 {s.share_pct === null ? t('sub.enterShare') : s.status === 'bound' ? t('sub.basisSigned', { pct: formatPct(s.share_pct) }) : t('sub.basisWritten', { pct: formatPct(s.share_pct) })}
               </p>
             </CardHeader>
@@ -265,7 +309,7 @@ export function SubmissionDetailPage() {
               {editable && <AddFollowUpButton entityType="submission" entityId={s.id!} defaultAssignee={s.underwriter_id} />}
             </CardHeader>
             <CardContent className="grid gap-2">
-              {!followUps.data?.length && <p className="text-sm text-muted-foreground">{t('fu.none')}</p>}
+              {!followUps.data?.length && <p className="text-body text-muted-foreground">{t('fu.none')}</p>}
               {followUps.data?.map((f) => (
                 <FollowUpItem key={f.id} followUp={f} onDone={setClosing} onReschedule={setRescheduling} />
               ))}

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
-import { useForm, useWatch, type UseFormRegisterReturn } from 'react-hook-form'
+import { Controller, useForm, useWatch, type UseFormRegisterReturn } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useTranslation } from 'react-i18next'
@@ -12,6 +12,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { NativeSelect } from '@/components/ui/native-select'
+import { SegmentedControl } from '@/components/SegmentedControl'
+import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field } from '@/components/Field'
 import { StatusBadge } from '@/components/StatusBadge'
@@ -83,6 +85,9 @@ const toStr = (v: number | string | null | undefined) => (v === null || v === un
 const orNull = (v: string) => (v.trim() === '' ? null : v.trim())
 const decOrNull = (v: string) => (v.trim() === '' ? null : cleanDecimal(v))
 
+/** The fields the form marks as required — the footer shows how many are filled. */
+const REQUIRED = ['received_at', 'mga_id', 'source_party_id', 'insured_name', 'currency'] as const
+
 function rowToForm(r: SubmissionRow): FormValues {
   return {
     received_at: r.received_at ?? isoDate(),
@@ -147,7 +152,7 @@ export function SubmissionFormPage() {
   const isEdit = Boolean(id)
   const existing = useSubmission(id)
   if (isEdit && existing.isLoading) return <FullPageSpinner />
-  if (isEdit && !existing.data) return <p className="p-6 text-sm text-muted-foreground">—</p>
+  if (isEdit && !existing.data) return <p className="p-6 text-body text-muted-foreground">—</p>
   return <SubmissionForm existing={existing.data ?? null} />
 }
 
@@ -183,7 +188,7 @@ function SubmissionForm({ existing }: { existing: SubmissionRow | null }) {
     setValue,
     control,
     formState: { errors, isSubmitting, isDirty },
-  } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: defaults, mode: 'onBlur' })
+  } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: defaults, mode: 'onTouched' })
 
   const v = useWatch({ control })
   const sourceTouched = useRef(Boolean(existing))
@@ -224,6 +229,8 @@ function SubmissionForm({ existing }: { existing: SubmissionRow | null }) {
     fxRateToUsd: fx.data ?? null,
   })
 
+  const requiredDone = REQUIRED.filter((k) => Boolean(v[k])).length
+
   const err = (name: keyof FormValues) => {
     const m = errors[name]?.message
     return m ? t(m) : undefined
@@ -262,31 +269,17 @@ function SubmissionForm({ existing }: { existing: SubmissionRow | null }) {
       <PageHeader
         title={existing ? t('sub.editTitle', { ref: existing.ref_no }) : t('sub.newTitle')}
         subtitle={existing ? existing.insured_name ?? undefined : t('sub.newSubtitle')}
-        actions={
-          <>
-            <Button type="button" variant="outline" asChild>
-              <Link to={existing ? `/submissions/${existing.id}` : '/submissions'}>
-                <ArrowLeft />
-                {t('common.cancel')}
-              </Link>
-            </Button>
-            <Button type="submit" disabled={isSubmitting || (Boolean(existing) && !isDirty)}>
-              {isSubmitting ? <Loader2 className="animate-spin" /> : <Save />}
-              {t('common.save')}
-            </Button>
-          </>
-        }
       />
 
       {existing && (
-        <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="mb-4 flex items-center gap-2 text-body text-muted-foreground">
           <StatusBadge status={existing.status} />
           <Info className="size-4" />
           {t('sub.statusViaActions')}
         </div>
       )}
 
-      <div className="grid gap-4 xl:grid-cols-[1fr_340px]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="grid gap-4">
           {/* Source */}
           <Card>
@@ -330,10 +323,22 @@ function SubmissionForm({ existing }: { existing: SubmissionRow | null }) {
                 </NativeSelect>
               </Field>
               <Field label={t('fields.businessType')} htmlFor="business_type">
-                <NativeSelect {...reg('business_type')}>
-                  <option value="facultative">{t('businessType.facultative')}</option>
-                  <option value="binder">{t('businessType.binder')}</option>
-                </NativeSelect>
+                <Controller
+                  control={control}
+                  name="business_type"
+                  render={({ field }) => (
+                    <SegmentedControl
+                      id="business_type"
+                      ariaLabel={t('fields.businessType')}
+                      value={field.value}
+                      onChange={(val) => { field.onChange(val); field.onBlur() }}
+                      options={[
+                        { value: 'facultative' as const, label: t('businessType.facultative') },
+                        { value: 'binder' as const, label: t('businessType.binder') },
+                      ]}
+                    />
+                  )}
+                />
               </Field>
               <Field label={t('fields.underwriter')} htmlFor="underwriter_id">
                 <NativeSelect {...reg('underwriter_id')}>
@@ -437,7 +442,7 @@ function SubmissionForm({ existing }: { existing: SubmissionRow | null }) {
           <Card>
             <CardHeader>
               <CardTitle>{t('sub.liveFigures')}</CardTitle>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-caption text-muted-foreground">
                 {isBound ? t('sub.basisSigned', { pct: formatPct(shareForCalc) }) : shareForCalc ? t('sub.basisWritten', { pct: formatPct(shareForCalc) }) : t('sub.enterShare')}
               </p>
             </CardHeader>
@@ -446,6 +451,35 @@ function SubmissionForm({ existing }: { existing: SubmissionRow | null }) {
             </CardContent>
           </Card>
         </div>
+      </div>
+
+      {/* Sticky footer: the outcome button is always in reach, whatever the scroll */}
+      <div className="sticky bottom-0 z-20 -mx-4 mt-6 flex flex-wrap items-center justify-end gap-3 border-t bg-background/95 px-4 py-3 backdrop-blur md:-mx-6 md:px-6">
+        <span className="mr-auto flex items-center gap-3 text-caption text-muted-foreground">
+          <span className="inline-flex items-center gap-2" aria-label={t('ui.form.requiredProgress', { done: requiredDone, total: REQUIRED.length })}>
+            <span className="flex gap-0.5" aria-hidden>
+              {REQUIRED.map((k) => <span key={k} className={cn('h-1.5 w-4 rounded-full', v[k] ? 'bg-success-600' : 'bg-slate-200')} />)}
+            </span>
+            <span className="num">{t('ui.form.requiredProgress', { done: requiredDone, total: REQUIRED.length })}</span>
+          </span>
+          {Object.keys(errors).length > 0 ? (
+            <span className="font-medium text-destructive">{t('ui.form.fixErrors', { count: Object.keys(errors).length })}</span>
+          ) : isDirty ? (
+            t('ui.form.unsaved')
+          ) : existing ? (
+            t('ui.form.noChanges')
+          ) : null}
+        </span>
+        <Button type="button" variant="outline" asChild>
+          <Link to={existing ? `/submissions/${existing.id}` : '/submissions'}>
+            <ArrowLeft />
+            {t('common.cancel')}
+          </Link>
+        </Button>
+        <Button type="submit" disabled={isSubmitting || (Boolean(existing) && !isDirty)}>
+          {isSubmitting ? <Loader2 className="animate-spin" /> : <Save />}
+          {existing ? t('ui.form.saveChanges') : t('ui.form.createSubmission')}
+        </Button>
       </div>
     </form>
   )
@@ -467,7 +501,7 @@ export function FiguresTable({
 }) {
   const { t } = useTranslation()
   const Row = ({ label, value, strong, muted }: { label: string; value: string; strong?: boolean; muted?: boolean }) => (
-    <div className={`flex items-baseline justify-between gap-3 py-1.5 text-sm ${strong ? 'font-semibold' : ''} ${muted ? 'text-muted-foreground' : ''}`}>
+    <div className={`flex items-baseline justify-between gap-3 py-2 text-body ${strong ? 'font-semibold' : ''} ${muted ? 'text-muted-foreground' : ''}`}>
       <span>{label}</span>
       <span className="tabular-nums">{value}</span>
     </div>
@@ -487,7 +521,7 @@ export function FiguresTable({
       <div>
         <Row label={t('fields.ourGrossUsd')} value={formatAmount(figures.ourGrossUsd)} />
         <Row label={t('fields.ourNetUsd')} value={formatAmount(figures.ourNetUsd)} />
-        <p className="pt-1 text-xs text-muted-foreground">
+        <p className="pt-1 text-caption text-muted-foreground">
           {currency === 'USD' ? '' : fxLoading ? t('common.loading') : fxRate ? t('sub.fxUsed', { rate: fxRate, currency }) : t('sub.noFx', { currency })}
         </p>
       </div>
