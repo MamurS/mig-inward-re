@@ -1,13 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { ArrowDown, ArrowUp, ChevronsUpDown, FilterX, Loader2, Plus, Search, AlertTriangle, Clock } from 'lucide-react'
+import { Eye, FileSpreadsheet, FilterX, Loader2, Pencil, Plus, Search, AlertTriangle, Clock } from 'lucide-react'
+import { toast } from 'sonner'
 import { PageHeader } from '@/components/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { NativeSelect } from '@/components/ui/native-select'
 import { Card } from '@/components/ui/card'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { DataTable, type Column } from '@/components/data/DataTable'
+import { highlight } from '@/components/data/highlight'
+import { EmptyState } from '@/components/EmptyState'
+import { Amount } from '@/components/Amount'
 import { StatusBadge } from '@/components/StatusBadge'
 import { useAuth } from '@/auth/AuthProvider'
 import { can } from '@/lib/roles'
@@ -17,8 +21,9 @@ import { cn } from '@/lib/utils'
 import { errorMessage } from '@/lib/errors'
 import { useCounterparties, useCurrencies, useLinesOfBusiness, useLocalName, useUsers, userName } from '@/hooks/useReference'
 import { activeFilterCount, EMPTY_FILTERS, filtersToParams, parseFilters, type SortKey, type SubmissionFilters } from './filters'
-import { MAX_ROWS, useSubmissionsList } from './api'
-import { ExportButton } from './ExportButton'
+import { MAX_ROWS, useSubmissionsList, type SubmissionRow } from './api'
+import { ExportButton, exportSubmissionsXlsx } from './ExportButton'
+import { SubmissionQuickView } from './SubmissionQuickView'
 
 export function SubmissionsPage() {
   const { t } = useTranslation()
@@ -57,6 +62,65 @@ export function SubmissionsPage() {
   const totalUsd = rows.reduce((s, r) => s + (r.our_gross_premium_usd ?? 0), 0)
   const filterCount = activeFilterCount(filters)
 
+  const [peek, setPeek] = useState<SubmissionRow | null>(null)
+  const clearFilters = () => {
+    setSearch('')
+    setParams(filtersToParams({ ...EMPTY_FILTERS, sort: filters.sort, dir: filters.dir }), { replace: true })
+  }
+
+  const columns: Column<SubmissionRow>[] = [
+    {
+      id: 'ref_no',
+      header: t('fields.refNo'),
+      sortKey: 'ref_no',
+      cell: (r, c) => (
+        <Link to={`/submissions/${r.id}`} className="font-medium text-link hover:underline num" onClick={(e) => e.stopPropagation()}>
+          {c.hl(r.ref_no)}
+        </Link>
+      ),
+    },
+    { id: 'received_at', header: t('fields.receivedAt'), sortKey: 'received_at', cell: (r) => formatDate(r.received_at) },
+    {
+      id: 'insured_name',
+      header: t('fields.insuredName'),
+      sortKey: 'insured_name',
+      className: 'max-w-64 truncate',
+      cell: (r, c) => <span title={r.insured_name ?? ''}>{c.hl(r.insured_name)}</span>,
+    },
+    { id: 'mga_name', header: t('fields.mga'), sortKey: 'mga_name', className: 'max-w-48 truncate', cell: (r, c) => c.hl(r.mga_name) },
+    { id: 'broker_name', header: t('fields.broker'), sortKey: 'broker_name', className: 'max-w-48 truncate text-muted-foreground', cell: (r, c) => (r.broker_name ? c.hl(r.broker_name) : '—') },
+    { id: 'lob_name', header: t('fields.lob'), sortKey: 'lob_name', className: 'max-w-40 truncate', cell: (r) => r.lob_name ?? '—' },
+    {
+      id: 'status',
+      header: t('fields.status'),
+      sortKey: 'status',
+      cell: (r) => (
+        <div className="flex items-center gap-1">
+          <StatusBadge status={r.status} />
+          {r.offer_expired && <span title={t('sub.offerExpired')}><AlertTriangle className="size-4 text-warning-600" /></span>}
+        </div>
+      ),
+    },
+    { id: 'currency', header: t('fields.currencyShort'), sortKey: 'currency', cell: (r) => r.currency },
+    { id: 'gross_premium_100', header: t('fields.grossPremium100'), sortKey: 'gross_premium_100', align: 'right', cell: (r) => formatAmount(r.gross_premium_100) },
+    { id: 'share_pct', header: t('fields.share'), sortKey: 'share_pct', align: 'right', cell: (r) => (r.share_pct === null ? '—' : formatPct(r.share_pct)) },
+    { id: 'our_gross_premium', header: t('fields.ourGrossPremium'), sortKey: 'our_gross_premium', align: 'right', cell: (r) => formatAmount(r.our_gross_premium) },
+    { id: 'our_gross_premium_usd', header: t('fields.ourGrossUsd'), sortKey: 'our_gross_premium_usd', align: 'right', cell: (r) => formatAmount(r.our_gross_premium_usd) },
+    { id: 'underwriter_name', header: t('fields.underwriter'), sortKey: 'underwriter_name', className: 'max-w-40 truncate', cell: (r) => r.underwriter_name ?? '—' },
+    {
+      id: 'next_follow_up_at',
+      header: t('fields.nextFollowUp'),
+      sortKey: 'next_follow_up_at',
+      cell: (r) =>
+        r.next_follow_up_at ? (
+          <span className={cn('inline-flex items-center gap-1', r.follow_up_overdue && 'font-medium text-destructive')}>
+            {r.follow_up_overdue && <Clock className="size-4" />}
+            {formatDate(r.next_follow_up_at)}
+          </span>
+        ) : '—',
+    },
+  ]
+
   const toggleStatus = (s: (typeof STATUSES)[number]) => {
     const current = parseFilters(new URLSearchParams(window.location.search)).status
     setFilters({ status: current.includes(s) ? current.filter((x) => x !== s) : [...current, s] })
@@ -64,15 +128,6 @@ export function SubmissionsPage() {
 
   const sortBy = (key: SortKey) =>
     setFilters(filters.sort === key ? { dir: filters.dir === 'asc' ? 'desc' : 'asc' } : { sort: key, dir: key === 'received_at' ? 'desc' : 'asc' })
-
-  const SortHead = ({ k, children, className }: { k: SortKey; children: React.ReactNode; className?: string }) => (
-    <TableHead className={className}>
-      <button type="button" onClick={() => sortBy(k)} className={cn('inline-flex items-center gap-1 hover:text-foreground', className?.includes('text-right') && 'flex-row-reverse')}>
-        {children}
-        {filters.sort === k ? filters.dir === 'asc' ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" /> : <ChevronsUpDown className="size-3 opacity-40" />}
-      </button>
-    </TableHead>
-  )
 
   return (
     <>
@@ -155,8 +210,6 @@ export function SubmissionsPage() {
               <input type="checkbox" checked={filters.expired} onChange={(e) => setFilters({ expired: e.target.checked })} />
               {t('sub.expiredOnly')}
             </label>
-            {isFetching && <Loader2 className="size-3.5 animate-spin" />}
-            {t('sub.resultCount', { count: data?.count ?? 0 })}
             {(filters.boundFrom || filters.boundTo) && (
               <span className="rounded bg-muted px-2 py-0.5">
                 {t('sub.boundBetween', { from: filters.boundFrom ? formatDate(filters.boundFrom) : '…', to: filters.boundTo ? formatDate(filters.boundTo) : '…' })}
@@ -165,7 +218,7 @@ export function SubmissionsPage() {
             {(data?.count ?? 0) > MAX_ROWS && <span className="text-warning-600">{t('sub.tooMany', { max: MAX_ROWS })}</span>}
           </div>
           {filterCount > 0 && (
-            <Button variant="ghost" size="sm" onClick={() => { setSearch(''); setParams(filtersToParams({ ...EMPTY_FILTERS, sort: filters.sort, dir: filters.dir }), { replace: true }) }}>
+            <Button variant="ghost" size="sm" onClick={clearFilters}>
               <FilterX />
               {t('sub.clearFilters')}
             </Button>
@@ -177,76 +230,71 @@ export function SubmissionsPage() {
       <Card className="gap-0 py-0">
         {error ? (
           <p className="p-6 text-body text-destructive">{errorMessage(error)}</p>
-        ) : isLoading ? (
-          <div className="flex justify-center p-10"><Loader2 className="size-5 animate-spin text-muted-foreground" /></div>
-        ) : rows.length === 0 ? (
-          <p className="p-10 text-center text-body text-muted-foreground">{t('sub.noResults')}</p>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <SortHead k="ref_no">{t('fields.refNo')}</SortHead>
-                <SortHead k="received_at">{t('fields.receivedAt')}</SortHead>
-                <SortHead k="insured_name">{t('fields.insuredName')}</SortHead>
-                <SortHead k="mga_name">{t('fields.mga')}</SortHead>
-                <SortHead k="broker_name">{t('fields.broker')}</SortHead>
-                <SortHead k="lob_name">{t('fields.lob')}</SortHead>
-                <SortHead k="status">{t('fields.status')}</SortHead>
-                <SortHead k="currency">{t('fields.currencyShort')}</SortHead>
-                <SortHead k="gross_premium_100" className="text-right">{t('fields.grossPremium100')}</SortHead>
-                <SortHead k="share_pct" className="text-right">{t('fields.share')}</SortHead>
-                <SortHead k="our_gross_premium" className="text-right">{t('fields.ourGrossPremium')}</SortHead>
-                <SortHead k="our_gross_premium_usd" className="text-right">{t('fields.ourGrossUsd')}</SortHead>
-                <SortHead k="underwriter_name">{t('fields.underwriter')}</SortHead>
-                <SortHead k="next_follow_up_at">{t('fields.nextFollowUp')}</SortHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map((r) => (
-                <TableRow key={r.id} className="cursor-pointer" onClick={() => navigate(`/submissions/${r.id}`)}>
-                  <TableCell className="font-medium">
-                    <Link to={`/submissions/${r.id}`} className="text-primary hover:underline" onClick={(e) => e.stopPropagation()}>
-                      {r.ref_no}
-                    </Link>
-                  </TableCell>
-                  <TableCell>{formatDate(r.received_at)}</TableCell>
-                  <TableCell className="max-w-64 truncate" title={r.insured_name ?? ''}>{r.insured_name}</TableCell>
-                  <TableCell className="max-w-48 truncate">{r.mga_name}</TableCell>
-                  <TableCell className="max-w-48 truncate text-muted-foreground">{r.broker_name ?? '—'}</TableCell>
-                  <TableCell className="max-w-40 truncate">{r.lob_name ?? '—'}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <StatusBadge status={r.status} />
-                      {r.offer_expired && <span title={t('sub.offerExpired')}><AlertTriangle className="size-3.5 text-warning-600" /></span>}
-                    </div>
-                  </TableCell>
-                  <TableCell>{r.currency}</TableCell>
-                  <TableCell className="text-right tabular-nums">{formatAmount(r.gross_premium_100)}</TableCell>
-                  <TableCell className="text-right tabular-nums">{r.share_pct === null ? '—' : formatPct(r.share_pct)}</TableCell>
-                  <TableCell className="text-right tabular-nums">{formatAmount(r.our_gross_premium)}</TableCell>
-                  <TableCell className="text-right tabular-nums">{formatAmount(r.our_gross_premium_usd)}</TableCell>
-                  <TableCell className="max-w-40 truncate">{r.underwriter_name ?? '—'}</TableCell>
-                  <TableCell>
-                    {r.next_follow_up_at ? (
-                      <span className={cn('inline-flex items-center gap-1', r.follow_up_overdue && 'font-medium text-destructive')}>
-                        {r.follow_up_overdue && <Clock className="size-3.5" />}
-                        {formatDate(r.next_follow_up_at)}
-                      </span>
-                    ) : '—'}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-            <tfoot>
-              <TableRow className="bg-muted/40 font-medium hover:bg-muted/40">
-                <TableCell colSpan={11} className="text-right text-caption text-muted-foreground">{t('sub.totalOurGrossUsd')}</TableCell>
-                <TableCell className="text-right tabular-nums">{formatAmount(totalUsd)}</TableCell>
-                <TableCell colSpan={2} />
-              </TableRow>
-            </tfoot>
-          </Table>
+          <DataTable
+            id="submissions"
+            columns={columns}
+            rows={rows}
+            getRowId={(r) => r.id!}
+            loading={isLoading}
+            hl={(text) => highlight(text, filters.q)}
+            sort={{ key: filters.sort, dir: filters.dir }}
+            onSort={(k) => sortBy(k as SortKey)}
+            onRowClick={(r) => navigate(`/submissions/${r.id}`)}
+            rowActions={(r) => (
+              <>
+                <Button variant="ghost" size="icon" className="size-8" aria-label={t('ui.quickView')} title={t('ui.quickView')} onClick={() => setPeek(r)}>
+                  <Eye />
+                </Button>
+                {can.editSubmissions(role) && (
+                  <Button variant="ghost" size="icon" className="size-8" aria-label={t('common.edit')} title={t('common.edit')} asChild>
+                    <Link to={`/submissions/${r.id}/edit`}><Pencil /></Link>
+                  </Button>
+                )}
+              </>
+            )}
+            bulkActions={(selected) => (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-white hover:bg-white/10 hover:text-white"
+                onClick={async () => {
+                  try {
+                    await exportSubmissionsXlsx(selected, t)
+                    toast.success(t('sub.exported', { count: selected.length }))
+                  } catch (e) {
+                    toast.error(errorMessage(e))
+                  }
+                }}
+              >
+                <FileSpreadsheet />
+                {t('ui.exportSelected')}
+              </Button>
+            )}
+            empty={
+              <EmptyState
+                pictogram="search"
+                title={t('sub.noResults')}
+                action={filterCount > 0 ? <Button variant="outline" size="sm" onClick={clearFilters}><FilterX />{t('sub.clearFilters')}</Button> : undefined}
+              >
+                {filterCount > 0 ? t('ui.emptyFiltered') : undefined}
+              </EmptyState>
+            }
+            toolbar={
+              <>
+                <span className="num">{t('sub.resultCount', { count: data?.count ?? 0 })}</span>
+                {isFetching && !isLoading && <Loader2 className="size-3.5 animate-spin" />}
+                {rows.length > 0 && (
+                  <span className="ml-auto">
+                    {t('sub.totalOurGrossUsd')}: <Amount value={totalUsd} human className="font-semibold text-foreground" />
+                  </span>
+                )}
+              </>
+            }
+          />
         )}
       </Card>
+      <SubmissionQuickView row={peek} onClose={() => setPeek(null)} />
     </>
   )
 }

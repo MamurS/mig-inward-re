@@ -516,5 +516,56 @@
     "reducedMotion": "Tizimda «harakatni kamaytirish» yoqilgan boʻlsa, hammasi bir zumda oʻzgaradi.",
     "sampleTable": "Namuna jadval",
     "amount": "Summa"
+  },
+  "ui": {
+    "actions": "Amallar",
+    "agendaClear": "Sizni hech narsa kutmayapti — yangi eslatmalar muddati kelganda shu yerda paydo boʻladi.",
+    "agingBucket": "{{bucket}} kun kechikkan",
+    "bulkActions": "Tanlangan qatorlar bilan amallar",
+    "clearSelection": "Bekor qilish",
+    "columns": "Ustunlar",
+    "daysOverdue": "{{count}} kun kechikdi",
+    "density": "Zichlik",
+    "densityComfortable": "Keng · 56 px",
+    "densityCompact": "Ixcham · 40 px",
+    "densityDefault": "Standart · 48 px",
+    "editSubmission": "Tahrirlash",
+    "emptyFiltered": "Filtrlarni kamaytiring yoki qidiruvni qisqartiring.",
+    "exportSelected": "Tanlanganlarni yuklab olish",
+    "openCounterparty": "Kontragentni ochish",
+    "openSubmission": "Arizani ochish",
+    "quickView": "Tezkor koʻrish",
+    "rows": "Qatorlar: {{count}}",
+    "saved": "Saqlandi",
+    "selectAll": "Barcha qatorlarni tanlash",
+    "selectRow": "Qatorni tanlash",
+    "selected": "Tanlandi: {{count}}",
+    "showColumns": "Ustunlarni koʻrsatish",
+    "form": {
+      "createSubmission": "Ariza yaratish",
+      "fixErrors": "Belgilangan maydonlarni tuzating ({{count}})",
+      "moveFollowUp": "Eslatmani koʻchirish",
+      "noChanges": "Oʻzgarishlar yoʻq",
+      "saveChanges": "Oʻzgarishlarni saqlash",
+      "saveDetails": "Maʼlumotlarni saqlash",
+      "saveSettings": "Sozlamalarni saqlash",
+      "unsaved": "Saqlanmagan oʻzgarishlar bor",
+      "closeFollowUp": "Eslatmani yopish"
+    },
+    "kpi": {
+      "followUpsPastDue": "eslatma muddati oʻtgan",
+      "offeredOrNoResponse": "taklif qilingan yoki javobsiz",
+      "vsLastMonth": "oʻtgan oyning shu kunlariga nisbatan",
+      "vsLastYear": "oʻtgan yilning shu sanasiga nisbatan"
+    },
+    "palette": {
+      "actions": "Amallar",
+      "button": "Qidirish yoki oʻtish…",
+      "goTo": "Oʻtish",
+      "nothing": "Hech narsa topilmadi. SUB-2026 kabi raqam yoki nomni kiriting.",
+      "placeholder": "Sahifa, raqam yoki nom…",
+      "switchLanguage": "Tilni {{lng}} ga almashtirish",
+      "title": "Qidiruv va buyruqlar"
+    }
   }
 }

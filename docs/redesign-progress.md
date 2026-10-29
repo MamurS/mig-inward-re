@@ -44,16 +44,18 @@ The mock harness is `e2e/support/mockSupabase.ts` + `fixtures.ts`.
 - [x] `/admin/tokens` preview page (admin only)
 - [x] `DESIGN.md`, colour audit
 
-## Phase 2 — components ⏳
+## Phase 2 — components ✅
 
-- [ ] Table v2: density 40/48/56 remembered per user, sticky header, frozen first column, column show/hide, hover row actions, bulk bar, search highlight
-- [ ] Quick-view side panel (register, agenda, counterparties)
-- [ ] KPI card: delta + sparkline, clickable
-- [ ] Unified badge (tinted; solid only for 90+), human-scale amounts with full-value tooltip
-- [ ] Empty states with pictograms, skeleton rows, inline success check
-- [ ] Command palette ⌘K / Ctrl K
-- [ ] Forms: labels above, segmented controls, validate on blur, outcome-named buttons, sticky footer
-- [ ] Side panels instead of modals
+- [x] Table v2: density 40/48/56 remembered per user, sticky header, frozen first column, column show/hide, hover row actions, bulk bar (export selected), search highlight — register and counterparties list
+- [x] Quick-view side panel (register, agenda, counterparties)
+- [x] KPI card: delta + sparkline, clickable (dashboard)
+- [x] Unified badge (tinted; solid only for 90+), AgingBadge on the agenda; human-scale amounts with full-value tooltip
+- [x] Empty states with own pictograms, skeleton rows / blocks, inline success check (counterparty details, admin settings)
+- [x] Command palette ⌘K / Ctrl K + header search button
+- [x] Forms: labels above, segmented controls (business type, follow-up type, counterparty type), validate on blur, outcome-named buttons, sticky footer
+- [x] Side panels instead of modals (all task dialogs)
+- [x] `e2e/components.spec.ts` (10 tests)
+- Found and fixed: `cn()` dropped custom type sizes next to a text colour (tailwind-merge config + `utils.test.ts`); the mock didn't expose `content-range`, so counts read 0 in screenshots.
 
 ## Phase 3 — signature screens ⏳
 
@@ -75,3 +77,10 @@ The mock harness is `e2e/support/mockSupabase.ts` + `fixtures.ts`.
 | 7 | UZ apostrophes converted to U+02BB / U+2019 | revert `src/locales/uz.json` |
 | 8 | Excel export header fill `#E8EDF5` left as is (file, not screen) | `ExportButton.tsx` |
 | 9 | Flexible grid columns use `minmax(0,1fr)` | the four `grid-cols-[…]` classes |
+| 10 | Default table density 48 px (Carbon default); 40 and 56 on offer | `usePref('table.density', …)` default in `DataTable.tsx` |
+| 11 | «Per user» preferences live in localStorage keyed by user id — no database change (visual-only brief) | move `usePref` to a `profiles.ui_prefs` column later |
+| 12 | All task dialogs become right side panels; browser `confirm()` kept for deletes | `variant="center"` on `DialogContent` |
+| 13 | Bulk action on the register = export selected rows (no bulk status change — that would be business logic) | add actions in `bulkActions` |
+| 14 | KPI deltas compare to the same stretch of the previous month / year; state counts (under review, awaiting, overdue) show no delta (no history) | `DashboardPage` KPI block |
+| 15 | Validation `onTouched` (first on blur, then live) | `mode` in `useForm` |
+| 16 | In-place saves show an inline «Saved ✓» instead of a toast | `SavedCheck` → `toast.success` |

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { Menu, X } from 'lucide-react'
+import { Menu, Search, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/auth/AuthProvider'
 import { Button } from '@/components/ui/button'
@@ -9,6 +9,7 @@ import { NAV_ITEMS } from './nav'
 import { LanguageSwitcher } from './LanguageSwitcher'
 import { UserMenu } from './UserMenu'
 import { useMyOverdueCount } from '@/features/followups/FollowUps'
+import { CommandPalette, OPEN_PALETTE, isMac } from '@/components/CommandPalette'
 
 export function AppLayout() {
   const { t, i18n } = useTranslation()
@@ -88,6 +89,15 @@ export function AppLayout() {
           <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setMobileOpen((o) => !o)}>
             {mobileOpen ? <X /> : <Menu />}
           </Button>
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new Event(OPEN_PALETTE))}
+            className="flex h-9 w-full max-w-sm items-center gap-2 rounded-md border bg-canvas px-3 text-body text-muted-foreground transition-colors hover:border-input hover:text-foreground"
+          >
+            <Search className="size-4" />
+            <span className="flex-1 truncate text-left">{t('ui.palette.button')}</span>
+            <kbd className="hidden rounded-sm border bg-background px-2 text-caption sm:inline">{isMac() ? '⌘K' : 'Ctrl K'}</kbd>
+          </button>
           <div className="flex-1" />
           <LanguageSwitcher />
           <UserMenu />
@@ -95,6 +105,7 @@ export function AppLayout() {
         <main className="mx-auto w-full max-w-[1600px] flex-1 p-4 md:p-6">
           <Outlet />
         </main>
+        <CommandPalette />
       </div>
     </div>
   )

@@ -3,8 +3,11 @@ import { Link, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { Bar, BarChart, CartesianGrid, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { AlertTriangle, CalendarClock, FileInput, Hourglass, Loader2, ScanSearch, Trophy } from 'lucide-react'
+import { AlertTriangle } from 'lucide-react'
 import { PageHeader } from '@/components/PageHeader'
+import { KpiCard } from '@/components/KpiCard'
+import { Skeleton } from '@/components/Skeleton'
+import { Amount } from '@/components/Amount'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { NativeSelect } from '@/components/ui/native-select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -85,6 +88,19 @@ export function DashboardPage() {
     const boundYtd = rows.filter((r) => r.status === 'bound' && r.bound_at && r.bound_at >= yearStart)
     const boundYtdUsd = boundYtd.reduce((s, r) => s + (r.our_gross_premium_usd ?? 0), 0)
 
+    // KPI trends: the same stretch of the previous month / year, and the last 12 months
+    const day = now.getDate()
+    const prevMonthStart = isoDate(new Date(now.getFullYear(), now.getMonth() - 1, 1))
+    const prevMonthSameDay = isoDate(new Date(now.getFullYear(), now.getMonth() - 1, Math.min(day, new Date(now.getFullYear(), now.getMonth(), 0).getDate()) + 1))
+    const receivedPrevMonth = rows.filter((r) => r.received_at >= prevMonthStart && r.received_at < prevMonthSameDay).length
+    const lastYearStart = `${thisYear - 1}-01-01`
+    const lastYearToday = isoDate(new Date(thisYear - 1, now.getMonth(), day + 1))
+    const boundLastYtd = rows.filter((r) => r.status === 'bound' && r.bound_at && r.bound_at >= lastYearStart && r.bound_at < lastYearToday).length
+    const change = (now_: number, before: number) => (before > 0 ? (now_ - before) / before : null)
+    const months12 = Array.from({ length: 12 }, (_, i) => isoDate(new Date(now.getFullYear(), now.getMonth() - 11 + i, 1)).slice(0, 7))
+    const receivedTrend = months12.map((mo) => rows.filter((r) => r.received_at.startsWith(mo)).length)
+    const boundTrend = months12.map((mo) => rows.filter((r) => r.status === 'bound' && r.bound_at?.startsWith(mo)).length)
+
     // Period-based analytics
     const received = rows.filter((r) => inYear(r.received_at))
     const reviewed = received.filter((r) => r.status !== 'received')
@@ -128,6 +144,7 @@ export function DashboardPage() {
       .slice(0, 10)
 
     return {
+      receivedDelta: change(receivedThisMonth, receivedPrevMonth), boundDelta: change(boundYtd.length, boundLastYtd), receivedTrend, boundTrend,
       monthStart, yearStart, receivedThisMonth, underReview, notReviewed, awaiting: awaiting.length, overdue,
       boundYtd: boundYtd.length, boundYtdUsd, funnel, byMga, byLob, byMonth, hitRatio, hitRatioDecided,
       offeredCount: offered.length, boundFromOffered: boundFromOffered.length, boundUsd: bound.reduce((s, r) => s + (r.our_gross_premium_usd ?? 0), 0),
@@ -135,7 +152,19 @@ export function DashboardPage() {
     }
   }, [data, year, years, thisYear, t])
 
-  if (isLoading) return <div className="flex justify-center p-10"><Loader2 className="size-6 animate-spin text-muted-foreground" /></div>
+  if (isLoading)
+    return (
+      <>
+        <PageHeader title={t('pages.dashboard.title')} subtitle={t('pages.dashboard.subtitle')} />
+        <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+          {[0, 1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-36 rounded-xl" />)}
+        </div>
+        <div className="grid gap-4 xl:grid-cols-2">
+          <Skeleton className="h-72 rounded-xl" />
+          <Skeleton className="h-72 rounded-xl" />
+        </div>
+      </>
+    )
   if (error) return <p className="p-6 text-body text-destructive">{errorMessage(error)}</p>
 
   const pct = (v: number | null) => (v === null ? '—' : `${new Intl.NumberFormat(locale(), { maximumFractionDigits: 0 }).format(v * 100)} %`)
@@ -159,17 +188,26 @@ export function DashboardPage() {
         }
       />
 
-      {/* Tiles — each opens the register with the matching filter */}
+      {/* KPIs — each opens the register with the matching filter */}
       <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
-        <Tile icon={FileInput} label={t('dash.tiles.receivedMonth')} value={m.receivedThisMonth} to={`/submissions?from=${m.monthStart}`} />
-        <Tile icon={ScanSearch} label={t('dash.tiles.underReview')} value={m.underReview} sub={t('dash.tiles.notReviewed', { count: m.notReviewed })} to="/submissions?status=under_review" />
-        <Tile icon={Hourglass} label={t('dash.tiles.awaiting')} value={m.awaiting} to="/submissions?status=offered,no_response&sort=next_follow_up_at&dir=asc" />
-        <Tile icon={CalendarClock} label={t('dash.tiles.overdue')} value={m.overdue} to="/submissions?overdue=1" danger={m.overdue > 0} />
-        <Tile
-          icon={Trophy}
+        <KpiCard
+          label={t('dash.tiles.receivedMonth')}
+          value={m.receivedThisMonth}
+          delta={m.receivedDelta}
+          deltaLabel={t('ui.kpi.vsLastMonth')}
+          series={m.receivedTrend}
+          to={`/submissions?from=${m.monthStart}`}
+        />
+        <KpiCard label={t('dash.tiles.underReview')} value={m.underReview} sub={t('dash.tiles.notReviewed', { count: m.notReviewed })} to="/submissions?status=under_review" />
+        <KpiCard label={t('dash.tiles.awaiting')} value={m.awaiting} sub={t('ui.kpi.offeredOrNoResponse')} to="/submissions?status=offered,no_response&sort=next_follow_up_at&dir=asc" />
+        <KpiCard label={t('dash.tiles.overdue')} value={m.overdue} sub={t('ui.kpi.followUpsPastDue')} to="/submissions?overdue=1" alert={m.overdue > 0} />
+        <KpiCard
           label={t('dash.tiles.boundYtd', { year: thisYear })}
           value={m.boundYtd}
-          sub={`${formatCompactUsd(m.boundYtdUsd)} ${t('dash.tiles.ourGross')}`}
+          delta={m.boundDelta}
+          deltaLabel={t('ui.kpi.vsLastYear')}
+          sub={<><Amount value={m.boundYtdUsd} currency="USD" human /> {t('dash.tiles.ourGross')}</>}
+          series={m.boundTrend}
           to={`/submissions?status=bound&boundFrom=${m.yearStart}`}
         />
       </div>
@@ -282,37 +320,6 @@ export function DashboardPage() {
         </CardContent>
       </Card>
     </>
-  )
-}
-
-function Tile({
-  icon: Icon,
-  label,
-  value,
-  sub,
-  to,
-  danger,
-}: {
-  icon: React.ComponentType<{ className?: string }>
-  label: string
-  value: number
-  sub?: string
-  to: string
-  danger?: boolean
-}) {
-  return (
-    <Link to={to} className="group">
-      <Card className={cn('h-full gap-2 py-4 transition-shadow group-hover:shadow-md', danger && 'border-destructive/40')}>
-        <CardContent className="grid gap-1 px-4">
-          <div className="flex items-center gap-2 text-caption font-medium text-muted-foreground">
-            <Icon className={cn('size-4', danger && 'text-destructive')} />
-            {label}
-          </div>
-          <div className={cn('text-headline font-semibold tabular-nums', danger && 'text-destructive')}>{value}</div>
-          {sub && <div className="text-caption text-muted-foreground">{sub}</div>}
-        </CardContent>
-      </Card>
-    </Link>
   )
 }
 

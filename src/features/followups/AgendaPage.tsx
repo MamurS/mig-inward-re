@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
-import { Loader2 } from 'lucide-react'
 import { PageHeader } from '@/components/PageHeader'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -10,6 +9,10 @@ import { useAuth } from '@/auth/AuthProvider'
 import { supabase } from '@/lib/supabase'
 import { errorMessage } from '@/lib/errors'
 import { useUsers, userName } from '@/hooks/useReference'
+import { EmptyState } from '@/components/EmptyState'
+import { Skeleton } from '@/components/Skeleton'
+import { SubmissionQuickView } from '@/features/submissions/SubmissionQuickView'
+import type { SubmissionRow } from '@/features/submissions/api'
 import { CloseFollowUpDialog, FollowUpItem, RescheduleFollowUpDialog, type FollowUp } from './FollowUps'
 
 type Bucket = 'overdue' | 'today' | 'week' | 'later'
@@ -33,6 +36,17 @@ export function AgendaPage() {
   const [who, setWho] = useState<string>(profile?.id ?? '')
   const [closing, setClosing] = useState<FollowUp | null>(null)
   const [rescheduling, setRescheduling] = useState<FollowUp | null>(null)
+  const [peekId, setPeekId] = useState<string | null>(null)
+
+  const peek = useQuery({
+    queryKey: ['submission', peekId],
+    enabled: Boolean(peekId),
+    queryFn: async () => {
+      const { data, error } = await supabase.from('submissions_v').select('*').eq('id', peekId!).single()
+      if (error) throw error
+      return data as SubmissionRow
+    },
+  })
 
   const open = useQuery({
     queryKey: ['agenda', 'open', who],
@@ -91,14 +105,20 @@ export function AgendaPage() {
         </TabsList>
 
         <TabsContent value="open" className="grid gap-4">
-          {open.isLoading && <Loader2 className="mx-auto size-5 animate-spin text-muted-foreground" />}
+          {open.isLoading && (
+            <Card>
+              <CardContent className="grid gap-2">
+                {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-16 rounded-md" />)}
+              </CardContent>
+            </Card>
+          )}
           {open.error && <p className="text-body text-destructive">{errorMessage(open.error)}</p>}
           {open.data && open.data.length === 0 && (
-            <Card><CardContent className="py-10 text-center text-body text-muted-foreground">{t('agenda.nothingOpen')}</CardContent></Card>
+            <Card><EmptyState pictogram="done" title={t('agenda.nothingOpen')}>{t('ui.agendaClear')}</EmptyState></Card>
           )}
           {order.map((b) =>
             groups[b].length ? (
-              <Card key={b} className={b === 'overdue' ? 'border-destructive/40' : undefined}>
+              <Card key={b} className={b === 'overdue' ? 'border-danger-200' : undefined}>
                 <CardHeader>
                   <CardTitle className={b === 'overdue' ? 'text-destructive' : undefined}>
                     {t(`agenda.bucket.${b}`)} ({groups[b].length})
@@ -106,7 +126,7 @@ export function AgendaPage() {
                 </CardHeader>
                 <CardContent className="grid gap-2">
                   {groups[b].map((f) => (
-                    <FollowUpItem key={f.id} followUp={f} showEntity onDone={setClosing} onReschedule={setRescheduling} />
+                    <FollowUpItem key={f.id} followUp={f} showEntity onDone={setClosing} onReschedule={setRescheduling} onPeek={(x) => setPeekId(x.entity_id)} />
                   ))}
                 </CardContent>
               </Card>
@@ -115,13 +135,14 @@ export function AgendaPage() {
         </TabsContent>
 
         <TabsContent value="done" className="grid gap-2">
-          {done.data?.length === 0 && <p className="py-6 text-center text-body text-muted-foreground">{t('agenda.nothingDone')}</p>}
-          {done.data?.map((f) => <FollowUpItem key={f.id} followUp={f} showEntity />)}
+          {done.data?.length === 0 && <Card><EmptyState pictogram="inbox" title={t('agenda.nothingDone')} /></Card>}
+          {done.data?.map((f) => <FollowUpItem key={f.id} followUp={f} showEntity onPeek={(x) => setPeekId(x.entity_id)} />)}
         </TabsContent>
       </Tabs>
 
       <CloseFollowUpDialog followUp={closing} onClose={() => setClosing(null)} />
       <RescheduleFollowUpDialog followUp={rescheduling} onClose={() => setRescheduling(null)} />
+      <SubmissionQuickView row={peekId ? (peek.data ?? null) : null} onClose={() => setPeekId(null)} />
     </>
   )
 }

@@ -5,7 +5,7 @@ import type { SubmissionFilters } from './filters'
 export const MAX_ROWS = 5000
 
 /** Characters with meaning in PostgREST filter syntax are removed from free-text search. */
-function cleanSearch(q: string) {
+export function cleanSearch(q: string) {
   return q.replace(/[,()*%\\:"']/g, ' ').trim()
 }
 

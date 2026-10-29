@@ -516,5 +516,56 @@
     "reducedMotion": "Если в системе включено «уменьшить движение», всё меняется мгновенно.",
     "sampleTable": "Пример таблицы",
     "amount": "Сумма"
+  },
+  "ui": {
+    "actions": "Действия",
+    "agendaClear": "Вас ничего не ждёт — новые напоминания появятся здесь, когда подойдёт срок.",
+    "agingBucket": "Просрочено {{bucket}} дн.",
+    "bulkActions": "Действия с выбранными строками",
+    "clearSelection": "Снять выбор",
+    "columns": "Столбцы",
+    "daysOverdue": "просрочено {{count}} дн.",
+    "density": "Плотность",
+    "densityComfortable": "Свободно · 56 px",
+    "densityCompact": "Компактно · 40 px",
+    "densityDefault": "Стандарт · 48 px",
+    "editSubmission": "Изменить",
+    "emptyFiltered": "Уберите часть фильтров или сократите запрос.",
+    "exportSelected": "Выгрузить выбранные",
+    "openCounterparty": "Открыть контрагента",
+    "openSubmission": "Открыть заявку",
+    "quickView": "Быстрый просмотр",
+    "rows": "Строк: {{count}}",
+    "saved": "Сохранено",
+    "selectAll": "Выбрать все строки",
+    "selectRow": "Выбрать строку",
+    "selected": "Выбрано: {{count}}",
+    "showColumns": "Показывать столбцы",
+    "form": {
+      "createSubmission": "Создать заявку",
+      "fixErrors": "Исправьте отмеченные поля ({{count}})",
+      "moveFollowUp": "Перенести напоминание",
+      "noChanges": "Изменений нет",
+      "saveChanges": "Сохранить изменения",
+      "saveDetails": "Сохранить данные",
+      "saveSettings": "Сохранить настройки",
+      "unsaved": "Есть несохранённые изменения",
+      "closeFollowUp": "Закрыть напоминание"
+    },
+    "kpi": {
+      "followUpsPastDue": "напоминаний просрочено",
+      "offeredOrNoResponse": "предложено или без ответа",
+      "vsLastMonth": "к тем же дням прошлого месяца",
+      "vsLastYear": "к той же дате прошлого года"
+    },
+    "palette": {
+      "actions": "Действия",
+      "button": "Поиск и переход…",
+      "goTo": "Перейти",
+      "nothing": "Ничего не найдено. Попробуйте номер вроде SUB-2026 или название.",
+      "placeholder": "Страница, номер или название…",
+      "switchLanguage": "Сменить язык на {{lng}}",
+      "title": "Поиск и команды"
+    }
   }
 }

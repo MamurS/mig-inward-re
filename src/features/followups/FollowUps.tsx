@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { CalendarClock, CheckCircle2, Circle, Clock, Loader2, Plus } from 'lucide-react'
+import { CalendarClock, CheckCircle2, Circle, Clock, Eye, Loader2, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,7 +10,10 @@ import { Textarea } from '@/components/ui/textarea'
 import { NativeSelect } from '@/components/ui/native-select'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Field } from '@/components/Field'
+import { SegmentedControl } from '@/components/SegmentedControl'
 import { StatusBadge } from '@/components/StatusBadge'
+import { Badge } from '@/components/ui/badge'
+import { AgingBadge } from '@/components/AgingBadge'
 import { useAuth } from '@/auth/AuthProvider'
 import { supabase } from '@/lib/supabase'
 import { addDays, formatDate, isoDate } from '@/lib/format'
@@ -149,7 +152,7 @@ export function CloseFollowUpDialog({ followUp, onClose }: { followUp: FollowUp 
           <Button variant="outline" onClick={onClose} disabled={busy}>{t('common.cancel')}</Button>
           <Button onClick={() => void save()} disabled={busy}>
             {busy && <Loader2 className="animate-spin" />}
-            {t('fu.markDone')}
+            {t('ui.form.closeFollowUp')}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -215,7 +218,7 @@ export function RescheduleFollowUpDialog({ followUp, onClose }: { followUp: Foll
           <Button variant="outline" onClick={onClose} disabled={busy}>{t('common.cancel')}</Button>
           <Button onClick={() => void save()} disabled={busy || !due}>
             {busy && <Loader2 className="animate-spin" />}
-            {t('common.save')}
+            {t('ui.form.moveFollowUp')}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -286,10 +289,8 @@ export function AddFollowUpButton({
             <DialogTitle>{t('fu.addTitle')}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label={t('fu.type')}>
-              <NativeSelect value={type} onChange={(e) => setType(e.target.value as Enums<'follow_up_type'>)}>
-                {FU_TYPES.map((x) => <option key={x} value={x}>{t(`fuType.${x}`)}</option>)}
-              </NativeSelect>
+            <Field label={t('fu.type')} className="sm:col-span-2">
+              <SegmentedControl ariaLabel={t('fu.type')} value={type} onChange={setType} options={FU_TYPES.map((x) => ({ value: x, label: t(`fuType.${x}`) }))} />
             </Field>
             <Field label={t('fu.due')} required>
               <Input type="date" value={due} onChange={(e) => setDue(e.target.value)} />
@@ -308,7 +309,7 @@ export function AddFollowUpButton({
             <Button variant="outline" onClick={() => setOpen(false)} disabled={busy}>{t('common.cancel')}</Button>
             <Button onClick={() => void save()} disabled={busy || !due}>
               {busy && <Loader2 className="animate-spin" />}
-              {t('common.save')}
+              {t('fu.add')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -325,11 +326,14 @@ export function FollowUpItem({
   showEntity,
   onDone,
   onReschedule,
+  onPeek,
 }: {
   followUp: FollowUp
   showEntity?: boolean
   onDone?: (f: FollowUp) => void
   onReschedule?: (f: FollowUp) => void
+  /** Opens the related submission in a side panel. */
+  onPeek?: (f: FollowUp) => void
 }) {
   const { t } = useTranslation()
   const users = useUsers()
@@ -340,7 +344,7 @@ export function FollowUpItem({
   const actionable = !f.done_at && canAct(f)
 
   return (
-    <div className={cn('rounded-md border p-3 text-body', f.done_at && 'bg-muted/30', overdue && 'border-destructive/40 bg-destructive/5')}>
+    <div className={cn('group rounded-md border bg-card p-3 text-body transition-colors hover:border-input', f.done_at && 'bg-muted/30', overdue && 'border-danger-200')}>
       <div className="flex flex-wrap items-start gap-2">
         {f.done_at ? (
           <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success-600" />
@@ -352,7 +356,8 @@ export function FollowUpItem({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <span className="font-medium">{f.title || t(`fuType.${f.type}`)}</span>
-            <span className="rounded bg-muted px-2 py-0.5 text-caption text-muted-foreground">{t(`fuType.${f.type}`)}</span>
+            <Badge>{t(`fuType.${f.type}`)}</Badge>
+            {overdue && daysOverdue > 0 && <AgingBadge days={daysOverdue} />}
           </div>
           {showEntity && f.entity_ref && (
             <div className="mt-1 flex flex-wrap items-center gap-2 text-caption">
@@ -375,6 +380,18 @@ export function FollowUpItem({
             </div>
           )}
         </div>
+        {onPeek && f.entity_type === 'submission' && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+            onClick={() => onPeek(f)}
+            title={t('ui.quickView')}
+            aria-label={t('ui.quickView')}
+          >
+            <Eye />
+          </Button>
+        )}
         {actionable && (onDone || onReschedule) && (
           <div className="flex gap-2">
             {onReschedule && (

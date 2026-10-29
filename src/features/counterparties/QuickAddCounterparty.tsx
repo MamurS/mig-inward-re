@@ -78,7 +78,7 @@ export function QuickAddCounterparty({
           <Button variant="outline" onClick={() => setOpen(false)}>{t('common.cancel')}</Button>
           <Button onClick={() => void save()} disabled={busy || !name.trim()}>
             {busy && <Loader2 className="animate-spin" />}
-            {t('common.save')}
+            {t(`cp.add.${type}`)}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Field } from '@/components/Field'
+import { SavedCheck, useFlash } from '@/components/SavedCheck'
 import { useAuth } from '@/auth/AuthProvider'
 import { supabase } from '@/lib/supabase'
 import { ALL_ROLES, type AppRole } from '@/lib/roles'
@@ -273,7 +274,7 @@ function SetPasswordDialog({ user, onClose }: { user: Tables<'profiles'> | null;
           <Button variant="outline" onClick={onClose} disabled={busy}>{t('common.cancel')}</Button>
           <Button onClick={() => void save()} disabled={busy || password.length < 10}>
             {busy && <Loader2 className="animate-spin" />}
-            {t('common.save')}
+            {t('admin.users.setPassword')}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -576,6 +577,7 @@ function SettingsTab() {
   })
   const [vals, setVals] = useState<Record<string, string | boolean>>({})
   const [busy, setBusy] = useState(false)
+  const [savedShown, flashSaved] = useFlash()
 
   useEffect(() => {
     if (settings.data) setVals(Object.fromEntries(settings.data.map((s) => [s.key, s.value as string | boolean])))
@@ -594,7 +596,7 @@ function SettingsTab() {
     const { error } = await supabase.from('settings').upsert(rows)
     setBusy(false)
     if (error) return toast.error(errorMessage(error))
-    toast.success(t('admin.saved'))
+    flashSaved()
     await qc.invalidateQueries({ queryKey: ['admin', 'settings'] })
   }
 
@@ -615,11 +617,12 @@ function SettingsTab() {
         <Field label={t('admin.settings.autoDays')} hint={t('admin.settings.autoDaysHint')}>
           <Input type="number" min={1} max={365} className="w-32" value={String(vals.auto_no_response_days ?? '')} onChange={(e) => setVals({ ...vals, auto_no_response_days: e.target.value })} disabled={!vals.auto_no_response_enabled} />
         </Field>
-        <div>
+        <div className="flex items-center gap-3">
           <Button onClick={() => void save()} disabled={busy}>
             {busy ? <Loader2 className="animate-spin" /> : <Save />}
-            {t('common.save')}
+            {t('ui.form.saveSettings')}
           </Button>
+          <SavedCheck show={savedShown} />
         </div>
       </CardContent>
     </Card>

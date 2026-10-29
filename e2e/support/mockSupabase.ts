@@ -157,7 +157,7 @@ export async function installMock(context: BrowserContext, role: FixtureRole | n
     const url = new URL(req.url())
     const method = req.method()
     const json = (body: unknown, status = 200, headers: Record<string, string> = {}) =>
-      route.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': '*', ...headers }, body: JSON.stringify(body) })
+      route.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': '*', 'access-control-expose-headers': 'content-range', ...headers }, body: JSON.stringify(body) })
 
     if (method === 'OPTIONS') {
       return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' } })

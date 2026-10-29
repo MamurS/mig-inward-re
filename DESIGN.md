@@ -183,13 +183,44 @@ animation and transition durations collapse to ~0.
   never change layout.
 - **Hover** — colour and background only, never size, border width or
   weight (layout-stability test).
-- **Feedback under 100 ms** — buttons respond on press; long work shows a
-  spinner or skeleton in the space the result will take.
+- **Feedback under 100 ms** — buttons respond on press (colour change at
+  110 ms); long work shows a skeleton in the space the result will take.
 - **Loading** — reserve the final size (skeleton rows, fixed card heights);
   page titles never move when data arrives.
 - **Grid columns** — a flexible column next to a fixed one is
   `minmax(0,1fr)`, never `1fr`, so wide tables scroll inside their card
   instead of pushing the page sideways.
+
+## Components
+
+All under `src/components/`; screens compose them, never re-style them.
+
+| component | file | rules |
+|---|---|---|
+| **Table v2** | `data/DataTable.tsx` | Density 40 / 48 / 56 px (default 48), remembered per user (`usePref`, localStorage keyed by user id). Sticky header and frozen first column inside a scroll box. Column show / hide (first column always shown), remembered. Row actions appear on hover / focus in a pinned right cell — reserved space, no shift. Selecting rows shows a floating bulk bar (fixed, never pushes the page). Search matches are wrapped in `<mark>` (`highlight()`). Skeleton rows at the final row height while loading. Empty → `EmptyState`. |
+| **Quick view** | `features/*/…QuickView` | A right side panel with the essentials and the next actions (open, edit, open in register). Used by the register, the agenda and the counterparties list. |
+| **Side panel** | `ui/dialog.tsx` | Every task dialog opens docked right (max 512 px, full height, 240 ms expressive slide); the footer sticks to the bottom edge. `variant="center"` only for short confirmations. |
+| **KPI card** | `KpiCard.tsx` | Label, figure in the display face, change vs the previous comparable period (green = good direction, red = bad, grey = flat), 12-month sparkline, click-through to the rows behind it. `alert` puts the figure in danger ink. |
+| **Badge** | `ui/badge.tsx` | One badge, tinted (`tint` fill, `line` border, `deep` text). Tones: neutral, brand, info, success, warning, danger, the 7 statuses, the 4 ageing buckets. `solid` only for things that must shout — 90+ days overdue, unread counts. `StatusBadge`, `AgingBadge` wrap it. |
+| **Amount** | `Amount.tsx` | Tabular figures, currency after in muted ink. `human` shows 1.25M / 1,25 млн / 1,25 mln with the exact value in a tooltip — for KPIs, summaries, charts; tables keep full values. |
+| **Empty state** | `EmptyState.tsx` | Own 64 px pictograms (search, inbox, done, documents, chart, people) in navy-500 / sky-400 on a navy-100 disc; one line on what is empty, one on why, and the action that fills it. |
+| **Skeleton** | `Skeleton.tsx` | Placeholder blocks at the final size; `SkeletonRows` for tables. Replaces spinners on page loads. |
+| **Inline success** | `SavedCheck.tsx` | «Saved ✓» next to the button for 2 s after an in-place save (space reserved). Toasts stay for things that happen elsewhere (created, exported). |
+| **Segmented control** | `SegmentedControl.tsx` | For 2–5 options that fit on one line (business type, follow-up type, counterparty type filter). Radio-group semantics, arrow keys. |
+| **Command palette** | `CommandPalette.tsx` | ⌘K / Ctrl K or the header search: pages (by role), actions (new submission, switch language), submissions by reference / insured, counterparties by name. ↑ ↓ Enter Esc. |
+| **Tooltip** | `ui/tooltip.tsx` | 300 ms delay, dark slate, for full values and icon-only buttons. |
+
+### Forms
+
+- Labels above the field (13 px medium, foreground); a required star is
+  decorative — the error says what is needed.
+- Validate on blur (`mode: 'onTouched'`): nothing is red until the user
+  leaves the field; after that the field re-checks as they type.
+- Buttons name the outcome: «Create submission», «Save changes», «Close
+  follow-up», «Move follow-up», «Set new password» — never a bare «Save» or
+  «OK».
+- Long forms have a sticky footer with the state («Unsaved changes», «Fix
+  the highlighted fields (2)») and the outcome button, always in reach.
 
 ## Language
 
@@ -206,4 +237,5 @@ animation and transition durations collapse to ~0.
 | type, spacing, colour scale | `npm test` (`scale.test.ts`) | no off-scale sizes, half steps, hex colours or stray weights |
 | contrast | `npm test` (`contrast.test.ts`) | palette pairing rule, every status/ageing pair, and every colour class pair in `src` ≥ 4.5 : 1 text / 3 : 1 icons |
 | layout stability | `npx playwright test layout-stability` | 7 screens × EN/RU/UZ: no landmark moves on load, hover, focus or menu open |
+| components | `npx playwright test components` | density / columns remembered, sticky header, frozen column, highlight, bulk bar, quick views, ⌘K, blur validation, sticky footer, side panels |
 | screenshots | `SHOTS=<dir> npx playwright test screenshots` | before/after captures, offline mock data |

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
-import { useForm, useWatch, type UseFormRegisterReturn } from 'react-hook-form'
+import { Controller, useForm, useWatch, type UseFormRegisterReturn } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useTranslation } from 'react-i18next'
@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { NativeSelect } from '@/components/ui/native-select'
+import { SegmentedControl } from '@/components/SegmentedControl'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field } from '@/components/Field'
 import { StatusBadge } from '@/components/StatusBadge'
@@ -183,7 +184,7 @@ function SubmissionForm({ existing }: { existing: SubmissionRow | null }) {
     setValue,
     control,
     formState: { errors, isSubmitting, isDirty },
-  } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: defaults, mode: 'onBlur' })
+  } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: defaults, mode: 'onTouched' })
 
   const v = useWatch({ control })
   const sourceTouched = useRef(Boolean(existing))
@@ -262,20 +263,6 @@ function SubmissionForm({ existing }: { existing: SubmissionRow | null }) {
       <PageHeader
         title={existing ? t('sub.editTitle', { ref: existing.ref_no }) : t('sub.newTitle')}
         subtitle={existing ? existing.insured_name ?? undefined : t('sub.newSubtitle')}
-        actions={
-          <>
-            <Button type="button" variant="outline" asChild>
-              <Link to={existing ? `/submissions/${existing.id}` : '/submissions'}>
-                <ArrowLeft />
-                {t('common.cancel')}
-              </Link>
-            </Button>
-            <Button type="submit" disabled={isSubmitting || (Boolean(existing) && !isDirty)}>
-              {isSubmitting ? <Loader2 className="animate-spin" /> : <Save />}
-              {t('common.save')}
-            </Button>
-          </>
-        }
       />
 
       {existing && (
@@ -330,10 +317,22 @@ function SubmissionForm({ existing }: { existing: SubmissionRow | null }) {
                 </NativeSelect>
               </Field>
               <Field label={t('fields.businessType')} htmlFor="business_type">
-                <NativeSelect {...reg('business_type')}>
-                  <option value="facultative">{t('businessType.facultative')}</option>
-                  <option value="binder">{t('businessType.binder')}</option>
-                </NativeSelect>
+                <Controller
+                  control={control}
+                  name="business_type"
+                  render={({ field }) => (
+                    <SegmentedControl
+                      id="business_type"
+                      ariaLabel={t('fields.businessType')}
+                      value={field.value}
+                      onChange={(val) => { field.onChange(val); field.onBlur() }}
+                      options={[
+                        { value: 'facultative' as const, label: t('businessType.facultative') },
+                        { value: 'binder' as const, label: t('businessType.binder') },
+                      ]}
+                    />
+                  )}
+                />
               </Field>
               <Field label={t('fields.underwriter')} htmlFor="underwriter_id">
                 <NativeSelect {...reg('underwriter_id')}>
@@ -446,6 +445,29 @@ function SubmissionForm({ existing }: { existing: SubmissionRow | null }) {
             </CardContent>
           </Card>
         </div>
+      </div>
+
+      {/* Sticky footer: the outcome button is always in reach, whatever the scroll */}
+      <div className="sticky bottom-0 z-20 -mx-4 mt-6 flex flex-wrap items-center justify-end gap-3 border-t bg-background/95 px-4 py-3 backdrop-blur md:-mx-6 md:px-6">
+        <span className="mr-auto text-caption text-muted-foreground">
+          {Object.keys(errors).length > 0 ? (
+            <span className="font-medium text-destructive">{t('ui.form.fixErrors', { count: Object.keys(errors).length })}</span>
+          ) : isDirty ? (
+            t('ui.form.unsaved')
+          ) : existing ? (
+            t('ui.form.noChanges')
+          ) : null}
+        </span>
+        <Button type="button" variant="outline" asChild>
+          <Link to={existing ? `/submissions/${existing.id}` : '/submissions'}>
+            <ArrowLeft />
+            {t('common.cancel')}
+          </Link>
+        </Button>
+        <Button type="submit" disabled={isSubmitting || (Boolean(existing) && !isDirty)}>
+          {isSubmitting ? <Loader2 className="animate-spin" /> : <Save />}
+          {existing ? t('ui.form.saveChanges') : t('ui.form.createSubmission')}
+        </Button>
       </div>
     </form>
   )

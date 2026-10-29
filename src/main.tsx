@@ -10,6 +10,7 @@ import '@/i18n'
 import '@/index.css'
 import { AuthProvider } from '@/auth/AuthProvider'
 import App from '@/App'
+import { TooltipProvider } from '@/components/ui/tooltip'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, refetchOnWindowFocus: false, retry: 1 } },
@@ -20,8 +21,10 @@ createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthProvider>
-          <App />
-          <Toaster richColors position="top-right" />
+          <TooltipProvider>
+            <App />
+            <Toaster richColors position="top-right" />
+          </TooltipProvider>
         </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>

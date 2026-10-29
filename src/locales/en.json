@@ -516,5 +516,56 @@
     "reducedMotion": "With «reduce motion» switched on in the system, everything moves instantly.",
     "sampleTable": "Sample table",
     "amount": "Amount"
+  },
+  "ui": {
+    "actions": "Actions",
+    "agendaClear": "Nothing is waiting on you — new follow-ups appear here as they fall due.",
+    "agingBucket": "{{bucket}} days overdue",
+    "bulkActions": "Actions for selected rows",
+    "clearSelection": "Clear",
+    "columns": "Columns",
+    "daysOverdue": "{{count}} d overdue",
+    "density": "Density",
+    "densityComfortable": "Comfortable · 56 px",
+    "densityCompact": "Compact · 40 px",
+    "densityDefault": "Standard · 48 px",
+    "editSubmission": "Edit",
+    "emptyFiltered": "Try fewer filters or a shorter search.",
+    "exportSelected": "Export selected",
+    "openCounterparty": "Open counterparty",
+    "openSubmission": "Open submission",
+    "quickView": "Quick view",
+    "rows": "Rows: {{count}}",
+    "saved": "Saved",
+    "selectAll": "Select all rows",
+    "selectRow": "Select row",
+    "selected": "{{count}} selected",
+    "showColumns": "Show columns",
+    "form": {
+      "createSubmission": "Create submission",
+      "fixErrors": "Fix the highlighted fields ({{count}})",
+      "moveFollowUp": "Move follow-up",
+      "noChanges": "No changes yet",
+      "saveChanges": "Save changes",
+      "saveDetails": "Save details",
+      "saveSettings": "Save settings",
+      "unsaved": "Unsaved changes",
+      "closeFollowUp": "Close follow-up"
+    },
+    "kpi": {
+      "followUpsPastDue": "follow-ups past due",
+      "offeredOrNoResponse": "offered or no response",
+      "vsLastMonth": "vs same days last month",
+      "vsLastYear": "vs same date last year"
+    },
+    "palette": {
+      "actions": "Actions",
+      "button": "Search or jump to…",
+      "goTo": "Go to",
+      "nothing": "Nothing found. Try a reference like SUB-2026 or a name.",
+      "placeholder": "Type a page, a reference or a name…",
+      "switchLanguage": "Switch language to {{lng}}",
+      "title": "Search and commands"
+    }
   }
 }

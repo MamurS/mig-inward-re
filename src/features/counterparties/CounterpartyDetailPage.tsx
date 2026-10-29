@@ -21,6 +21,7 @@ import { formatAmount, formatCompactUsd, formatDate, formatPct, locale } from '@
 import { errorMessage } from '@/lib/errors'
 import type { Enums, Json } from '@/lib/database.types'
 import { useCountries, useLocalName } from '@/hooks/useReference'
+import { SavedCheck, useFlash } from '@/components/SavedCheck'
 import type { SubmissionRow } from '@/features/submissions/api'
 
 type Contact = { name: string; role: string; email: string; phone: string }
@@ -70,6 +71,7 @@ export function CounterpartyDetailPage() {
 
   const [form, setForm] = useState<{ name: string; type: Enums<'counterparty_type'>; country_code: string; notes: string; active: boolean; contacts: Contact[] } | null>(null)
   const [busy, setBusy] = useState(false)
+  const [savedShown, flashSaved] = useFlash()
 
   useEffect(() => {
     if (party.data)
@@ -138,7 +140,7 @@ export function CounterpartyDetailPage() {
       return
     }
     await Promise.all([qc.invalidateQueries({ queryKey: ['counterparty', id] }), qc.invalidateQueries({ queryKey: ['ref', 'counterparties'] }), qc.invalidateQueries({ queryKey: ['submissions'] })])
-    toast.success(t('cp.saved'))
+    flashSaved()
   }
 
   const pct = (v: number | null) => (v === null ? '—' : `${new Intl.NumberFormat(locale(), { maximumFractionDigits: 0 }).format(v * 100)} %`)
@@ -267,10 +269,13 @@ export function CounterpartyDetailPage() {
             </div>
 
             {editable && (
-              <Button onClick={() => void save()} disabled={busy || !form.name.trim()}>
-                {busy ? <Loader2 className="animate-spin" /> : <Save />}
-                {t('common.save')}
-              </Button>
+              <div className="flex items-center gap-3">
+                <Button onClick={() => void save()} disabled={busy || !form.name.trim()}>
+                  {busy ? <Loader2 className="animate-spin" /> : <Save />}
+                  {t('ui.form.saveDetails')}
+                </Button>
+                <SavedCheck show={savedShown} />
+              </div>
             )}
           </CardContent>
         </Card>
