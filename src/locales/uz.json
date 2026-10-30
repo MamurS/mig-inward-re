@@ -486,6 +486,13 @@
       "topMgas": "Eng ko'p kechiktirgan MGA lar",
       "mostOverdue": "Eng ko'p kechikkan to'lovlar",
       "noOverdue": "Kechikkan mukofot yo'q"
+    },
+    "attention": "Diqqat talab qiladi",
+    "noOverdueFollowUps": "Muddati oʻtgan eslatmalar yoʻq.",
+    "nav": {
+      "label": "Dashboard boʻlimlari",
+      "overview": "Umumiy koʻrinish",
+      "charts": "Tahlil"
     }
   },
   "admin": {

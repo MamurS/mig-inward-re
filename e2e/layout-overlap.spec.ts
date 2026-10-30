@@ -84,7 +84,7 @@ const PAGES: { name: string; path: string; role: FixtureRole; ready: string }[] 
   { name: 'claims dashboard', path: '/dashboard', role: 'claims', ready: '[data-claims-dashboard] [data-ratio-table]' },
   { name: 'binders', path: '/binders', role: 'underwriter', ready: 'main tbody tr' },
   { name: 'binder', path: '/binders/b1000000-0000-4000-8000-000000000001', role: 'underwriter', ready: '[data-periods-grid]' },
-  { name: 'binders dashboard', path: '/dashboard', role: 'management', ready: '[data-binders-dashboard] [data-ref-list]' },
+  { name: 'binders dashboard', path: '/dashboard', role: 'management', ready: '[data-binders-dashboard] h2' },
 ]
 
 for (const demoMode of [false, true]) {

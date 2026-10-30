@@ -147,8 +147,16 @@ test('dashboard: claims figures open the register; loss ratios labelled both way
   await section.waitFor()
   const open = section.locator('[data-slot="card"]').filter({ hasText: 'Open claims' }).first()
   await expect(open.locator('.text-display')).toHaveText('3')
-  await expect(section.locator('[data-large-losses]')).toContainText('Emirates Aviation Services Hull')
-  await expect(section.locator('[data-cash-calls]')).toContainText('Emirates Aviation Services Hull')
+  // large losses and cash calls are in «Needs attention», above the claims section
+  const attention = page.locator('[data-attention]')
+  await expect(attention.locator('[data-large-losses]')).toContainText('Emirates Aviation Services Hull')
+  await expect(attention.locator('[data-cash-calls]')).toContainText('Emirates Aviation Services Hull')
+  // loss ratios: every MGA's full name above its bars, none cut on an axis
+  await section.locator('[data-loss-ratios] .recharts-yAxis-tick-labels text').first().waitFor()
+  const names = await section.locator('[data-loss-ratios] .recharts-yAxis-tick-labels text').allTextContents()
+  expect(names.length).toBeGreaterThan(1)
+  for (const n of names) expect(n).not.toContain('…')
+  expect(names).toContain('Silk Road Underwriting Agency')
   const table = section.locator('[data-ratio-table]')
   await expect(table).toContainText('Loss ratio, incurred / written')
   await expect(table).toContainText('Loss ratio, incurred / earned')

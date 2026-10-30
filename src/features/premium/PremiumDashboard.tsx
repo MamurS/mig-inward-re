@@ -5,6 +5,7 @@ import { KPI_GRID_5, KPI_SPAN_5, KpiCard } from '@/components/KpiCard'
 import { Amount } from '@/components/Amount'
 import { AgingBadge } from '@/components/AgingBadge'
 import { EmptyState } from '@/components/EmptyState'
+import { AgeingBreakdown } from '@/components/AgeingBar'
 import { Skeleton } from '@/components/Skeleton'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatAmount, isoDate } from '@/lib/format'
@@ -12,22 +13,17 @@ import { errorMessage } from '@/lib/errors'
 import { quoteValue } from '@/features/search/query'
 import { pageLink, RECEIPTS_PAGE, RECEIVABLES_PAGE } from '@/features/search/pages'
 import { AGING_BUCKETS } from '@/features/search/scopes'
+import { ATTENTION_MAX, AttentionCard, RefName, RefRow } from '@/features/dashboard/Attention'
 import { premiumSummary, usePremiumOverview } from './summary'
-
-const BUCKET_COLOUR: Record<(typeof AGING_BUCKETS)[number], string> = {
-  '0-30': 'var(--color-aging-0to30)',
-  '31-60': 'var(--color-aging-31to60)',
-  '61-90': 'var(--color-aging-61to90)',
-  '90+': 'var(--color-aging-90plus)',
-}
 
 const rcv = (q: string) => pageLink(RECEIVABLES_PAGE, q)
 const rcp = (q: string) => pageLink(RECEIPTS_PAGE, q)
 
 /**
  * Dashboard › Premium: outstanding and overdue (with buckets), cash received
- * this month / year, payable to MGAs kept apart, top MGAs by overdue and the
- * most overdue items. Every figure opens the register it comes from.
+ * this month / year, payable to MGAs kept apart, top MGAs by overdue. Every
+ * figure opens the register it comes from. The most overdue items are in
+ * «Needs attention» ({@link MostOverduePremium}).
  */
 export function PremiumDashboard() {
   const { t } = useTranslation()
@@ -80,21 +76,17 @@ export function PremiumDashboard() {
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader><CardTitle>{t('dash.premium.overdueByAge')}</CardTitle></CardHeader>
-          <CardContent className="grid gap-4">
-            <div className="flex h-3 overflow-hidden rounded-full bg-slate-100" aria-hidden>
-              {s.overdueUsd > 0 && AGING_BUCKETS.map((b) => s.buckets[b] > 0 && <span key={b} style={{ width: `${(s.buckets[b] / s.overdueUsd) * 100}%`, background: BUCKET_COLOUR[b] }} />)}
-            </div>
-            <ul className="grid gap-1">
-              {AGING_BUCKETS.map((b) => (
-                <li key={b}>
-                  <Link to={rcv(`bucket:${b}`)} className="flex items-center gap-3 rounded-md px-2 py-2 text-body transition-colors hover:bg-slate-50">
-                    <span className="size-3 shrink-0 rounded-sm" style={{ background: BUCKET_COLOUR[b] }} />
-                    <span className="flex-1">{t('rcv.bucketDays', { bucket: b })}</span>
-                    <Amount value={s.buckets[b]} currency="USD" human className="font-semibold" />
-                  </Link>
-                </li>
-              ))}
-            </ul>
+          <CardContent>
+            <AgeingBreakdown
+              columns={1}
+              items={AGING_BUCKETS.map((b) => ({
+                bucket: b,
+                label: t('rcv.bucketDays', { bucket: b }),
+                weight: s.buckets[b],
+                value: <Amount value={s.buckets[b]} currency="USD" human />,
+                to: rcv(`bucket:${b}`),
+              }))}
+            />
           </CardContent>
         </Card>
 
@@ -123,32 +115,33 @@ export function PremiumDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="gap-0 py-0 lg:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between gap-2 py-4">
-            <CardTitle>{t('dash.premium.mostOverdue')}</CardTitle>
-            <Link to={rcv('overdue')} className="text-body text-link hover:underline">{t('dash.openInRegister')}</Link>
-          </CardHeader>
-          {s.mostOverdue.length === 0 ? (
-            <EmptyState pictogram="done" title={t('dash.premium.noOverdue')} compact />
-          ) : (
-            <ul className="grid grid-cols-[max-content_minmax(0,1fr)_auto] border-t sm:grid-cols-[max-content_minmax(0,1fr)_auto_auto]" data-most-overdue data-ref-list>
-              {s.mostOverdue.map((r) => (
-                <li key={r.id} className="col-span-full grid grid-cols-subgrid">
-                  <Link to={`/submissions/${r.submission_id}`} className="col-span-full grid grid-cols-subgrid items-baseline gap-x-3 border-b px-5 py-2 text-body transition-colors hover:bg-slate-50">
-                    <span className="font-medium whitespace-nowrap text-link num" data-ref>{r.ref_no} #{r.installment_no}</span>
-                    <span className="min-w-0">
-                      <span className="block truncate" title={r.insured_name ?? ''}>{r.insured_name}</span>
-                      <span className="block truncate text-caption text-muted-foreground">{r.mga_name}</span>
-                    </span>
-                    <span className="hidden sm:inline"><AgingBadge days={r.days_overdue ?? 0} /></span>
-                    <span className="text-right whitespace-nowrap num">{formatAmount(r.outstanding_amount)} <span className="text-caption text-muted-foreground">{r.currency}</span></span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
       </div>
     </section>
+  )
+}
+
+/** «Needs attention»: the most overdue premium installments, oldest first. */
+export function MostOverduePremium() {
+  const { t } = useTranslation()
+  const overview = usePremiumOverview()
+  const s = overview.data ? premiumSummary(overview.data.rows, overview.data.receipts, isoDate()) : null
+  return (
+    <AttentionCard
+      title={t('dash.premium.mostOverdue')}
+      count={s?.overdueCount ?? 0}
+      to={rcv('overdue')}
+      empty={t('dash.premium.noOverdue')}
+      loading={overview.isLoading}
+      error={overview.error}
+      data="most-overdue"
+    >
+      {s?.mostOverdue.slice(0, ATTENTION_MAX).map((r) => (
+        <RefRow key={r.id} to={`/submissions/${r.submission_id}`}>
+          <span className="font-medium whitespace-nowrap text-link num" data-ref>{r.ref_no} #{r.installment_no}</span>
+          <RefName name={r.insured_name} sub={`${r.mga_name ?? ''} · ${formatAmount(r.outstanding_amount)} ${r.currency ?? ''}`} />
+          <span className="text-right"><AgingBadge days={r.days_overdue ?? 0} /></span>
+        </RefRow>
+      ))}
+    </AttentionCard>
   )
 }

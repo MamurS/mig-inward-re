@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { Bar, BarChart, CartesianGrid, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
@@ -14,15 +13,17 @@ import { EmptyState } from '@/components/EmptyState'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { NativeSelect } from '@/components/ui/native-select'
-import { StatusBadge } from '@/components/StatusBadge'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/auth/AuthProvider'
 import { formatAmount, formatDate, formatHuman, formatLongDate, formatMonthShort, isoDate, locale } from '@/lib/format'
 import { errorMessage } from '@/lib/errors'
-import { STATUS_SOLID, type SubmissionStatus } from '@/lib/status'
-import { PremiumDashboard } from '@/features/premium/PremiumDashboard'
-import { ClaimsDashboard } from '@/features/claims/ClaimsDashboard'
-import { BindersDashboard } from '@/features/binders/BindersDashboard'
+import { STATUS_MARK, type SubmissionStatus } from '@/lib/status'
+import { AgeingBreakdown } from '@/components/AgeingBar'
+import { MostOverduePremium, PremiumDashboard } from '@/features/premium/PremiumDashboard'
+import { CashCallsDue, ClaimsDashboard, LargeLosses } from '@/features/claims/ClaimsDashboard'
+import { BindersDashboard, BordereauxToChase } from '@/features/binders/BindersDashboard'
+import { ATTENTION_MAX, AttentionCard, RefName, RefRow } from './Attention'
+import { SectionNav, type DashSection } from './SectionNav'
 
 type Row = {
   id: string
@@ -38,6 +39,7 @@ type Row = {
   lob_name: string | null
   our_gross_premium_usd: number | null
   follow_up_overdue: boolean
+  next_follow_up_at: string | null
   offer_expired: boolean
 }
 
@@ -47,7 +49,7 @@ const partOfDay = () => {
 }
 
 const COLUMNS =
-  'id, ref_no, insured_name, status, received_at, offered_at, bound_at, offer_valid_until, mga_id, mga_name, lob_name, our_gross_premium_usd, follow_up_overdue, offer_expired'
+  'id, ref_no, insured_name, status, received_at, offered_at, bound_at, offer_valid_until, mga_id, mga_name, lob_name, our_gross_premium_usd, follow_up_overdue, next_follow_up_at, offer_expired'
 
 const BAR = 'var(--color-brand-500)'
 /** Axis text: slate-600 reads at 6.5 : 1 on white. */
@@ -98,7 +100,9 @@ export function DashboardPage() {
     const underReview = rows.filter((r) => r.status === 'under_review').length
     const notReviewed = rows.filter((r) => r.status === 'received').length
     const awaiting = rows.filter((r) => r.status === 'offered' || r.status === 'no_response')
-    const overdue = rows.filter((r) => r.follow_up_overdue).length
+    // longest overdue first
+    const overdueFollowUps = rows.filter((r) => r.follow_up_overdue).sort((a, b) => (a.next_follow_up_at ?? '').localeCompare(b.next_follow_up_at ?? ''))
+    const overdue = overdueFollowUps.length
     const boundYtd = rows.filter((r) => r.status === 'bound' && r.bound_at && r.bound_at >= yearStart)
     const boundYtdUsd = boundYtd.reduce((s, r) => s + (r.our_gross_premium_usd ?? 0), 0)
 
@@ -157,6 +161,7 @@ export function DashboardPage() {
       .slice(0, 10)
 
     return {
+      overdueFollowUps,
       receivedDelta: change(receivedThisMonth, receivedPrevMonth), boundDelta: change(boundYtd.length, boundLastYtd), receivedTrend, boundTrend,
       monthStart, yearStart, receivedThisMonth, underReview, notReviewed, awaiting: awaiting.length, overdue,
       boundYtd: boundYtd.length, boundYtdUsd, funnel, byMga, byLob, byMonth, hitRatio, hitRatioDecided,
@@ -164,6 +169,18 @@ export function DashboardPage() {
       oldestOffers,
     }
   }, [data, year, years, thisYear, t])
+
+  // the switcher names only the sections this role sees
+  const sections = useMemo<DashSection[]>(
+    () => [
+      { key: 'overview', label: t('dash.nav.overview'), id: null },
+      ...(seesPremium ? [{ key: 'premium', label: t('dash.premium.title'), id: 'dash-premium' }] : []),
+      ...(seesClaims ? [{ key: 'claims', label: t('claim.dashTitle'), id: 'dash-claims' }] : []),
+      { key: 'binders', label: t('binder.dashTitle'), id: 'dash-binders' },
+      { key: 'charts', label: t('dash.nav.charts'), id: 'dash-charts' },
+    ],
+    [t, seesPremium, seesClaims],
+  )
 
   const greeting = `${t(`ui.greeting.${partOfDay()}`, { name: profile?.full_name?.split(' ')[0] ?? '' })} · ${formatLongDate()}`
 
@@ -203,6 +220,8 @@ export function DashboardPage() {
         }
       />
 
+      <SectionNav sections={sections} />
+
       {/* KPIs — each opens the register with the matching filter */}
       <div className={`mb-4 ${KPI_GRID_5}`}>
         <KpiCard
@@ -231,129 +250,152 @@ export function DashboardPage() {
         />
       </div>
 
+      {/* What needs doing first: short lists, each opening the filtered register (only what the role may see) */}
+      <section aria-labelledby="dash-attention" className="mb-6 grid gap-4" data-attention>
+        <h2 id="dash-attention" className="text-title font-semibold">{t('dash.attention')}</h2>
+        <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+          <AttentionCard
+            title={t('dash.tiles.overdue')}
+            count={m.overdueFollowUps.length}
+            to={registerLink('overdue', { sort: 'next_follow_up_at', dir: 'asc' })}
+            empty={t('dash.noOverdueFollowUps')}
+            data="overdue-follow-ups"
+          >
+            {m.overdueFollowUps.slice(0, ATTENTION_MAX).map((r) => (
+              <RefRow key={r.id} to={`/submissions/${r.id}`}>
+                <span className="font-medium whitespace-nowrap text-link num" data-ref>{r.ref_no}</span>
+                <RefName name={r.insured_name} sub={r.mga_name} />
+                <span className="text-right"><AgingBadge days={Math.max(daysSince(r.next_follow_up_at) ?? 1, 1)} /></span>
+              </RefRow>
+            ))}
+          </AttentionCard>
+          <AttentionCard
+            title={t('dash.oldestOffers')}
+            count={m.awaiting}
+            to={registerLink('status:offered|no_response', { sort: 'received_at', dir: 'asc' })}
+            empty={t('dash.noOpenOffers')}
+            data="oldest-offers"
+          >
+            {m.oldestOffers.slice(0, ATTENTION_MAX).map((r) => {
+              const days = daysSince(r.offered_at) ?? 0
+              return (
+                <RefRow key={r.id} to={`/submissions/${r.id}`}>
+                  <span className="font-medium whitespace-nowrap text-link num" data-ref>{r.ref_no}</span>
+                  <RefName name={r.insured_name} sub={r.our_gross_premium_usd === null ? r.mga_name : `${r.mga_name} · ${formatHuman(r.our_gross_premium_usd)} USD`} />
+                  <span className="inline-flex items-center justify-end gap-2">
+                    {r.offer_expired && (
+                      <span title={t('sub.offerExpiredOn', { date: formatDate(r.offer_valid_until) })}><AlertTriangle className="size-4 text-warning-600" /></span>
+                    )}
+                    <AgingBadge days={Math.max(days, 1)} label={t('ui.daysWaiting', { count: days })} />
+                  </span>
+                </RefRow>
+              )
+            })}
+          </AttentionCard>
+          {seesPremium && <MostOverduePremium />}
+          {seesClaims && <LargeLosses />}
+          {seesClaims && <CashCallsDue />}
+          <BordereauxToChase />
+        </div>
+      </section>
+
       {seesPremium && <PremiumDashboard />}
       {seesClaims && <ClaimsDashboard />}
       <BindersDashboard />
 
-      {/* What needs an answer first, then how we are doing */}
-      <div className="mb-4 grid gap-4 xl:grid-cols-3">
-        <Card className="gap-0 py-0 xl:col-span-2">
-          <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 py-4">
-            <CardTitle>{t('dash.oldestOffers')}</CardTitle>
-            <Link to={registerLink('status:offered|no_response', { sort: 'received_at', dir: 'asc' })} className="text-body text-link hover:underline">{t('dash.openInRegister')}</Link>
-          </CardHeader>
-          {m.oldestOffers.length === 0 ? (
-            <EmptyState pictogram="done" title={t('dash.noOpenOffers')} compact />
-          ) : (
-            // one grid for the whole list: the ref column is as wide as the longest ref (DEMO-SUB-…), never fixed
-            <ul className="grid grid-cols-[max-content_minmax(8rem,1fr)_auto] border-t md:grid-cols-[max-content_minmax(8rem,1fr)_auto_auto] 2xl:grid-cols-[max-content_minmax(8rem,1fr)_auto_auto_auto]" data-ref-list>
-              {m.oldestOffers.map((r) => {
-                const days = daysSince(r.offered_at) ?? 0
-                return (
-                  <li key={r.id} className="col-span-full grid grid-cols-subgrid">
-                    <Link to={`/submissions/${r.id}`} className="col-span-full grid grid-cols-subgrid items-baseline gap-x-3 border-b px-5 py-2 text-body transition-colors hover:bg-slate-50">
-                      <span className="font-medium whitespace-nowrap text-link num" data-ref>{r.ref_no}</span>
-                      <span className="min-w-0">
-                        <span className="block truncate" title={r.insured_name}>{r.insured_name}</span>
-                        <span className="block truncate text-caption text-muted-foreground">{r.mga_name}</span>
-                      </span>
-                      <StatusBadge status={r.status} className="hidden 2xl:inline-flex" />
-                      <span className="hidden items-center justify-end gap-2 md:inline-flex">
-                        {r.offer_expired && (
-                          <span title={t('sub.offerExpiredOn', { date: formatDate(r.offer_valid_until) })}><AlertTriangle className="size-4 text-warning-600" /></span>
-                        )}
-                        <AgingBadge days={Math.max(days, 1)} label={t('ui.daysWaiting', { count: days })} />
-                      </span>
-                      <span className="text-right"><Amount value={r.our_gross_premium_usd} human /></span>
-                    </Link>
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-        </Card>
+      {/* How we are doing: bound premium, the funnel, offers by age, the deeper analysis one click away */}
+      <section aria-labelledby="dash-charts" className="grid gap-4" data-dash-charts>
+        <h2 id="dash-charts" className="text-title font-semibold">{t('dash.nav.charts')}</h2>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Card>
+            <CardHeader className="flex flex-row items-baseline justify-between gap-2">
+              <CardTitle>{t('dash.byMonth')}</CardTitle>
+              <Amount value={m.boundUsd} currency="USD" human className="text-body font-semibold" />
+            </CardHeader>
+            <CardContent>
+              {m.boundUsd === 0 ? (
+                <EmptyState pictogram="chart" title={t('dash.noBound')} compact />
+              ) : (
+                <ResponsiveContainer width="100%" height={240}>
+                  {/* the axis is as wide as its longest label (the top tick can be a digit longer than the tallest bar); room above the top one */}
+                  <BarChart data={m.byMonth} margin={{ top: 12, right: 4, left: 4 }}>
+                    <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="var(--color-slate-200)" />
+                    <XAxis dataKey="name" tickLine={false} axisLine={false} tick={TICK} interval={0} />
+                    <YAxis tickFormatter={(v) => formatHuman(v as number)} tickLine={false} axisLine={false} tick={TICK} width={axisWidth(Math.max(...m.byMonth.map((x) => x.value)))} />
+                    <Tooltip formatter={(v) => [formatAmount(v as number), t('dash.ourGrossUsd')]} cursor={{ fill: 'var(--color-slate-50)' }} />
+                    <Bar dataKey="value" fill={BAR} radius={[3, 3, 0, 0]} isAnimationActive={false} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader><CardTitle>{t('dash.awaitingByAge')}</CardTitle></CardHeader>
-          <CardContent>
-            <AgeBuckets rows={(data ?? []).filter((r) => r.status === 'offered' || r.status === 'no_response')} />
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="mb-4 grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader className="flex flex-row items-baseline justify-between gap-2">
-            <CardTitle>{t('dash.byMonth')}</CardTitle>
-            <Amount value={m.boundUsd} currency="USD" human className="text-body font-semibold" />
-          </CardHeader>
-          <CardContent>
-            {m.boundUsd === 0 ? (
-              <EmptyState pictogram="chart" title={t('dash.noBound')} compact />
-            ) : (
+          <Card>
+            <CardHeader><CardTitle>{t('dash.funnelTitle')}</CardTitle></CardHeader>
+            <CardContent>
+              {/* in the status badges' colours (StatusBadge), so «Offered» never reads as an ageing bucket */}
               <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={m.byMonth} margin={{ top: 8, right: 4, left: 4 }}>
-                  <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="var(--color-slate-200)" />
-                  <XAxis dataKey="name" tickLine={false} axisLine={false} tick={TICK} interval={0} />
-                  <YAxis tickFormatter={(v) => formatHuman(v as number)} tickLine={false} axisLine={false} tick={TICK} width={48} />
-                  <Tooltip formatter={(v) => [formatAmount(v as number), t('dash.ourGrossUsd')]} cursor={{ fill: 'var(--color-slate-50)' }} />
-                  <Bar dataKey="value" fill={BAR} radius={[3, 3, 0, 0]} isAnimationActive={false} />
+                <BarChart data={m.funnel} layout="vertical" margin={{ left: 8, right: 40 }}>
+                  <XAxis type="number" hide allowDecimals={false} />
+                  <YAxis type="category" dataKey="name" width={120} tickLine={false} axisLine={false} tick={TICK} />
+                  <Tooltip formatter={(v) => [v as number, t('dash.count')]} cursor={{ fill: 'transparent' }} />
+                  <Bar dataKey="value" radius={[0, 4, 4, 0]} isAnimationActive={false}>
+                    {m.funnel.map((f) => <Cell key={f.status} fill={STATUS_MARK[f.status].fill} stroke={STATUS_MARK[f.status].edge} strokeWidth={1} />)}
+                    <LabelList dataKey="value" position="right" fontSize={12} fill="var(--color-slate-700)" />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
 
-        <Card>
-          <CardHeader><CardTitle>{t('dash.funnelTitle')}</CardTitle></CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={m.funnel} layout="vertical" margin={{ left: 8, right: 40 }}>
-                <XAxis type="number" hide allowDecimals={false} />
-                <YAxis type="category" dataKey="name" width={120} tickLine={false} axisLine={false} tick={TICK} />
-                <Tooltip formatter={(v) => [v as number, t('dash.count')]} cursor={{ fill: 'transparent' }} />
-                <Bar dataKey="value" radius={[0, 4, 4, 0]} isAnimationActive={false}>
-                  {m.funnel.map((f) => <Cell key={f.status} fill={STATUS_SOLID[f.status]} />)}
-                  <LabelList dataKey="value" position="right" fontSize={12} fill="var(--color-slate-700)" />
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
+        <div className="grid gap-4 xl:grid-cols-3">
+          <Card className="xl:col-span-2">
+            <CardContent>
+              <Tabs defaultValue="hit">
+                <TabsList>
+                  <TabsTrigger value="hit">{t('dash.hitRatio')}</TabsTrigger>
+                  <TabsTrigger value="mga">{t('dash.byMga')}</TabsTrigger>
+                  <TabsTrigger value="lob">{t('dash.byLob')}</TabsTrigger>
+                </TabsList>
+                <TabsContent value="hit">
+                  <div className="grid gap-6 pt-2 md:grid-cols-3">
+                    <div>
+                      <div className="font-display-bold text-display num">{pct(m.hitRatio)}</div>
+                      <p className="mt-1 text-body text-muted-foreground">{t('dash.hitRatioExplain', { bound: m.boundFromOffered, offered: m.offeredCount })}</p>
+                    </div>
+                    <div>
+                      <div className="font-display-bold text-headline num">{pct(m.hitRatioDecided)}</div>
+                      <p className="mt-1 text-body text-muted-foreground">{t('dash.hitRatioDecided')}</p>
+                    </div>
+                    <div>
+                      <div className="font-display-bold text-headline"><Amount value={m.boundUsd} currency="USD" human /></div>
+                      <p className="mt-1 text-body text-muted-foreground">{t('dash.boundPremiumPeriod')}</p>
+                    </div>
+                  </div>
+                </TabsContent>
+                <TabsContent value="mga"><RankChart data={m.byMga} empty={t('dash.noBound')} /></TabsContent>
+                <TabsContent value="lob"><RankChart data={m.byLob} empty={t('dash.noBound')} /></TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
 
-      {/* Deeper analysis, one click away */}
-      <Card>
-        <CardContent>
-          <Tabs defaultValue="hit">
-            <TabsList>
-              <TabsTrigger value="hit">{t('dash.hitRatio')}</TabsTrigger>
-              <TabsTrigger value="mga">{t('dash.byMga')}</TabsTrigger>
-              <TabsTrigger value="lob">{t('dash.byLob')}</TabsTrigger>
-            </TabsList>
-            <TabsContent value="hit">
-              <div className="grid gap-6 pt-2 md:grid-cols-3">
-                <div>
-                  <div className="font-display-bold text-display num">{pct(m.hitRatio)}</div>
-                  <p className="mt-1 text-body text-muted-foreground">{t('dash.hitRatioExplain', { bound: m.boundFromOffered, offered: m.offeredCount })}</p>
-                </div>
-                <div>
-                  <div className="font-display-bold text-headline num">{pct(m.hitRatioDecided)}</div>
-                  <p className="mt-1 text-body text-muted-foreground">{t('dash.hitRatioDecided')}</p>
-                </div>
-                <div>
-                  <div className="font-display-bold text-headline"><Amount value={m.boundUsd} currency="USD" human /></div>
-                  <p className="mt-1 text-body text-muted-foreground">{t('dash.boundPremiumPeriod')}</p>
-                </div>
-              </div>
-            </TabsContent>
-            <TabsContent value="mga"><RankChart data={m.byMga} empty={t('dash.noBound')} /></TabsContent>
-            <TabsContent value="lob"><RankChart data={m.byLob} empty={t('dash.noBound')} /></TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+          <Card>
+            <CardHeader><CardTitle>{t('dash.awaitingByAge')}</CardTitle></CardHeader>
+            <CardContent>
+              <AgeBuckets rows={(data ?? []).filter((r) => r.status === 'offered' || r.status === 'no_response')} />
+            </CardContent>
+          </Card>
+        </div>
+      </section>
     </>
   )
+}
+
+/** A y-axis width that fits the longest compact tick label (12 px figures), the top tick included. */
+function axisWidth(max: number) {
+  const longest = Math.max(formatHuman(max).length, formatHuman(max * 1.25).length) + 1
+  return Math.max(40, Math.ceil(longest * 7) + 4)
 }
 
 function RankChart({ data, empty }: { data: { name: string; value: number }[]; empty: string }) {
@@ -375,38 +417,31 @@ function RankChart({ data, empty }: { data: { name: string; value: number }[]; e
 }
 
 const AGE_BUCKETS = [
-  { key: '0-30', label: '0–30', min: 0, max: 30, colour: 'var(--color-aging-0to30)' },
-  { key: '31-60', label: '31–60', min: 31, max: 60, colour: 'var(--color-aging-31to60)' },
-  { key: '61-90', label: '61–90', min: 61, max: 90, colour: 'var(--color-aging-61to90)' },
-  { key: '90+', label: '90+', min: 91, max: Infinity, colour: 'var(--color-aging-90plus)' },
+  { key: '0-30', label: '0–30', min: 0, max: 30 },
+  { key: '31-60', label: '31–60', min: 31, max: 60 },
+  { key: '61-90', label: '61–90', min: 61, max: 90 },
+  { key: '90+', label: '90+', min: 91, max: Infinity },
 ] as const
 
-/** Open offers by days since offered, on the ageing scale: one stacked bar, then the four buckets. */
+/** Open offers by days since offered, on the ageing scale: the same bar and legend as overdue premium. */
 function AgeBuckets({ rows }: { rows: Row[] }) {
   const { t } = useTranslation()
-  const buckets = AGE_BUCKETS.map((b) => {
-    const items = rows.filter((r) => {
+  const items = AGE_BUCKETS.map((b) => {
+    const inBucket = rows.filter((r) => {
       const d = r.offered_at ? Math.floor((Date.now() - new Date(r.offered_at).getTime()) / 86_400_000) : 0
       return d >= b.min && d <= b.max
     })
-    return { ...b, name: t('dash.days', { range: b.label }), value: items.length, usd: items.reduce((s, r) => s + (r.our_gross_premium_usd ?? 0), 0) }
+    return {
+      bucket: b.key,
+      label: t('dash.days', { range: b.label }),
+      weight: inBucket.length,
+      value: <span className="num">{inBucket.length}</span>,
+      extra: <Amount value={inBucket.reduce((s, r) => s + (r.our_gross_premium_usd ?? 0), 0)} human />,
+    }
   })
-  const total = buckets.reduce((s, b) => s + b.value, 0)
   return (
     <div className="grid gap-4">
-      <div className="flex h-3 overflow-hidden rounded-full bg-slate-100" aria-hidden>
-        {total > 0 && buckets.map((b) => b.value > 0 && <span key={b.key} style={{ width: `${(b.value / total) * 100}%`, background: b.colour }} />)}
-      </div>
-      <ul className="grid gap-1">
-        {buckets.map((b) => (
-          <li key={b.key} className="flex items-center gap-3 rounded-md px-2 py-2 text-body">
-            <span className="size-3 shrink-0 rounded-sm" style={{ background: b.colour }} />
-            <span className="flex-1">{b.name}</span>
-            <span className="w-8 text-right font-semibold num">{b.value}</span>
-            <span className="w-20 text-right text-caption text-muted-foreground"><Amount value={b.usd} human /></span>
-          </li>
-        ))}
-      </ul>
+      <AgeingBreakdown items={items} columns={1} />
       <p className="text-caption text-muted-foreground">{t('dash.ageNote')}</p>
     </div>
   )

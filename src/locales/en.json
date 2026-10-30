@@ -486,6 +486,13 @@
       "topMgas": "Top MGAs by overdue premium",
       "mostOverdue": "Most overdue premium",
       "noOverdue": "No overdue premium"
+    },
+    "attention": "Needs attention",
+    "noOverdueFollowUps": "No follow-ups are overdue.",
+    "nav": {
+      "label": "Dashboard sections",
+      "overview": "Overview",
+      "charts": "Analytics"
     }
   },
   "admin": {
