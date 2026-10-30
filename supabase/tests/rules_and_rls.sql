@@ -173,7 +173,7 @@ end $$;
 -- ---------------- Steps 4–5 objects, storage, calculations ----------------
 do $$
 declare
-  v_uid uuid := (select id from public.profiles where role = 'admin' order by created_at limit 1);  -- same identity as the first block
+  v_uid uuid := (select id from public.profiles order by created_at limit 1);  -- same identity as the first block
   v_rec uuid := (select id from public.submissions where status = 'received' order by ref_no limit 1);
   v_fu  uuid;
   v_n   int;
