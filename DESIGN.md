@@ -301,6 +301,23 @@ the syntax and learn it by seeing it. It edits one AND group; what it has no
 control for (exclusions, OR, `ref:`, relative or open-ended ranges) is kept
 exactly as typed. Model: `search/builder.ts` (unit-tested round trip).
 
+**The only search / filter control.** The bar searches the list of the page
+it is on — placeholder, words, suggestions, chips and builder follow the page.
+No page has a search box, filter pills or filter checkboxes of its own.
+
+| page | searches | words (EN / RU / UZ) | where |
+|---|---|---|---|
+| Submissions | the register | status, mga, broker, lob, country, ccy, uw, type, ref, premium, share, si, dates; overdue, expired, mine | database |
+| Counterparties | the list | type (mga / broker / cedent), country; `inactive` shows inactive ones too | browser (reference-sized) |
+| Agenda | follow-ups (both tabs) | assignee (`all`, a name, `mine`), type, due; overdue; today / thisweek = due | browser; `assignee:` loads others' (admin, management) |
+| Admin › Users | users | role; active / inactive | browser |
+| Admin › Reference data | currencies, countries, lines | text; active / inactive | browser |
+| Admin › FX rates | all stored rates | ccy, date, source | database |
+| anything else | submissions | — | Enter opens the register |
+
+The admin tab is in the URL (`?tab=fx`), so the bar knows the list; switching
+tab starts a fresh search.
+
 **One engine, a scope per page.** `query.ts` is the parser; `scopes.ts` says
 what each page's search knows (fields with EN/RU/UZ aliases, values, keywords);
 `pages.ts` says which scope runs where, where its rows are filtered, the

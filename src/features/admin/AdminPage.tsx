@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { KeyRound, Loader2, Play, Plus, Save, Trash2, UserPlus } from 'lucide-react'
@@ -21,13 +22,24 @@ import { cleanDecimal, isDecimal } from '@/lib/decimal'
 import { errorMessage } from '@/lib/errors'
 import type { Tables } from '@/lib/database.types'
 import { useCurrencies } from '@/hooks/useReference'
+import { norm } from '@/features/search/normalize'
+import type { ParsedQuery } from '@/features/search/query'
+import { matchesQuery, type ClientSpec } from '@/features/search/client'
+import { FX_PAGE, REFERENCE_PAGE, USERS_PAGE } from '@/features/search/pages'
+import { useListSearch } from '@/features/search/useSearch'
+import { SearchChips } from '@/features/search/SearchChips'
+
+const TABS = ['users', 'reference', 'fx', 'settings', 'jobs'] as const
 
 export function AdminPage() {
   const { t } = useTranslation()
+  // the tab lives in the URL, so the search bar knows which list it filters (and links keep the tab)
+  const [params, setParams] = useSearchParams()
+  const tab = TABS.find((x) => x === params.get('tab')) ?? 'users'
   return (
     <>
       <PageHeader title={t('pages.admin.title')} subtitle={t('pages.admin.subtitle')} />
-      <Tabs defaultValue="users">
+      <Tabs value={tab} onValueChange={(v) => setParams({ tab: v })}>
         <TabsList className="flex-wrap">
           <TabsTrigger value="users">{t('admin.tabs.users')}</TabsTrigger>
           <TabsTrigger value="reference">{t('admin.tabs.reference')}</TabsTrigger>
@@ -81,6 +93,16 @@ function UsersTab() {
       return data
     },
   })
+  const { parsed, setQ } = useListSearch(USERS_PAGE)
+  const spec: ClientSpec<Tables<'profiles'>> = useMemo(
+    () => ({
+      text: (u) => norm([u.full_name, u.email].filter(Boolean).join(' ')),
+      list: { role: (u) => u.role },
+      flags: { active: (u) => u.active, inactive: (u) => !u.active },
+    }),
+    [],
+  )
+  const shown = (users.data ?? []).filter((u) => matchesQuery(parsed, u, spec))
   const [edits, setEdits] = useState<Record<string, { full_name: string; role: AppRole | ''; active: boolean }>>({})
   const [creating, setCreating] = useState(false)
   const [pwFor, setPwFor] = useState<Tables<'profiles'> | null>(null)
@@ -105,6 +127,8 @@ function UsersTab() {
   }
 
   return (
+    <>
+    {parsed && <SearchChips query={parsed} scope={USERS_PAGE.scope} onChange={setQ} count={t('ui.rows', { count: shown.length })} />}
     <Card className="gap-0 py-0">
       <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 py-4">
         <div>
@@ -128,7 +152,7 @@ function UsersTab() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {users.data?.map((u) => {
+          {shown.map((u) => {
             const e = edits[u.id]
             if (!e) return null
             const changed = e.full_name !== (u.full_name ?? '') || e.role !== (u.role ?? '') || e.active !== u.active
@@ -165,6 +189,7 @@ function UsersTab() {
       <CreateUserDialog open={creating} onClose={() => setCreating(false)} />
       <SetPasswordDialog user={pwFor} onClose={() => setPwFor(null)} />
     </Card>
+    </>
   )
 }
 
@@ -293,7 +318,9 @@ function RefTable({
   cols,
   title,
   orderBy,
+  query,
 }: {
+  query: ParsedQuery | null
   table: 'currencies' | 'countries' | 'lines_of_business'
   pk: 'code' | 'id'
   cols: RefCol[]
@@ -312,6 +339,14 @@ function RefTable({
   })
   const [edits, setEdits] = useState<Record<string, Record<string, string | boolean>>>({})
   const [draft, setDraft] = useState<Record<string, string>>({})
+  const spec: ClientSpec<Record<string, string | boolean | number | null>> = useMemo(
+    () => ({
+      text: (r) => norm(cols.map((c) => r[c.key]).filter((v) => v !== null && v !== undefined).join(' ')),
+      flags: { active: (r) => Boolean(r.active), inactive: (r) => !r.active },
+    }),
+    [cols],
+  )
+  const shown = (rows.data ?? []).filter((r) => matchesQuery(query, r, spec))
 
   const refresh = () => Promise.all([qc.invalidateQueries({ queryKey: ['admin', table] }), qc.invalidateQueries({ queryKey: ['ref'] })])
 
@@ -347,7 +382,7 @@ function RefTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {rows.data?.map((r) => {
+            {shown.map((r) => {
               const id = String(r[pk])
               const e = edits[id] ?? {}
               const val = (k: string) => (k in e ? e[k] : r[k]) as string | boolean | null
@@ -404,9 +439,12 @@ function RefTable({
 
 function ReferenceTab() {
   const { t } = useTranslation()
+  const { parsed, setQ } = useListSearch(REFERENCE_PAGE)
   return (
     <div className="grid gap-4">
+      {parsed && parsed.groups.length > 0 && <SearchChips query={parsed} scope={REFERENCE_PAGE.scope} onChange={setQ} count={null} />}
       <RefTable
+        query={parsed}
         table="lines_of_business"
         pk="id"
         orderBy="sort_order"
@@ -420,6 +458,7 @@ function ReferenceTab() {
       />
       <div className="grid gap-4 xl:grid-cols-2">
         <RefTable
+          query={parsed}
           table="currencies"
           pk="code"
           orderBy="sort_order"
@@ -430,6 +469,7 @@ function ReferenceTab() {
           ]}
         />
         <RefTable
+          query={parsed}
           table="countries"
           pk="code"
           orderBy="name"
@@ -457,12 +497,14 @@ function FxTab() {
   const [ccy, setCcy] = useState('')
   const [date, setDate] = useState(isoDate())
   const [rate, setRate] = useState('')
-  const [filter, setFilter] = useState('')
+  // the search bar filters the rates in the database (all of them, not only the 300 latest shown)
+  const { parsed, filter, setQ } = useListSearch(FX_PAGE)
   const rates = useQuery({
     queryKey: ['admin', 'fx', filter],
+    enabled: parsed !== null,
     queryFn: async () => {
       let q = supabase.from('fx_rates').select('*').order('rate_date', { ascending: false }).order('currency').limit(300)
-      if (filter) q = q.eq('currency', filter)
+      if (filter) q = q.or(filter)
       const { data, error } = await q
       if (error) throw error
       return data
@@ -490,6 +532,7 @@ function FxTab() {
 
   return (
     <div className="grid gap-4">
+      {parsed && parsed.groups.length > 0 && <SearchChips query={parsed} scope={FX_PAGE.scope} onChange={setQ} count={t('ui.rows', { count: rates.data?.length ?? 0 })} />}
       <Card>
         <CardHeader>
           <CardTitle>{t('admin.fx.add')}</CardTitle>
@@ -519,12 +562,6 @@ function FxTab() {
       <Card className="gap-0 py-0">
         <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 py-4">
           <CardTitle>{t('admin.tabs.fx')}</CardTitle>
-          <div className="w-36">
-            <NativeSelect value={filter} onChange={(e) => setFilter(e.target.value)}>
-              <option value="">{t('sub.allCurrencies')}</option>
-              {currencies.data?.filter((c) => c.code !== 'USD').map((c) => <option key={c.code} value={c.code}>{c.code}</option>)}
-            </NativeSelect>
-          </div>
         </CardHeader>
         <div className="max-h-[480px] overflow-y-auto">
           <Table>

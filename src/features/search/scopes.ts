@@ -4,7 +4,7 @@
  * PostgREST filter) or over the rows already loaded (client: small,
  * reference-sized lists). One parser (query.ts) reads them all.
  */
-import type { Option, Scope, SearchContext } from './query'
+import type { ListField, Option, Scope, SearchContext } from './query'
 import type { ServerSpec } from './postgrest'
 
 const label = (ctx: SearchContext, key: string, fallback: string) => ctx.t?.(key) ?? fallback
@@ -106,3 +106,111 @@ export const SUBMISSIONS_SERVER: ServerSpec = {
   textColumn: 'search_text',
 }
 
+
+// ---------------------------------------------------------------------------
+// Counterparties
+// ---------------------------------------------------------------------------
+
+const CP_TYPE_WORDS: Record<string, string[]> = {
+  mga: ['mga', 'мга', 'agent', 'агент'],
+  broker: ['broker', 'brokers', 'брокер', 'брокеры', 'vositachi'],
+  cedent: ['cedent', 'cedents', 'цедент', 'цеденты', 'sedent'],
+}
+const cpTypeOptions = (ctx: SearchContext): Option[] =>
+  Object.keys(CP_TYPE_WORDS).map((k) => ({ value: k, label: label(ctx, `counterpartyType.${k}`, k), insert: k, names: [...CP_TYPE_WORDS[k], label(ctx, `counterpartyType.${k}`, k)] }))
+
+const COUNTRY_FIELD: ListField = { key: 'country', kind: 'list', aliases: ['страна', 'mamlakat', 'davlat'], labelKey: 'fields.country', options: countryOptions, partial: 'contains' }
+
+export const COUNTERPARTIES: Scope = {
+  id: 'counterparties',
+  fields: [
+    { key: 'type', kind: 'list', aliases: ['тип', 'turi', 'tur'], labelKey: 'cp.type', options: cpTypeOptions, partial: 'prefix' },
+    COUNTRY_FIELD,
+  ],
+  flags: [{ flag: 'inactive', words: ['inactive', 'archived', 'неактивные', 'неактивный', 'архив', 'nofaol'], labelKey: 'search.flag.inactive' }],
+  exactFields: ['type', 'country'],
+  weak: ['agent', 'агент'],
+}
+
+// ---------------------------------------------------------------------------
+// Agenda (follow-ups)
+// ---------------------------------------------------------------------------
+
+const FU_TYPE_WORDS: Record<string, string[]> = {
+  request_update: ['request_update', 'request', 'update', 'запрос', 'запросить', 'sorov'],
+  offer_expiry: ['offer_expiry', 'expiry', 'истечение', 'срок предложения', 'muddat'],
+  premium_overdue: ['premium_overdue', 'premium', 'премия', 'mukofot'],
+  other: ['other', 'другое', 'boshqa'],
+}
+const fuTypeOptions = (ctx: SearchContext): Option[] =>
+  Object.keys(FU_TYPE_WORDS).map((k) => ({ value: k, label: label(ctx, `fuType.${k}`, k), insert: k, names: [...FU_TYPE_WORDS[k], label(ctx, `fuType.${k}`, k)] }))
+
+const EVERYONE = ['all', 'everyone', 'anyone', 'все', 'всех', 'hamma', 'hammasi']
+const assigneeOptions = (ctx: SearchContext): Option[] => [
+  { value: 'all', label: label(ctx, 'agenda.everyone', 'Everyone'), insert: 'all', names: [], codes: EVERYONE },
+  ...userOptions((u) => Boolean(u.role))(ctx),
+]
+
+export const AGENDA: Scope = {
+  id: 'agenda',
+  fields: [
+    { key: 'assignee', kind: 'list', aliases: ['who', 'assigned', 'исполнитель', 'кто', 'masul', 'kim'], labelKey: 'fu.assignedTo', options: assigneeOptions, partial: 'contains' },
+    { key: 'type', kind: 'list', aliases: ['тип', 'turi', 'tur'], labelKey: 'fu.type', options: fuTypeOptions, partial: 'prefix' },
+    { key: 'due', kind: 'date', looksBack: false, aliases: ['срок', 'muddat'], labelKey: 'fu.due' },
+  ],
+  flags: [{ flag: 'overdue', words: ['late', 'просрочено', 'просрочен', 'просроченные', 'kechikkan', 'muddati otgan'], labelKey: 'search.flag.fuOverdue' }],
+  dateKeywordField: 'due',
+  exactFields: ['type'],
+  weak: ['request', 'update', 'expiry', 'premium', 'other', 'late', 'week', 'month', 'hafta', 'неделя', 'месяц'],
+}
+
+// ---------------------------------------------------------------------------
+// Admin: users, reference data, FX rates
+// ---------------------------------------------------------------------------
+
+const ROLE_WORDS: Record<string, string[]> = {
+  admin: ['admin', 'админ', 'администратор', 'administrator'],
+  underwriter: ['underwriter', 'uw', 'андеррайтер', 'anderrayter'],
+  finance: ['finance', 'финансы', 'бухгалтерия', 'moliya'],
+  claims: ['claims', 'убытки', 'zarar'],
+  management: ['management', 'руководство', 'rahbariyat'],
+}
+const roleOptions = (ctx: SearchContext): Option[] =>
+  Object.keys(ROLE_WORDS).map((k) => ({ value: k, label: label(ctx, `roles.${k}`, k), insert: k, names: [...ROLE_WORDS[k], label(ctx, `roles.${k}`, k)] }))
+
+const ACTIVE_FLAGS = [
+  { flag: 'active', words: ['активные', 'активный', 'faol'], labelKey: 'search.flag.active' },
+  { flag: 'inactive', words: ['archived', 'неактивные', 'неактивный', 'архив', 'nofaol'], labelKey: 'search.flag.onlyInactive' },
+]
+
+export const USERS: Scope = {
+  id: 'users',
+  fields: [{ key: 'role', kind: 'list', aliases: ['роль', 'rol'], labelKey: 'admin.users.role', options: roleOptions, partial: 'prefix' }],
+  flags: ACTIVE_FLAGS,
+  exactFields: ['role'],
+  weak: ['uw'],
+}
+
+export const REFERENCE: Scope = { id: 'reference', fields: [], flags: ACTIVE_FLAGS, exactFields: [], weak: [] }
+
+export const FX: Scope = {
+  id: 'fx',
+  fields: [
+    { key: 'ccy', kind: 'list', aliases: ['currency', 'cur', 'валюта', 'вал', 'valyuta'], labelKey: 'fields.currency', options: (ctx) => currencyOptions(ctx).filter((o) => o.value !== 'USD'), partial: 'none' },
+    { key: 'date', kind: 'date', looksBack: true, aliases: ['дата', 'sana', 'on'], labelKey: 'admin.fx.date' },
+    { key: 'source', kind: 'like', aliases: ['источник', 'manba'], labelKey: 'admin.fx.source' },
+  ],
+  flags: [],
+  dateKeywordField: 'date',
+  exactFields: ['ccy'],
+  weak: [],
+}
+
+export const FX_SERVER: ServerSpec = {
+  list: { ccy: 'currency' },
+  like: { source: 'source' },
+  num: {},
+  date: { date: 'rate_date' },
+  flags: {},
+  textColumn: (w, neg) => `currency.${neg ? 'not.' : ''}ilike."*${w.replace(/["\\*%]/g, '')}*"`,
+}

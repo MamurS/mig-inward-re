@@ -1,17 +1,17 @@
 import { useMemo, useState } from 'react'
+import type { TFunction } from 'i18next'
+import { toast } from 'sonner'
 import { Link, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { registerLink } from '@/features/submissions/filters'
 import { quoteValue } from '@/features/search/query'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowUpRight, Eye, FileStack, Mail, Phone, Search } from 'lucide-react'
+import { ArrowUpRight, Eye, FileSpreadsheet, FileStack, Loader2, Mail, Phone } from 'lucide-react'
 import { PageHeader } from '@/components/PageHeader'
 import { Card } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { SegmentedControl } from '@/components/SegmentedControl'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { highlight } from '@/components/data/highlight'
 import { EmptyState } from '@/components/EmptyState'
@@ -19,9 +19,16 @@ import { Amount } from '@/components/Amount'
 import { useAuth } from '@/auth/AuthProvider'
 import { can } from '@/lib/roles'
 import { supabase } from '@/lib/supabase'
-import { formatAmount } from '@/lib/format'
+import { formatAmount, isoDate } from '@/lib/format'
+import { errorMessage } from '@/lib/errors'
+import { norm } from '@/features/search/normalize'
+import { textWords } from '@/features/search/query'
+import { hasFlag, matchesQuery, type ClientSpec } from '@/features/search/client'
+import { COUNTERPARTIES_PAGE } from '@/features/search/pages'
+import { useListSearch } from '@/features/search/useSearch'
+import { SearchChips } from '@/features/search/SearchChips'
 import { useCounterparties, useCountries, useLocalName } from '@/hooks/useReference'
-import type { Enums, Json, Tables } from '@/lib/database.types'
+import type { Json, Tables } from '@/lib/database.types'
 import { QuickAddCounterparty } from './QuickAddCounterparty'
 
 type Party = Tables<'counterparties'>
@@ -47,9 +54,8 @@ export function CounterpartiesPage() {
   const counterparties = useCounterparties()
   const countries = useCountries()
   const localName = useLocalName()
-  const [q, setQ] = useState('')
-  const [type, setType] = useState<'' | Enums<'counterparty_type'>>('')
-  const [showInactive, setShowInactive] = useState(false)
+  const { q, parsed, setQ } = useListSearch(COUNTERPARTIES_PAGE)
+  const [exporting, setExporting] = useState(false)
   const [peek, setPeek] = useState<Party | null>(null)
 
   const stats = useQuery({
@@ -80,9 +86,22 @@ export function CounterpartiesPage() {
     return map
   }, [stats.data])
 
-  const rows = (counterparties.data ?? []).filter(
-    (c) => (showInactive || c.active) && (!type || c.type === type) && (!q || c.name.toLowerCase().includes(q.toLowerCase())),
-  )
+  // The search bar filters this list (it is loaded whole: a reference-sized table). Inactive ones show only with «inactive».
+  const spec: ClientSpec<Party> = useMemo(() => {
+    const byCode = new Map((countries.data ?? []).map((c) => [c.code, c]))
+    return {
+      text: (c) => {
+        const co = c.country_code ? byCode.get(c.country_code) : undefined
+        const people = contactsOf(c.contacts).flatMap((x) => [x.name, x.role, x.email, x.phone])
+        return norm([c.name, c.country_code, co?.name, co?.name_ru, co?.name_uz, c.notes, ...people].filter(Boolean).join(' '))
+      },
+      list: { type: (c) => c.type, country: (c) => c.country_code },
+      flags: { inactive: () => true },
+    }
+  }, [countries.data])
+  const withInactive = hasFlag(parsed, 'inactive')
+  const rows = (counterparties.data ?? []).filter((c) => (withInactive || c.active) && matchesQuery(parsed, c, spec))
+  const words = parsed ? textWords(parsed) : []
 
   const countryName = (code: string | null) => localName(countries.data?.find((x) => x.code === code))
 
@@ -110,37 +129,32 @@ export function CounterpartiesPage() {
         title={t('pages.counterparties.title')}
         subtitle={t('pages.counterparties.subtitle')}
         actions={
-          can.editSubmissions(role) && (
-            <div className="flex gap-2">
-              {(['mga', 'broker', 'cedent'] as const).map((tp) => (
-                <div key={tp} className="flex items-center gap-2 text-body">
-                  <QuickAddCounterparty type={tp} onCreated={(id) => navigate(`/counterparties/${id}`)} />
-                  <span className="hidden text-muted-foreground lg:inline">{t(`counterpartyType.${tp}`)}</span>
-                </div>
-              ))}
-            </div>
-          )
+          <>
+            <Button
+              variant="outline"
+              disabled={!rows.length || exporting}
+              onClick={async () => {
+                setExporting(true)
+                try {
+                  await exportCounterpartiesXlsx(rows, perParty, countryName, t)
+                  toast.success(t('cp.exported', { count: rows.length }))
+                } catch (e) {
+                  toast.error(errorMessage(e))
+                } finally {
+                  setExporting(false)
+                }
+              }}
+            >
+              {exporting ? <Loader2 className="animate-spin" /> : <FileSpreadsheet />}
+              {t('sub.exportExcel')}
+            </Button>
+            {can.editSubmissions(role) && <QuickAddCounterparty onCreated={(id) => navigate(`/counterparties/${id}`)} />}
+          </>
         }
       />
-      <Card className="mb-4 flex-row flex-wrap items-center gap-3 px-4 py-3">
-        <div className="relative w-full sm:w-72">
-          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('cp.search')} className="pl-8" />
-        </div>
-        <SegmentedControl
-          ariaLabel={t('cp.type')}
-          value={type || 'all'}
-          onChange={(v) => setType(v === 'all' ? '' : v)}
-          options={[
-            { value: 'all' as const, label: t('cp.allTypes') },
-            ...(['mga', 'broker', 'cedent'] as const).map((tp) => ({ value: tp, label: t(`counterpartyType.${tp}`) })),
-          ]}
-        />
-        <label className="flex items-center gap-2 text-body">
-          <input type="checkbox" checked={showInactive} onChange={(e) => setShowInactive(e.target.checked)} />
-          {t('cp.showInactive')}
-        </label>
-      </Card>
+      {parsed && (
+        <SearchChips query={parsed} scope={COUNTERPARTIES_PAGE.scope} onChange={setQ} count={t('ui.rows', { count: rows.length })} />
+      )}
       <Card className="gap-0 py-0">
         <DataTable
           id="counterparties"
@@ -148,15 +162,14 @@ export function CounterpartiesPage() {
           rows={rows}
           getRowId={(c) => c.id}
           loading={counterparties.isLoading}
-          hl={(text) => highlight(text, q)}
+          hl={(text) => highlight(text, words)}
           onRowClick={(c) => navigate(`/counterparties/${c.id}`)}
           rowActions={(c) => (
             <Button variant="ghost" size="icon" className="size-8" aria-label={t('ui.quickView')} title={t('ui.quickView')} onClick={() => setPeek(c)}>
               <Eye />
             </Button>
           )}
-          toolbar={<span className="num">{t('ui.rows', { count: rows.length })}</span>}
-          empty={<EmptyState pictogram="people" title={t('cp.none')}>{q || type ? t('ui.emptyFiltered') : undefined}</EmptyState>}
+          empty={<EmptyState pictogram="people" title={t('cp.none')}>{q ? t('ui.emptyFiltered') : undefined}</EmptyState>}
         />
       </Card>
       <CounterpartyQuickView party={peek} stats={peek ? perParty.get(peek.id) : undefined} country={peek ? countryName(peek.country_code) : ''} onClose={() => setPeek(null)} />
@@ -222,4 +235,30 @@ function CounterpartyQuickView({ party, stats, country, onClose }: { party: Part
       </DialogContent>
     </Dialog>
   )
+}
+
+/** Excel export of exactly the counterparties the search shows. */
+async function exportCounterpartiesXlsx(rows: Party[], stats: Map<string, PartyStats>, countryName: (code: string | null) => string, t: TFunction) {
+  const { default: writeXlsxFile } = await import('write-excel-file/browser')
+  const header = [t('fields.name'), t('cp.type'), t('fields.country'), t('common.active'), t('cp.submissions'), t('cp.bound'), t('cp.boundUsd'), t('cp.contacts')]
+    .map((value) => ({ value, fontWeight: 'bold' as const, backgroundColor: '#E8EDF5' }))
+  const body = rows.map((c) => {
+    const s = stats.get(c.id)
+    const people = contactsOf(c.contacts).filter((x) => x.name || x.email || x.phone).map((x) => [x.name, x.email, x.phone].filter(Boolean).join(' · ')).join('; ')
+    return [
+      { type: String, value: c.name },
+      { type: String, value: t(`counterpartyType.${c.type}`) },
+      { type: String, value: c.country_code ? countryName(c.country_code) : '' },
+      { type: String, value: c.active ? t('common.yes') : t('common.no') },
+      { type: Number, value: s?.count ?? 0 },
+      { type: Number, value: s?.bound ?? 0 },
+      { type: Number, value: Math.round((s?.boundUsd ?? 0) * 100) / 100, format: '#,##0.00' },
+      { type: String, value: people },
+    ]
+  })
+  await writeXlsxFile([header, ...body], {
+    sheet: t('pages.counterparties.title').slice(0, 31),
+    columns: [{ width: 36 }, { width: 10 }, { width: 18 }, { width: 8 }, { width: 12 }, { width: 10 }, { width: 16 }, { width: 60 }],
+    stickyRowsCount: 1,
+  }).toFile(`counterparties-${isoDate()}.xlsx`)
 }

@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useLocation } from 'react-router'
+import { useLocation, useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/auth/AuthProvider'
 import { isoDate } from '@/lib/format'
@@ -86,4 +86,22 @@ export function rememberSearch(userId: string | null, text: string, scope = 'sub
 
 export function forgetSearch(userId: string | null, text: string, scope = 'submissions') {
   writeRecent(userId, scope, readRecent(userId, scope).filter((x) => x !== text))
+}
+
+/**
+ * A list page's search state: the bar's text from the URL (?q=), parsed with
+ * the page's scope, and a setter for chips (× writes the new text back).
+ */
+export function useListSearch(page: PageSearch) {
+  const [params, setParams] = useSearchParams()
+  const q = params.get('q') ?? ''
+  const { ctx, parsed, filter } = useParsedQuery(q, page)
+  const setQ = (text: string) => {
+    // the browser's current params, not this render's (the bar writes them too)
+    const next = new URLSearchParams(window.location.search)
+    if (text) next.set('q', text)
+    else next.delete('q')
+    setParams(next)
+  }
+  return { q, ctx, parsed, filter, setQ }
 }

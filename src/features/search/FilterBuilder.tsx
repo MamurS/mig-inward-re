@@ -154,7 +154,7 @@ export function FilterBuilder({
             )}
             <div className="grid gap-2">
               <label htmlFor="fb-text" className="text-small font-medium text-foreground">{t('search.builder.words')}</label>
-              <Input id="fb-text" value={state.text} onChange={(e) => setState((s) => ({ ...s, text: e.target.value }))} placeholder={t('search.builder.wordsHint')} />
+              <Input id="fb-text" value={state.text} onChange={(e) => setState((s) => ({ ...s, text: e.target.value }))} placeholder={t(`search.page.${page.scope.id}.words`)} />
             </div>
             <div className="grid gap-5 sm:grid-cols-2">{spec.items.map(control)}</div>
             {spec.toggles.length > 0 && (

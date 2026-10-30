@@ -51,7 +51,9 @@
     "remove": "Remove",
     "active": "Active",
     "inactive": "inactive",
-    "close": "Close"
+    "close": "Close",
+    "yes": "Yes",
+    "no": "No"
   },
   "pages": {
     "dashboard": {
@@ -123,7 +125,8 @@
   "fuType": {
     "request_update": "Request update",
     "offer_expiry": "Offer expiry",
-    "other": "Other"
+    "other": "Other",
+    "premium_overdue": "Premium overdue"
   },
   "audit": {
     "INSERT": "created",
@@ -364,7 +367,9 @@
       "thisYearUsd": "this year: {{amount}}",
       "openOffers": "Open offers",
       "avgShare": "Avg signed share"
-    }
+    },
+    "new": "New counterparty",
+    "exported": "Exported {{count}} counterparties"
   },
   "v": {
     "required": "Required",
@@ -737,7 +742,11 @@
     "flag": {
       "overdue": "Follow-up overdue",
       "expired": "Offer expired",
-      "mine": "My submissions"
+      "mine": "My submissions",
+      "inactive": "Including inactive",
+      "fuOverdue": "Overdue",
+      "active": "Active only",
+      "onlyInactive": "Inactive only"
     },
     "kw": {
       "today": "Received today",
@@ -761,6 +770,44 @@
         "keywords": "Keywords: overdue, expired, noresponse, mine, today, thisweek, thismonth",
         "notes": "A word that is exactly a status, MGA, line or currency (bound, USD) filters by it; anything else is searched as text.",
         "languages": "Filter names and words work in English, Russian and Uzbek: статус:связан, holat:tasdiqlandi, валюта:usd, просрочено, bugun."
+      },
+      "counterparties": {
+        "text": "Text anywhere: name, country, contacts (name, e-mail, phone), notes",
+        "type": "Type: MGA, broker or cedent; | for several",
+        "country": "Country by code or name",
+        "exclude": ", AND · - excludes",
+        "inactive": "Also show inactive counterparties (hidden otherwise)",
+        "notes": "A word that is exactly a type or a country (broker, Uzbekistan) filters by it; anything else is searched as text.",
+        "languages": "Words work in English, Russian and Uzbek: тип:брокер, страна:Узбекистан, неактивные."
+      },
+      "agenda": {
+        "text": "Text anywhere: title, submission ref no. and insured, MGA, outcome",
+        "overdue": "Only overdue follow-ups",
+        "type": "Type: request_update, offer_expiry, premium_overdue, other",
+        "due": "Due within the next N days (or due:2026-11-01..2026-11-30)",
+        "assignee": "Everyone’s follow-ups (admin and management; or assignee:Malika)",
+        "notes": "Without assignee: your own follow-ups. today, thisweek and thismonth mean «due».",
+        "languages": "Words work in English, Russian and Uzbek: просрочено, срок<7d, kechikkan."
+      },
+      "users": {
+        "text": "Text anywhere: name, e-mail",
+        "role": "Role; | for several",
+        "inactive": "Only inactive users (active: only active ones)",
+        "notes": "A word that is exactly a role (finance) filters by it.",
+        "languages": "Words work in English, Russian and Uzbek: роль:финансы, неактивные."
+      },
+      "reference": {
+        "text": "Text anywhere: code and names in every language (all three tables)",
+        "inactive": "Only inactive rows (active: only active ones)",
+        "notes": "Filters currencies, countries and lines of business at once.",
+        "languages": "Words work in English, Russian and Uzbek."
+      },
+      "fx": {
+        "ccy": "One currency (a bare code filters by it)",
+        "dates": "Several currencies, from a date",
+        "source": "Where the rate came from: manual or cbu",
+        "notes": "Searches all stored rates, not only the latest shown.",
+        "languages": "Words work in English, Russian and Uzbek: валюта:EUR, дата>=2026-10-01."
       }
     },
     "count_one": "{{count}} submission",
@@ -769,7 +816,33 @@
     "page": {
       "submissions": {
         "placeholder": "Search or filter: insured, MGA, status, currency…",
-        "label": "Search or filter submissions"
+        "label": "Search or filter submissions",
+        "words": "name, ref no., risk, notes…"
+      },
+      "counterparties": {
+        "placeholder": "Search or filter: name, type, country…",
+        "label": "Search or filter counterparties",
+        "words": "name, contact, e-mail…"
+      },
+      "agenda": {
+        "placeholder": "Search or filter: title, submission, type, due…",
+        "label": "Search or filter follow-ups",
+        "words": "title, ref no., insured…"
+      },
+      "users": {
+        "placeholder": "Search or filter: name, e-mail, role…",
+        "label": "Search or filter users",
+        "words": "name, e-mail…"
+      },
+      "reference": {
+        "placeholder": "Search or filter: code, name…",
+        "label": "Search or filter reference data",
+        "words": "code, name…"
+      },
+      "fx": {
+        "placeholder": "Search or filter: currency, date, source…",
+        "label": "Search or filter FX rates",
+        "words": "currency…"
       }
     },
     "filters": "Filters",
@@ -777,7 +850,6 @@
       "title": "Filters",
       "intro": "Pick what you want to see. Apply writes the search into the bar — you can read and change it there.",
       "words": "Contains the words",
-      "wordsHint": "name, ref no., risk, notes…",
       "from": "from",
       "to": "to",
       "min": "min",
@@ -795,6 +867,7 @@
       "clearField": "Clear",
       "orNotice": "Your search has OR groups (;) — edit it in the bar, or start a new filter here.",
       "startOver": "Start a new filter"
-    }
+    },
+    "noMatch": "Nothing matches this search"
   }
 }

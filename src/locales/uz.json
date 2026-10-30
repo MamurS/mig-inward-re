@@ -51,7 +51,9 @@
     "remove": "Olib tashlash",
     "active": "Faol",
     "inactive": "nofaol",
-    "close": "Yopish"
+    "close": "Yopish",
+    "yes": "Ha",
+    "no": "Yoʻq"
   },
   "pages": {
     "dashboard": {
@@ -123,7 +125,8 @@
   "fuType": {
     "request_update": "Holat soʻrash",
     "offer_expiry": "Taklif muddati tugashi",
-    "other": "Boshqa"
+    "other": "Boshqa",
+    "premium_overdue": "Mukofot muddati oʻtgan"
   },
   "audit": {
     "INSERT": "yaratildi",
@@ -364,7 +367,9 @@
       "thisYearUsd": "shu yil: {{amount}}",
       "openOffers": "Ochiq takliflar",
       "avgShare": "Oʻrtacha tasdiqlangan ulush"
-    }
+    },
+    "new": "Yangi kontragent",
+    "exported": "{{count}} ta kontragent eksport qilindi"
   },
   "v": {
     "required": "Majburiy maydon",
@@ -737,7 +742,11 @@
     "flag": {
       "overdue": "Eslatma muddati oʻtgan",
       "expired": "Taklif muddati tugagan",
-      "mine": "Mening arizalarim"
+      "mine": "Mening arizalarim",
+      "inactive": "Nofaollar bilan",
+      "fuOverdue": "Muddati oʻtgan",
+      "active": "Faqat faollar",
+      "onlyInactive": "Faqat nofaollar"
     },
     "kw": {
       "today": "Bugun qabul qilingan",
@@ -761,6 +770,44 @@
         "keywords": "Kalit soʻzlar: overdue / kechikkan, expired / eskirgan, noresponse, mine / mening, today / bugun, thisweek, thismonth",
         "notes": "Holat, MGA, tur yoki valyutaga aynan mos soʻz (tasdiqlandi, USD) filtrga aylanadi; qolgani matn sifatida qidiriladi.",
         "languages": "Filtr nomlari va soʻzlar ingliz, rus va oʻzbek tillarida tushuniladi: статус:связан, holat:tasdiqlandi, валюта:usd, просрочено, bugun."
+      },
+      "counterparties": {
+        "text": "Hamma joyda matn: nom, mamlakat, kontaktlar (ism, e-mail, telefon), izohlar",
+        "type": "Tur: MGA, broker yoki sedent; | — bir nechta",
+        "country": "Mamlakat kodi yoki nomi boʻyicha",
+        "exclude": ", — VA · - chiqarib tashlaydi",
+        "inactive": "Nofaol kontragentlarni ham koʻrsatish (aks holda yashirin)",
+        "notes": "Tur yoki mamlakatga aynan mos soʻz (broker, Oʻzbekiston) filtrga aylanadi; qolgani matn sifatida qidiriladi.",
+        "languages": "Soʻzlar ingliz, rus va oʻzbek tillarida tushuniladi: turi:broker, mamlakat:Oʻzbekiston, nofaol."
+      },
+      "agenda": {
+        "text": "Hamma joyda matn: mavzu, ariza raqami va sugʻurtalanuvchi, MGA, natija",
+        "overdue": "Faqat muddati oʻtganlar",
+        "type": "Tur: request_update, offer_expiry, premium_overdue, other",
+        "due": "Keyingi N kun ichida muddati (yoki due:2026-11-01..2026-11-30)",
+        "assignee": "Hammaning eslatmalari (administrator va rahbariyat; yoki assignee:Malika)",
+        "notes": "Masʼulsiz — sizning eslatmalaringiz. today, thisweek va thismonth muddatga tegishli.",
+        "languages": "Soʻzlar ingliz, rus va oʻzbek tillarida tushuniladi: kechikkan, muddat<7d, просрочено."
+      },
+      "users": {
+        "text": "Hamma joyda matn: ism, e-mail",
+        "role": "Rol; | — bir nechta",
+        "inactive": "Faqat nofaollar (active — faqat faollar)",
+        "notes": "Rolga aynan mos soʻz (moliya) filtrga aylanadi.",
+        "languages": "Soʻzlar ingliz, rus va oʻzbek tillarida tushuniladi: rol:moliya, nofaol."
+      },
+      "reference": {
+        "text": "Hamma joyda matn: kod va barcha tillardagi nomlar (uchala jadvalda)",
+        "inactive": "Faqat nofaol qatorlar (active — faqat faollar)",
+        "notes": "Valyutalar, mamlakatlar va sugʻurta turlarini birdaniga saralaydi.",
+        "languages": "Soʻzlar ingliz, rus va oʻzbek tillarida tushuniladi."
+      },
+      "fx": {
+        "ccy": "Bitta valyuta (maydonsiz kod ham saralaydi)",
+        "dates": "Bir nechta valyuta, sanadan boshlab",
+        "source": "Kurs manbai: manual yoki cbu",
+        "notes": "Faqat oxirgilarini emas, barcha saqlangan kurslarni qidiradi.",
+        "languages": "Soʻzlar ingliz, rus va oʻzbek tillarida tushuniladi: valyuta:EUR, sana>=2026-10-01."
       }
     },
     "count_one": "{{count}} ta ariza",
@@ -769,7 +816,33 @@
     "page": {
       "submissions": {
         "placeholder": "Qidiruv yoki filtr: sugʻurtalanuvchi, MGA, holat, valyuta…",
-        "label": "Arizalarni qidirish va saralash"
+        "label": "Arizalarni qidirish va saralash",
+        "words": "nom, raqam, risk, izohlar…"
+      },
+      "counterparties": {
+        "placeholder": "Qidiruv yoki filtr: nom, tur, mamlakat…",
+        "label": "Kontragentlarni qidirish va saralash",
+        "words": "nom, kontakt, e-mail…"
+      },
+      "agenda": {
+        "placeholder": "Qidiruv yoki filtr: mavzu, ariza, tur, muddat…",
+        "label": "Eslatmalarni qidirish va saralash",
+        "words": "mavzu, raqam, sugʻurtalanuvchi…"
+      },
+      "users": {
+        "placeholder": "Qidiruv yoki filtr: ism, e-mail, rol…",
+        "label": "Foydalanuvchilarni qidirish va saralash",
+        "words": "ism, e-mail…"
+      },
+      "reference": {
+        "placeholder": "Qidiruv yoki filtr: kod, nom…",
+        "label": "Maʼlumotnomalarni qidirish va saralash",
+        "words": "kod, nom…"
+      },
+      "fx": {
+        "placeholder": "Qidiruv yoki filtr: valyuta, sana, manba…",
+        "label": "Valyuta kurslarini qidirish va saralash",
+        "words": "valyuta…"
       }
     },
     "filters": "Filtrlar",
@@ -777,7 +850,6 @@
       "title": "Filtrlar",
       "intro": "Nimani koʻrishni tanlang. «Qoʻllash» qidiruvni satrga yozadi — uni u yerda oʻqish va oʻzgartirish mumkin.",
       "words": "Soʻzlarni oʻz ichiga oladi",
-      "wordsHint": "nom, raqam, risk, izohlar…",
       "from": "dan",
       "to": "gacha",
       "min": "dan",
@@ -795,6 +867,7 @@
       "clearField": "Tozalash",
       "orNotice": "Qidiruvingizda YOKI guruhlari (;) bor — uni satrda oʻzgartiring yoki bu yerda yangi filtr boshlang.",
       "startOver": "Yangi filtr"
-    }
+    },
+    "noMatch": "Bu qidiruv boʻyicha hech narsa yoʻq"
   }
 }

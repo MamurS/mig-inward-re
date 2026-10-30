@@ -94,9 +94,9 @@ test('the URL keeps the search: reload, Back and Forward', async ({ page }) => {
   await expect(chips(page).first()).toContainText('Status: Declined')
 })
 
-test('Ctrl K from another page; Enter opens the register with the query', async ({ page }) => {
-  await installMock(page.context(), 'underwriter', 'en')
-  await page.goto('/agenda')
+test('Ctrl K from a page without a list; Enter opens the register with the query', async ({ page }) => {
+  await installMock(page.context(), 'management', 'en')
+  await page.goto('/dashboard')
   await page.locator('main h1').waitFor()
   await page.keyboard.press('Control+k')
   await expect(bar(page)).toBeFocused()

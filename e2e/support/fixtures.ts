@@ -65,10 +65,11 @@ const CP = [
   ['Meridian Risk Partners', 'mga', 'GB', 'James Whitfield', 'Class Underwriter'],
   ['Tashkent Re Brokers', 'broker', 'UZ', 'Dilnoza Rakhimova', 'Account Executive'],
   ['Gulf Placement Partners', 'broker', 'AE', 'Omar Haddad', 'Partner'],
+  ['Anadolu Re (run-off)', 'cedent', 'TR', 'Mehmet Yılmaz', 'Run-off Manager'], // inactive
 ] as const
 const counterparties: Row[] = CP.map(([name, type, country_code, contact, role], i) => ({
   id: `20000000-0000-4000-8000-${String(i + 1).padStart(12, '0')}`,
-  name, type, country_code, active: true, notes: null,
+  name, type, country_code, active: type !== 'cedent', notes: null,
   contacts: [{ name: contact, role, email: `${contact.split(' ')[0].toLowerCase()}@example.com`, phone: '+998 71 000 0000' }],
   created_at: iso(300 * DAY), created_by: null, updated_at: iso(300 * DAY), updated_by: null,
 }))

@@ -70,4 +70,26 @@ test.describe('search bar screenshots', () => {
       await context.close()
     })
   }
+
+  for (const [name, path, role, lang] of [
+    ['counterparties', '/counterparties?q=' + encodeURIComponent('broker; inactive, cedent'), 'underwriter', 'en'],
+    ['agenda', '/agenda?q=' + encodeURIComponent('assignee:all, overdue'), 'management', 'en'],
+    ['users', '/admin?tab=users&q=' + encodeURIComponent('role:underwriter|finance'), 'admin', 'en'],
+    ['fx', '/admin?tab=fx&q=' + encodeURIComponent('ccy:EUR|UZS, date>=2026-10-01'), 'admin', 'en'],
+    ['counterparties-ru', '/counterparties?q=' + encodeURIComponent('брокер, страна:ОАЭ'), 'underwriter', 'ru'],
+  ] as const) {
+    test(`page · ${name}`, async ({ browser }) => {
+      const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' })
+      await installMock(context, role, lang)
+      const page = await context.newPage()
+      await page.goto(path)
+      await page.locator('main h1').waitFor()
+      await settle(page)
+      await page.screenshot({ path: `${OUT}/page-${name}.jpg`, type: 'jpeg', quality: 82 })
+      await page.locator('header').getByRole('button', { name: /^(Filters|Фильтры)$/ }).click()
+      await settle(page)
+      await page.screenshot({ path: `${OUT}/page-${name}-builder.jpg`, type: 'jpeg', quality: 82 })
+      await context.close()
+    })
+  }
 })

@@ -8,7 +8,7 @@
 import type { BuilderSpec } from './builder'
 import type { Scope } from './query'
 import type { ServerSpec } from './postgrest'
-import { SUBMISSIONS, SUBMISSIONS_SERVER } from './scopes'
+import { AGENDA, COUNTERPARTIES, FX, FX_SERVER, REFERENCE, SUBMISSIONS, SUBMISSIONS_SERVER, USERS } from './scopes'
 
 export type PageSearch = {
   scope: Scope
@@ -21,8 +21,6 @@ export type PageSearch = {
   builder: BuilderSpec
   /** quick suggestions while typing a bare word: these list fields */
   suggest: string[]
-  /** direct hits (open a record) — the register only */
-  records?: boolean
   /** help popover: example queries; descriptions at search.help.<scope>.<key> */
   examples: { q: string; key: string }[]
 }
@@ -49,7 +47,6 @@ export const SUBMISSIONS_PAGE: PageSearch = {
     toggles: [{ flag: 'overdue' }, { flag: 'expired' }, { field: 'status', value: 'no_response', labelKey: 'status.no_response' }],
   },
   suggest: ['status', 'mga', 'broker', 'lob', 'ccy'],
-  records: true,
   examples: [
     { q: 'evon', key: 'text' },
     { q: '"Yigit Agro"', key: 'phrase' },
@@ -65,7 +62,74 @@ export const SUBMISSIONS_PAGE: PageSearch = {
   ],
 }
 
-export const PAGE_SEARCHES: PageSearch[] = [SUBMISSIONS_PAGE]
+export const COUNTERPARTIES_PAGE: PageSearch = {
+  scope: COUNTERPARTIES,
+  path: '/counterparties',
+  builder: { items: [{ kind: 'chips', field: 'type' }, { kind: 'multi', field: 'country' }], toggles: [{ flag: 'inactive' }] },
+  suggest: ['type', 'country'],
+  examples: [
+    { q: 'silk', key: 'text' },
+    { q: 'type:mga|broker', key: 'type' },
+    { q: 'country:UZ', key: 'country' },
+    { q: 'broker, -country:UZ', key: 'exclude' },
+    { q: 'inactive', key: 'inactive' },
+  ],
+}
+
+export const AGENDA_PAGE: PageSearch = {
+  scope: AGENDA,
+  path: '/agenda',
+  builder: { items: [{ kind: 'multi', field: 'assignee' }, { kind: 'chips', field: 'type' }, { kind: 'dates', field: 'due' }], toggles: [{ flag: 'overdue' }] },
+  suggest: ['type', 'assignee'],
+  examples: [
+    { q: 'tashkent', key: 'text' },
+    { q: 'overdue', key: 'overdue' },
+    { q: 'type:premium_overdue', key: 'type' },
+    { q: 'due<7d', key: 'due' },
+    { q: 'assignee:all', key: 'assignee' },
+  ],
+}
+
+export const USERS_PAGE: PageSearch = {
+  scope: USERS,
+  path: '/admin',
+  params: { tab: 'users' },
+  builder: { items: [{ kind: 'chips', field: 'role' }], toggles: [{ flag: 'active' }, { flag: 'inactive' }] },
+  suggest: ['role'],
+  examples: [
+    { q: 'malika', key: 'text' },
+    { q: 'role:underwriter|finance', key: 'role' },
+    { q: 'inactive', key: 'inactive' },
+  ],
+}
+
+export const REFERENCE_PAGE: PageSearch = {
+  scope: REFERENCE,
+  path: '/admin',
+  params: { tab: 'reference' },
+  builder: { items: [], toggles: [{ flag: 'active' }, { flag: 'inactive' }] },
+  suggest: [],
+  examples: [
+    { q: 'cargo', key: 'text' },
+    { q: 'inactive', key: 'inactive' },
+  ],
+}
+
+export const FX_PAGE: PageSearch = {
+  scope: FX,
+  server: FX_SERVER,
+  path: '/admin',
+  params: { tab: 'fx' },
+  builder: { items: [{ kind: 'chips', field: 'ccy' }, { kind: 'dates', field: 'date' }], toggles: [] },
+  suggest: ['ccy'],
+  examples: [
+    { q: 'EUR', key: 'ccy' },
+    { q: 'ccy:EUR|UZS, date>=2026-10-01', key: 'dates' },
+    { q: 'source:manual', key: 'source' },
+  ],
+}
+
+export const PAGE_SEARCHES: PageSearch[] = [SUBMISSIONS_PAGE, COUNTERPARTIES_PAGE, AGENDA_PAGE, USERS_PAGE, REFERENCE_PAGE, FX_PAGE]
 
 /** The search for this location: the page's own list, or (here: false) the register. */
 export function pageSearchFor(pathname: string, search: string): { page: PageSearch; here: boolean } {

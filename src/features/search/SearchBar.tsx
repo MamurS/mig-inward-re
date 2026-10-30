@@ -62,17 +62,30 @@ export function SearchBar() {
   const wrapRef = useRef<HTMLDivElement>(null)
   const written = useRef<string | null>(null) // the last q this bar wrote to the URL
   const pushNext = useRef(true) // the first write of a new search adds a history entry
+  const pending = useRef<number | undefined>(undefined) // the debounced live-filter write, if any
+  const cancelPending = () => window.clearTimeout(pending.current)
 
   // URL → bar (Back / Forward, a chip removed, a link followed). Our own writes are skipped, so
   // keystrokes typed while a debounced write was in flight are never lost.
   useEffect(() => {
     if (urlQ === written.current) return
+    cancelPending() // the URL moved on (Back, a chip, a tab): a write still waiting is stale
     written.current = null
     setText(urlQ)
     pushNext.current = true
   }, [urlQ, location.pathname])
 
   useEffect(() => setRecent(readRecent(userId, scope.id)), [userId, scope.id])
+
+  /** Navigate from the bar. The bar shows `nextText` now: React Router applies the move a moment
+   * later, and the URL → bar effect must not then wipe what was typed in between. */
+  function go(to: string, nextText: string) {
+    cancelPending()
+    written.current = nextText
+    setText(nextText)
+    setOpen(false)
+    navigate(to)
+  }
 
   function writeUrl(q: string, push: boolean) {
     written.current = q
@@ -86,11 +99,11 @@ export function SearchBar() {
   // Live filtering on the register (debounced)
   useEffect(() => {
     if (!here || text === urlQ) return
-    const h = setTimeout(() => {
+    pending.current = window.setTimeout(() => {
       writeUrl(text, pushNext.current)
       pushNext.current = false
     }, 200)
-    return () => clearTimeout(h)
+    return cancelPending
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [text, here])
 
@@ -118,6 +131,7 @@ export function SearchBar() {
   /** Run the search: filter the register (here) or open it (elsewhere). */
   function submit(q = text) {
     const clean = q.trim()
+    cancelPending()
     rememberSearch(userId, clean, scope.id)
     setRecent(readRecent(userId, scope.id))
     setOpen(false)
@@ -126,7 +140,7 @@ export function SearchBar() {
       if (clean !== urlQ) writeUrl(clean, true)
       pushNext.current = true
     } else {
-      navigate(pageLink(SUBMISSIONS_PAGE, clean))
+      go(pageLink(SUBMISSIONS_PAGE, clean), clean)
     }
   }
 
@@ -141,7 +155,7 @@ export function SearchBar() {
   // Direct hits: submissions by ref no. or insured
   const records = useQuery({
     queryKey: ['search', 'records', debounced],
-    enabled: open && Boolean(page.records) && debounced.length >= 2,
+    enabled: open && debounced.length >= 2,
     staleTime: 30_000,
     queryFn: async () => {
       const v = `"*${debounced.replace(/["\\*%,()]/g, '')}*"`
@@ -227,8 +241,7 @@ export function SearchBar() {
         hint: <StatusBadge status={s.status} />,
         run: () => {
           rememberSearch(userId, text.trim(), scope.id)
-          setOpen(false)
-          navigate(`/submissions/${s.id}`)
+          go(`/submissions/${s.id}`, '')
         },
       })
     }
@@ -239,10 +252,10 @@ export function SearchBar() {
         if (!role || !n.roles.includes(role)) continue
         const label = t(n.labelKey)
         if (!norm(label).includes(typed)) continue
-        out.push({ id: `p:${n.to}`, group: 'page', icon: <n.icon />, label: highlight(label, tok.value.trim()), hint: t('search.kind.page'), run: () => { setOpen(false); setText(''); navigate(n.to) } })
+        out.push({ id: `p:${n.to}`, group: 'page', icon: <n.icon />, label: highlight(label, tok.value.trim()), hint: t('search.kind.page'), run: () => go(n.to, '') })
       }
       if (can.editSubmissions(role) && norm(t('sub.new')).includes(typed)) {
-        out.push({ id: 'a:new', group: 'page', icon: <Plus />, label: highlight(t('sub.new'), tok.value.trim()), hint: t('search.kind.action'), run: () => { setOpen(false); setText(''); navigate('/submissions/new') } })
+        out.push({ id: 'a:new', group: 'page', icon: <Plus />, label: highlight(t('sub.new'), tok.value.trim()), hint: t('search.kind.action'), run: () => go('/submissions/new', '') })
       }
     }
     return out

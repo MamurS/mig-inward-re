@@ -64,6 +64,43 @@ The funnel icon at the right of the pill opens plain controls for the page's fie
 - `e2e/search.spec.ts`: building a query from the controls, reading the bar back into them, RU/UZ, and the builder fitting the window in 4 themes × 2 text sizes.
 - Screenshots: `<theme>-<size>-builder.jpg`.
 
+## Search on every page
+
+The bar is the **only** search and filter control. On each page it searches and filters that page's list, with that page's placeholder, words (EN/RU/UZ), suggestions, chips, filter builder and help examples. `?q=` keeps the search in the URL everywhere.
+
+| Page | Removed | Now in the bar |
+|---|---|---|
+| **Counterparties** | search box, MGA / broker / cedent switch, "Show inactive" checkbox, three "+" icon buttons | free text (name, country in 3 languages, contacts' names, roles, e-mails and phones, notes); `type:mga\|broker\|cedent`; `country:`; `inactive` shows inactive ones too. Added: **Export to Excel** (exactly what is shown) and one primary **New counterparty** button that asks for the type in the form. |
+| **Agenda** | "Assigned to" dropdown (admin / management) | `assignee:all` / a name / `mine` (default: your own); `type:`; `due<7d`, `due:a..b`; `overdue`; `today`, `thisweek`, `thismonth` mean due; free text (title, ref no., insured, MGA, outcome). Filters both tabs. |
+| **Admin › Users** | — (no filter before) | free text (name, e-mail), `role:`, `active` / `inactive` |
+| **Admin › Reference data** | — | free text over code and names in every language, `active` / `inactive` — all three tables at once |
+| **Admin › FX rates** | currency filter dropdown | `ccy:` (a bare code too), `date>=…` / `date:a..b`, `source:`; filtered in the database over all stored rates, not only the 300 latest shown |
+| Dashboard, a submission, the form, Settings, Jobs | — | no list of their own: the bar searches submissions; Enter opens the register |
+
+**Kept on purpose**, because they are views or settings, not filters:
+- the Agenda's Open / Done tabs, the Admin tabs and the submission tabs;
+- the register's Density / Columns;
+- the Dashboard's reporting **Period**: it sets the year the KPIs and charts cover, not a list filter. It could move into the bar if you want.
+
+**Receipts / Receivables** don't exist yet; Phase 2 steps 3–4 build them on the bar from the start.
+
+**One engine.**
+- `query.ts` parses for every page.
+- `scopes.ts` holds each page's vocabulary.
+- `pages.ts` maps pages to scopes.
+- Lists that are already loaded whole are filtered in the browser by `client.ts`, with the same rules as the database filter.
+
+**Bug fixed along the way:** a navigation started from the bar could reset the bar a moment later and erase text typed meanwhile, and a pending live-filter write could land on the next tab. Both are covered by tests now.
+
+**Tests**
+- Unit (`scopes.test.ts`, 7): every new scope in EN/RU/UZ, plus the in-browser filter and the FX database filter.
+- Browser (`e2e/search-pages.spec.ts`, 16):
+  - no page controls left;
+  - each page's words, chips, URL, export and builder;
+  - "New counterparty";
+  - every page's bar and builder in 4 themes × 2 text sizes.
+- Screenshots: `page-*.jpg`.
+
 ## Screenshots (`screenshots/`)
 
 - **Each theme and text size:** `<theme>-<size>-chips.jpg` and `<theme>-<size>-suggestions.jpg`, using the query `Silk Road Underwriting Agency, bound; caspian, -declined, premium>10k`.
