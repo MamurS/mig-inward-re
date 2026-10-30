@@ -6,9 +6,13 @@ export const ALL_ROLES: AppRole[] = ['admin', 'underwriter', 'finance', 'claims'
 
 /** Who can do what in the UI. The database (RLS + functions) enforces the same rules. */
 export const can = {
-  viewDashboard: (r: AppRole | null) => r === 'admin' || r === 'management',
+  viewDashboard: (r: AppRole | null) => r === 'admin' || r === 'management' || r === 'finance' || r === 'claims',
   editSubmissions: (r: AppRole | null) => r === 'admin' || r === 'underwriter',
   manageAdmin: (r: AppRole | null) => r === 'admin',
   /** Receipts, allocations, write-offs, settling return premium. */
   manageFinance: (r: AppRole | null) => r === 'admin' || r === 'finance',
+  /** Claims, reserves, recoveries, claim documents and status. */
+  manageClaims: (r: AppRole | null) => r === 'admin' || r === 'claims',
+  /** Claim payments, including offsets against premium. */
+  payClaims: (r: AppRole | null) => r === 'admin' || r === 'finance',
 }

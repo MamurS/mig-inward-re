@@ -20,6 +20,7 @@ export const USERS = {
   underwriter: { id: '00000000-0000-4000-8000-000000000002', email: 'uw@mig.example', full_name: 'Malika Karimova', role: 'underwriter' },
   management: { id: '00000000-0000-4000-8000-000000000003', email: 'ceo@mig.example', full_name: 'Rustam Aliyev', role: 'management' },
   finance: { id: '00000000-0000-4000-8000-000000000004', email: 'fin@mig.example', full_name: 'Nodira Saidova', role: 'finance' },
+  claims: { id: '00000000-0000-4000-8000-000000000005', email: 'claims@mig.example', full_name: 'Bekzod Usmonov', role: 'claims' },
 } as const
 export type FixtureRole = keyof typeof USERS
 

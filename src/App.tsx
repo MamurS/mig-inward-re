@@ -17,6 +17,8 @@ const CounterpartyDetailPage = lazy(() => import('@/features/counterparties/Coun
 const AdminPage = lazy(() => import('@/features/admin/AdminPage').then((m) => ({ default: m.AdminPage })))
 const TokensPage = lazy(() => import('@/features/admin/TokensPage').then((m) => ({ default: m.TokensPage })))
 const ReceiptsPage = lazy(() => import('@/features/premium/ReceiptsPage').then((m) => ({ default: m.ReceiptsPage })))
+const ClaimsPage = lazy(() => import('@/features/claims/ClaimsPage').then((m) => ({ default: m.ClaimsPage })))
+const ClaimDetailPage = lazy(() => import('@/features/claims/ClaimDetailPage').then((m) => ({ default: m.ClaimDetailPage })))
 const ReceivablesPage = lazy(() => import('@/features/premium/ReceivablesPage').then((m) => ({ default: m.ReceivablesPage })))
 const SubmissionDetailPage = lazy(() => import('@/features/submissions/SubmissionDetailPage').then((m) => ({ default: m.SubmissionDetailPage })))
 
@@ -37,7 +39,7 @@ export default function App() {
           <Route
             path="dashboard"
             element={
-              <RequireRole roles={['admin', 'management', 'finance']}>{page(<DashboardPage />)}</RequireRole>
+              <RequireRole roles={['admin', 'management', 'finance', 'claims']}>{page(<DashboardPage />)}</RequireRole>
             }
           />
           <Route path="ceo-dashboard" element={<Navigate to="/dashboard" replace />} />
@@ -53,6 +55,8 @@ export default function App() {
           />
           <Route path="agenda" element={page(<AgendaPage />)} />
           <Route path="receipts" element={<RequireRole roles={['admin', 'finance', 'management']}>{page(<ReceiptsPage />)}</RequireRole>} />
+          <Route path="claims" element={page(<ClaimsPage />)} />
+          <Route path="claims/:id" element={page(<ClaimDetailPage />)} />
           <Route path="receivables" element={<RequireRole roles={['admin', 'finance', 'management']}>{page(<ReceivablesPage />)}</RequireRole>} />
           <Route path="counterparties" element={page(<CounterpartiesPage />)} />
           <Route path="counterparties/:id" element={page(<CounterpartyDetailPage />)} />

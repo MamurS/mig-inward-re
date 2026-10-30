@@ -116,7 +116,9 @@ test.describe('agenda', () => {
     const shownOf = async () => Number(/\((\d+)\)/.exec((await tab.textContent()) ?? '')?.[1] ?? 0)
     // a premium follow-up links to its installment: «SUB-… #n»
     const premium = page.locator('main [role="tabpanel"] a').filter({ hasText: /#\d+$/ })
-    await expect.poll(async () => (await shownOf()) - (await premium.count())).toBe(overdueOpen)
+    // …and the overdue claim follow-ups (large loss → management and admin)
+    const claimItems = page.locator('main [role="tabpanel"] a[href^="/claims/"]')
+    await expect.poll(async () => (await shownOf()) - (await premium.count()) - (await claimItems.count())).toBe(overdueOpen)
     expect(await premium.count()).toBeGreaterThan(0)
     await search(page, 'assignee:all, zzzz-nothing')
     await expect(page.getByText('Nothing matches this search')).toBeVisible()

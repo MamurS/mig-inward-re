@@ -16,7 +16,7 @@ cannot fix, or an action only the owner can do.
 | part | scope | branch / PR | state |
 |---|---|---|---|
 | A | Phase 2 premium: steps 5 (dashboard, counterparty) and 6 (self-review), merge | `claude/mga-inward-reinsurance-phase-0-1-otvuzf` / MamurS/mig-inward-re#4 | ✅ merged |
-| B | Phase 3 claims (spec) | — | — |
+| B | Phase 3 claims (spec) | same branch name, restarted from main / MamurS/mig-inward-re#5 | in progress |
 | C | Binders and bordereaux | — | — |
 | D | AI-assisted data entry (pluggable provider) | — | — |
 | E | Whole-system audit and polish | — | — |
@@ -33,3 +33,13 @@ Steps 1–4, demo data and the Density removal: `docs/receivables-progress.md`.
 - [x] e2e `premium-dashboard.spec.ts`.
 - [x] Step 6 self-review: `supabase/tests/premium_review.sql` (sums, FX, overdue days, roles, demo isolation of every dashboard figure) — all pass; details in `docs/receivables-progress.md`.
 - [x] Full suite green (build, vitest 77/77, Playwright 147/147); PR #4 merged.
+
+## B — Phase 3 claims
+
+Branch: the session's branch name, restarted from `main` after #4 merged; PR MamurS/mig-inward-re#5. Details and the self-review: `docs/claims-progress.md`.
+
+- [x] Database: claims, append-only reserves, payments (cash / offset), recoveries; signed line at DOL; coverage check with comment; status rules; large loss; cash calls; review job; RLS per role; audit; demo integration and seed (9 demo claims). `supabase/tests/claims_rules.sql` 11/11.
+- [x] Register with its search words and export; new-claim form with the coverage check; claim detail (reserve chart, payments incl. offset, recoveries, follow-ups, documents, change log).
+- [x] Claims tab, counterparty claims card with both loss ratios, dashboard claims section with loss ratios by MGA / line / year.
+- [x] Settings (threshold, review days), demo counts, EN / RU / UZ, mock + e2e (7), overlap and large-text checks, screenshots.
+- [ ] Merge PR #5.

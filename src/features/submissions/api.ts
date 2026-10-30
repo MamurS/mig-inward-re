@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import type { Enums } from '@/lib/database.types'
 import type { SortKey } from './filters'
 
 export const MAX_ROWS = 5000
@@ -58,7 +59,7 @@ export function useSubmissionHistory(id: string | undefined) {
   })
 }
 
-export function useEntityDocuments(entityType: 'submission', id: string | undefined) {
+export function useEntityDocuments(entityType: Enums<'entity_type'>, id: string | undefined) {
   return useQuery({
     queryKey: ['documents', entityType, id],
     enabled: Boolean(id),
@@ -75,7 +76,7 @@ export function useEntityDocuments(entityType: 'submission', id: string | undefi
   })
 }
 
-export function useEntityFollowUps(entityType: 'submission', id: string | undefined) {
+export function useEntityFollowUps(entityType: Enums<'entity_type'>, id: string | undefined) {
   return useQuery({
     queryKey: ['follow_ups', entityType, id],
     enabled: Boolean(id),

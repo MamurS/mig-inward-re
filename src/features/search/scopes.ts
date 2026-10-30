@@ -315,3 +315,59 @@ export const RECEIVABLES_SERVER: ServerSpec = {
     return neg ? `and(${RECEIVABLE_TEXT.map((c) => `or(${c}.is.null,${c}.not.ilike.${v})`).join(',')})` : `or(${RECEIVABLE_TEXT.map((c) => `${c}.ilike.${v}`).join(',')})`
   },
 }
+
+// ---------------------------------------------------------------------------
+// Claims
+// ---------------------------------------------------------------------------
+
+const CLAIM_STATUS_WORDS: Record<string, string[]> = {
+  notified: ['notified', 'new', 'заявлен', 'заявлена', 'заявленные', 'новый', 'xabar', 'yangi'],
+  open: ['open', 'открыт', 'открыта', 'открытые', 'ochiq'],
+  reopened: ['reopened', 'переоткрыт', 'переоткрыта', 'qayta'],
+  closed: ['closed', 'закрыт', 'закрыта', 'закрытые', 'yopilgan', 'yopiq'],
+  declined: ['declined', 'отклонён', 'отклонен', 'отклонена', 'отказ', 'rad'],
+}
+const claimStatusOptions = (ctx: SearchContext): Option[] =>
+  Object.keys(CLAIM_STATUS_WORDS).map((k) => ({ value: k, label: label(ctx, `claim.status.${k}`, k), insert: k, names: [...CLAIM_STATUS_WORDS[k], label(ctx, `claim.status.${k}`, k)] }))
+
+export const CLAIMS: Scope = {
+  id: 'claims',
+  fields: [
+    { key: 'status', kind: 'list', aliases: ['state', 'статус', 'holat', 'holati'], labelKey: 'fields.status', options: claimStatusOptions, partial: 'prefix' },
+    { key: 'mga', kind: 'list', aliases: ['мга', 'agent', 'агент'], labelKey: 'fields.mga', options: partyOptions('mga'), partial: 'contains' },
+    { key: 'broker', kind: 'list', aliases: ['брокер', 'vositachi'], labelKey: 'fields.broker', options: partyOptions('broker'), partial: 'contains' },
+    { key: 'lob', kind: 'list', aliases: ['line', 'class', 'вид', 'класс', 'yonalish', 'sinf'], labelKey: 'fields.lob', options: lobOptions, partial: 'contains' },
+    { key: 'handler', kind: 'list', aliases: ['adjuster', 'урегулировщик', 'ответственный', 'masul'], labelKey: 'claim.handler', options: userOptions((u) => u.role === 'claims' || u.role === 'admin'), partial: 'contains' },
+    { key: 'uw', kind: 'list', aliases: ['underwriter', 'андеррайтер', 'anderrayter'], labelKey: 'fields.underwriter', options: userOptions(), partial: 'contains' },
+    { key: 'ccy', kind: 'list', aliases: ['currency', 'cur', 'валюта', 'вал', 'valyuta'], labelKey: 'fields.currency', options: currencyOptions, partial: 'none' },
+    { key: 'ref', kind: 'like', aliases: ['claimno', 'номер', 'raqam'], labelKey: 'claim.claimNo' },
+    { key: 'dol', kind: 'date', looksBack: true, aliases: ['loss', 'dateofloss', 'убыток', 'дата убытка', 'zarar'], labelKey: 'claim.dateOfLoss' },
+    { key: 'notified', kind: 'date', looksBack: true, aliases: ['reported', 'заявлен', 'xabar'], labelKey: 'claim.notifiedDate' },
+    { key: 'outstanding', kind: 'num', aliases: ['os', 'reserve', 'остаток', 'резерв', 'qoldiq'], labelKey: 'claim.outstandingUsd' },
+    { key: 'incurred', kind: 'num', aliases: ['понесено', 'kelgan'], labelKey: 'claim.incurredUsd' },
+    { key: 'paid', kind: 'num', aliases: ['оплачено', 'tolangan'], labelKey: 'claim.paidUsd' },
+  ],
+  flags: [
+    { flag: 'large', words: ['largeloss', 'крупный', 'крупные', 'yirik'], labelKey: 'search.flag.largeLoss' },
+    { flag: 'cashcall', words: ['cash_call', 'кэшколл', 'денежный запрос', 'naqd'], labelKey: 'search.flag.cashCall' },
+    { flag: 'review', words: ['stale', 'пересмотр', 'korib'], labelKey: 'search.flag.claimReview' },
+    { flag: 'mine', words: MINE.filter((w) => w !== 'me' && w !== 'я'), labelKey: 'search.flag.myClaims', needsUser: true },
+  ],
+  dateKeywordField: 'notified',
+  exactFields: ['status', 'mga', 'broker', 'lob', 'ccy'],
+  weak: ['new', 'yangi', 'open', 'loss', 'reserve', 'os', 'stale', 'my', 'week', 'month', 'hafta', 'неделя', 'месяц'],
+}
+
+export const CLAIMS_SERVER: ServerSpec = {
+  list: { status: 'status', mga: 'mga_id', broker: 'broker_id', lob: 'lob_id', handler: 'handler_id', uw: 'underwriter_id', ccy: 'currency' },
+  like: { ref: 'claim_no' },
+  num: { outstanding: 'outstanding_usd', incurred: 'incurred_usd', paid: 'paid_usd' },
+  date: { dol: 'date_of_loss', notified: 'notified_date' },
+  flags: {
+    large: (neg) => `large_loss.is.${neg ? 'false' : 'true'}`,
+    cashcall: (neg) => `cash_call_due_at.${neg ? 'is' : 'not.is'}.null`,
+    review: (neg) => (neg ? 'days_since_reserve.lt.90' : 'and(days_since_reserve.gte.90,status.in.(notified,open,reopened))'),
+    mine: (neg, userId) => (!userId ? null : neg ? `or(handler_id.is.null,handler_id.neq.${userId})` : `handler_id.eq.${userId}`),
+  },
+  textColumn: 'search_text',
+}

@@ -8,7 +8,7 @@
 import type { BuilderSpec } from './builder'
 import type { Scope } from './query'
 import type { ServerSpec } from './postgrest'
-import { AGENDA, COUNTERPARTIES, FX, FX_SERVER, RECEIPTS, RECEIPTS_SERVER, RECEIVABLES, RECEIVABLES_SERVER, REFERENCE, SUBMISSIONS, SUBMISSIONS_SERVER, USERS } from './scopes'
+import { AGENDA, CLAIMS, CLAIMS_SERVER, COUNTERPARTIES, FX, FX_SERVER, RECEIPTS, RECEIPTS_SERVER, RECEIVABLES, RECEIVABLES_SERVER, REFERENCE, SUBMISSIONS, SUBMISSIONS_SERVER, USERS } from './scopes'
 
 export type PageSearch = {
   scope: Scope
@@ -175,7 +175,35 @@ export const RECEIVABLES_PAGE: PageSearch = {
   ],
 }
 
-export const PAGE_SEARCHES: PageSearch[] = [SUBMISSIONS_PAGE, COUNTERPARTIES_PAGE, AGENDA_PAGE, USERS_PAGE, REFERENCE_PAGE, FX_PAGE, RECEIPTS_PAGE, RECEIVABLES_PAGE]
+export const CLAIMS_PAGE: PageSearch = {
+  scope: CLAIMS,
+  server: CLAIMS_SERVER,
+  path: '/claims',
+  builder: {
+    items: [
+      { kind: 'chips', field: 'status' },
+      { kind: 'multi', field: 'mga' },
+      { kind: 'multi', field: 'lob' },
+      { kind: 'multi', field: 'handler' },
+      { kind: 'chips', field: 'ccy' },
+      { kind: 'dates', field: 'dol' },
+      { kind: 'range', field: 'outstanding' },
+    ],
+    toggles: [{ flag: 'large' }, { flag: 'cashcall' }, { flag: 'review' }],
+  },
+  suggest: ['status', 'mga', 'lob', 'handler'],
+  examples: [
+    { q: 'fire', key: 'text' },
+    { q: 'status:open|reopened', key: 'status' },
+    { q: 'large', key: 'large' },
+    { q: 'cashcall', key: 'cashcall' },
+    { q: 'dol:2026-01-01..2026-06-30', key: 'dol' },
+    { q: 'outstanding>50k', key: 'outstanding' },
+    { q: 'mga:"Silk Road", lob:PROP', key: 'mga' },
+  ],
+}
+
+export const PAGE_SEARCHES: PageSearch[] = [SUBMISSIONS_PAGE, COUNTERPARTIES_PAGE, AGENDA_PAGE, USERS_PAGE, REFERENCE_PAGE, FX_PAGE, RECEIPTS_PAGE, RECEIVABLES_PAGE, CLAIMS_PAGE]
 
 /** The search for this location: the page's own list, or (here: false) the register. */
 export function pageSearchFor(pathname: string, search: string): { page: PageSearch; here: boolean } {

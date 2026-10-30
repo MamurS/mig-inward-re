@@ -22,6 +22,7 @@ import { openDocument } from '@/lib/documents'
 import { errorMessage } from '@/lib/errors'
 import { useCounterparties, useCountries, useLinesOfBusiness, useLocalName, useUsers, userName } from '@/hooks/useReference'
 import { DocumentsPanel } from '@/features/documents/DocumentsPanel'
+import { ClaimsTab } from '@/features/claims/ClaimsTab'
 import { useAuditLog, useEntityDocuments, useEntityFollowUps, useSubmission, useSubmissionHistory } from './api'
 import { StatusChangeDialog } from './StatusChangeDialog'
 import { AddFollowUpButton, CloseFollowUpDialog, FollowUpItem, RescheduleFollowUpDialog, type FollowUp } from '@/features/followups/FollowUps'
@@ -73,7 +74,7 @@ export function SubmissionDetailPage() {
   // Premium lives on bound submissions (and on any that already have installments)
   const showPremium = s.status === 'bound' || (premiumRows.data?.length ?? 0) > 0
   // Bound submissions open on Premium unless the user picked another tab
-  const activeTab = tab === null ? (showPremium ? 'premium' : 'timeline') : tab === 'premium' && !showPremium ? 'timeline' : tab
+  const activeTab = tab === null ? (showPremium ? 'premium' : 'timeline') : (tab === 'premium' || tab === 'claims') && !showPremium ? 'timeline' : tab
   // The first time each status was reached (history is newest first)
   const reachedAt: Partial<Record<SubmissionStatus, string>> = { received: s.received_at ?? undefined }
   for (const h of [...(history.data ?? [])].reverse()) reachedAt[h.to_status] ??= h.changed_at
@@ -244,6 +245,7 @@ export function SubmissionDetailPage() {
           <Tabs value={activeTab} onValueChange={setTab}>
             <TabsList>
               {showPremium && <TabsTrigger value="premium">{t('prem.tab')}</TabsTrigger>}
+              {showPremium && <TabsTrigger value="claims">{t('claim.tab')}</TabsTrigger>}
               <TabsTrigger value="timeline">{t('sub.tabs.timeline')}</TabsTrigger>
               <TabsTrigger value="documents">{t('sub.tabs.documents')} ({docs.data?.length ?? 0})</TabsTrigger>
               <TabsTrigger value="changes">{t('sub.tabs.changes')}</TabsTrigger>
@@ -252,6 +254,12 @@ export function SubmissionDetailPage() {
             {showPremium && (
               <TabsContent value="premium">
                 <PremiumTab submission={s} startEditor={scheduleStep} onEditorStarted={() => setScheduleStep(false)} />
+              </TabsContent>
+            )}
+
+            {showPremium && (
+              <TabsContent value="claims">
+                <ClaimsTab submissionId={s.id!} currency={s.currency} />
               </TabsContent>
             )}
 

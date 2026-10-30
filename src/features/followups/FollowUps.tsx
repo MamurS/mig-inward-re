@@ -237,10 +237,16 @@ export function AddFollowUpButton({
   entityType,
   entityId,
   defaultAssignee,
+  types = FU_TYPES,
+  teams = [],
 }: {
   entityType: Enums<'entity_type'>
   entityId: string
   defaultAssignee?: string | null
+  /** the kinds offered (default: offers' kinds) */
+  types?: Enums<'follow_up_type'>[]
+  /** teams it can go to as a whole (assigned_role), e.g. finance for a cash call */
+  teams?: AppRole[]
 }) {
   const { t } = useTranslation()
   const qc = useQueryClient()
@@ -254,7 +260,7 @@ export function AddFollowUpButton({
   const [busy, setBusy] = useState(false)
 
   function start() {
-    setType('other')
+    setType(types[0] ?? 'other')
     setTitle('')
     setDue(addDays(isoDate(), 7))
     setAssignee(defaultAssignee ?? profile?.id ?? '')
@@ -269,7 +275,9 @@ export function AddFollowUpButton({
       type,
       title: title.trim() || null,
       due_at: new Date(`${due}T09:00:00`).toISOString(),
-      assigned_to: assignee || null,
+      // «team:finance» goes to the whole team
+      assigned_to: assignee.startsWith('team:') ? null : assignee || null,
+      assigned_role: assignee.startsWith('team:') ? (assignee.slice(5) as AppRole) : null,
     })
     setBusy(false)
     if (error) {
@@ -294,7 +302,7 @@ export function AddFollowUpButton({
           </DialogHeader>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label={t('fu.type')} className="sm:col-span-2">
-              <SegmentedControl ariaLabel={t('fu.type')} value={type} onChange={setType} options={FU_TYPES.map((x) => ({ value: x, label: t(`fuType.${x}`) }))} />
+              <SegmentedControl ariaLabel={t('fu.type')} value={type} onChange={setType} options={types.map((x) => ({ value: x, label: t(`fuType.${x}`) }))} />
             </Field>
             <Field label={t('fu.due')} required>
               <Input type="date" value={due} onChange={(e) => setDue(e.target.value)} />
@@ -305,6 +313,7 @@ export function AddFollowUpButton({
             <Field label={t('fu.assignedTo')} className="sm:col-span-2">
               <NativeSelect value={assignee} onChange={(e) => setAssignee(e.target.value)}>
                 <option value="">—</option>
+                {teams.map((r) => <option key={r} value={`team:${r}`}>{t('fu.team', { role: t(`roles.${r}`) })}</option>)}
                 {users.data?.filter((u) => u.role && u.active).map((u) => <option key={u.id} value={u.id}>{userName(u)}</option>)}
               </NativeSelect>
             </Field>
@@ -376,7 +385,7 @@ export function FollowUpItem({
           </div>
           {showEntity && f.entity_ref && (
             <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-caption">
-              <Link to={`/submissions/${f.submission_id ?? f.entity_id}`} className="font-medium text-link hover:underline num">
+              <Link to={f.entity_type === 'claim' ? `/claims/${f.entity_id}` : `/submissions/${f.submission_id ?? f.entity_id}`} className="font-medium text-link hover:underline num">
                 {f.entity_ref}
               </Link>
               <span className="truncate">{f.entity_label}</span>
