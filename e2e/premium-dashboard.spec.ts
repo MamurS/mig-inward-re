@@ -51,7 +51,7 @@ test('top MGAs and the most overdue list open what they show', async ({ page }) 
   await first.click()
   await expect(page).toHaveURL(/\/receivables\?q=mga/)
   await expect(page.locator('main [data-chip]').first()).toContainText(name)
-  for (const t of await page.locator('main tbody tr td:nth-child(3)').allTextContents()) expect(t).toBe(name)
+  for (const t of await page.locator('main tbody tr td:nth-child(2) .text-muted-foreground').allTextContents()) expect(t).toBe(name)
 
   await page.goto('/dashboard')
   await section(page).locator('[data-most-overdue] li').first().waitFor()

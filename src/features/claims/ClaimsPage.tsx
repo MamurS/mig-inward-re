@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { highlight } from '@/components/data/highlight'
+import { NameCell } from '@/components/data/NameCell'
 import { EmptyState } from '@/components/EmptyState'
 import { Amount } from '@/components/Amount'
 import { useAuth } from '@/auth/AuthProvider'
@@ -57,14 +58,21 @@ export function ClaimsPage() {
       id: 'insured',
       header: t('fields.insuredName'),
       className: 'max-w-64',
+      // second line: the submission's ref (a link), then the MGA
       cell: (r, c) => (
-        <span className="block min-w-0">
-          <span className="block truncate" title={r.insured_name ?? ''}>{c.hl(r.insured_name)}</span>
-          <Link to={`/submissions/${r.submission_id}`} className="block text-caption text-muted-foreground num hover:underline" onClick={(e) => e.stopPropagation()}>{c.hl(r.ref_no)}</Link>
-        </span>
+        <NameCell
+          name={c.hl(r.insured_name)}
+          title={[r.insured_name, r.ref_no, r.mga_name].filter(Boolean).join('\n')}
+          sub={
+            <>
+              <Link to={`/submissions/${r.submission_id}`} className="num hover:underline" onClick={(e) => e.stopPropagation()}>{c.hl(r.ref_no)}</Link>
+              {r.mga_name && <> · {c.hl(r.mga_name)}</>}
+            </>
+          }
+        />
       ),
     },
-    { id: 'mga', header: t('fields.mga'), className: 'max-w-48 truncate', cell: (r, c) => c.hl(r.mga_name) },
+    { id: 'mga', header: t('fields.mga'), className: 'max-w-48 truncate', defaultHidden: true, cell: (r, c) => c.hl(r.mga_name) },
     { id: 'lob', header: t('fields.lob'), defaultHidden: true, cell: (r) => r.lob_code ?? '—' },
     { id: 'dol', header: t('claim.dateOfLoss'), cell: (r) => formatDate(r.date_of_loss) },
     { id: 'status', header: t('fields.status'), cell: (r) => <ClaimStatusBadge status={r.status} /> },
@@ -136,7 +144,7 @@ export function ClaimsPage() {
 
       <Card className="gap-0 py-0">
         <DataTable
-          id="claims"
+          id="claims.v2"
           columns={columns}
           rows={rows}
           getRowId={(r) => r.id!}

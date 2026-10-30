@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { highlight } from '@/components/data/highlight'
+import { NameCell } from '@/components/data/NameCell'
 import { EmptyState } from '@/components/EmptyState'
 import { Amount } from '@/components/Amount'
 import { AgingBadge } from '@/components/AgingBadge'
@@ -61,8 +62,13 @@ export function ReceivablesPage() {
         </Link>
       ),
     },
-    { id: 'insured', header: t('fields.insuredName'), className: 'max-w-64 truncate', cell: (r, c) => <span title={r.insured_name ?? ''}>{c.hl(r.insured_name)}</span> },
-    { id: 'mga', header: t('fields.mga'), className: 'max-w-48 truncate', cell: (r, c) => c.hl(r.mga_name) },
+    {
+      id: 'insured',
+      header: t('fields.insuredName'),
+      className: 'max-w-64',
+      cell: (r, c) => <NameCell name={c.hl(r.insured_name)} sub={r.mga_name && c.hl(r.mga_name)} title={[r.insured_name, r.mga_name].filter(Boolean).join('\n')} />,
+    },
+    { id: 'mga', header: t('fields.mga'), className: 'max-w-48 truncate', defaultHidden: true, cell: (r, c) => c.hl(r.mga_name) },
     { id: 'broker', header: t('fields.broker'), className: 'max-w-48 truncate', defaultHidden: true, cell: (r, c) => c.hl(r.broker_name) || '—' },
     { id: 'due_date', header: t('prem.dueDate'), cell: (r) => formatDate(r.due_date) },
     {
@@ -159,7 +165,7 @@ export function ReceivablesPage() {
 
       <Card className="gap-0 py-0">
         <DataTable
-          id={payableView ? 'payables' : 'receivables'}
+          id={payableView ? 'payables.v2' : 'receivables.v2'}
           columns={columns}
           rows={rows}
           getRowId={(r) => r.id!}

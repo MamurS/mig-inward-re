@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Field } from '@/components/Field'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { highlight } from '@/components/data/highlight'
+import { NameCell } from '@/components/data/NameCell'
 import { EmptyState } from '@/components/EmptyState'
 import { Amount } from '@/components/Amount'
 import { useAuth } from '@/auth/AuthProvider'
@@ -59,13 +60,9 @@ export function ReceiptsPage() {
     {
       id: 'payer',
       header: t('rcp.payer'),
-      className: 'max-w-64 truncate',
-      cell: (r, c) => (
-        <span className="inline-flex min-w-0 items-center gap-2" title={r.payer_name ?? ''}>
-          <span className="truncate">{c.hl(r.payer_name)}</span>
-          {r.payer_type && <Badge>{t(`counterpartyType.${r.payer_type}`)}</Badge>}
-        </span>
-      ),
+      className: 'max-w-64',
+      // the payer's type (MGA / broker) is the grey line under the name
+      cell: (r, c) => <NameCell name={c.hl(r.payer_name)} sub={r.payer_type && t(`counterpartyType.${r.payer_type}`)} title={r.payer_name ?? ''} />,
     },
     { id: 'currency', header: t('fields.currencyShort'), cell: (r) => r.currency },
     { id: 'amount', header: t('rcp.amount'), align: 'right', cell: (r) => formatAmount(r.amount) },

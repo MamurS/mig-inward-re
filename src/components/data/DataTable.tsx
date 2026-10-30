@@ -104,7 +104,7 @@ export function DataTable<T>({
   const divider = 'group-data-[scrolled-x=true]/scroll:shadow-[inset_-1px_0_0_var(--color-border)]'
   const frozen = `sticky left-0 z-[1] bg-card ${divider} group-hover/row:bg-slate-50 group-data-[selected=true]/row:bg-brand-50`
   const [scrolledX, setScrolledX] = useState(false)
-  const headCell = 'sticky top-0 z-[2] h-11 border-b bg-card px-3 text-left align-middle text-small font-medium whitespace-nowrap text-muted-foreground'
+  const headCell = 'sticky top-0 z-[2] h-11 border-b bg-card px-3 text-left align-middle text-small leading-tight font-medium text-muted-foreground'
 
   return (
     <div className={cn('min-w-0', className)}>
@@ -194,7 +194,8 @@ export function DataTable<T>({
                   </th>
                 )
               })}
-              {rowActions && <th className={cn(headCell, 'right-0 z-[3] w-px')}><span className="sr-only">{t('ui.actions')}</span></th>}
+              {/* row actions take no width: they float over the row's end on hover / focus */}
+              {rowActions && <th className={cn(headCell, 'right-0 z-[3] w-0 p-0')}><span className="sr-only">{t('ui.actions')}</span></th>}
             </tr>
           </thead>
           <tbody>
@@ -239,10 +240,10 @@ export function DataTable<T>({
                     ))}
                     {rowActions && (
                       <td
-                        className="sticky right-0 border-b bg-transparent px-2 align-middle whitespace-nowrap"
+                        className="sticky right-0 w-0 border-b bg-transparent p-0 align-middle whitespace-nowrap"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <div className="flex items-center justify-end gap-1 rounded-md bg-card opacity-0 shadow-card transition-opacity group-hover/row:opacity-100 focus-within:opacity-100 group-data-[selected=true]/row:opacity-100">
+                        <div className="absolute top-1/2 right-2 flex -translate-y-1/2 items-center justify-end gap-1 rounded-md bg-card opacity-0 shadow-card transition-opacity group-hover/row:opacity-100 focus-within:opacity-100 group-data-[selected=true]/row:opacity-100">
                           {rowActions(r)}
                         </div>
                       </td>
