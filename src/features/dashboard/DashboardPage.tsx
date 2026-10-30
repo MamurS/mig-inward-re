@@ -194,7 +194,7 @@ export function DashboardPage() {
           <div className="flex items-center gap-2 text-body text-muted-foreground">
             {t('dash.period')}
             <div className="w-32">
-              <NativeSelect value={year} onChange={(e) => setYear(e.target.value)}>
+              <NativeSelect value={year} onChange={(e) => setYear(e.target.value)} aria-label={t('dash.period')}>
                 {years.map((y) => <option key={y} value={y}>{y}</option>)}
                 <option value="all">{t('dash.allYears')}</option>
               </NativeSelect>

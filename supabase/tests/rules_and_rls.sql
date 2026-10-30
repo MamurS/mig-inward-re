@@ -94,7 +94,8 @@ begin
     'insert into public.submissions (source_party_id, mga_id, insured_name, currency) select id, id, ''Test insured'', ''USD'' from public.counterparties where type = ''mga'' limit 1');
   select count(*) into v_n from public.audit_log where table_name = 'submissions' and action = 'INSERT' and changed_by = v_uid;
   insert into t_results values ('Audit log records the insert with user', case when v_n >= 1 then 'PASS' else 'FAIL' end);
-  select count(*) into v_n from public.submissions where insured_name = 'Test insured' and ref_no ~ ('^SUB-' || extract(year from current_date) || '-\d{4}$');
+  -- in Demo mode the insured gets «DEMO » and the ref «DEMO-» in front
+  select count(*) into v_n from public.submissions where insured_name in ('Test insured', 'DEMO Test insured') and ref_no ~ ('^(DEMO-)?SUB-' || extract(year from current_date) || '-\d{4}$');
   insert into t_results values ('Ref no generated SUB-YYYY-NNNN', case when v_n = 1 then 'PASS' else 'FAIL' end);
 
   -- ---------------- as FINANCE ----------------
@@ -184,8 +185,8 @@ begin
   execute 'set local role authenticated';
   perform pg_temp.expect_ok('UW: can add counterparty',
     'insert into public.counterparties (name, type) values (''Test MGA X'', ''mga'')');
-  delete from public.counterparties where name = 'Test MGA X';
-  select count(*) into v_n from public.counterparties where name = 'Test MGA X';
+  delete from public.counterparties where name in ('Test MGA X', 'DEMO Test MGA X');
+  select count(*) into v_n from public.counterparties where name in ('Test MGA X', 'DEMO Test MGA X');
   insert into t_results values ('UW: cannot delete counterparty', case when v_n = 1 then 'PASS' else 'FAIL' end);
   select count(*) into v_n from public.job_runs;
   insert into t_results values ('UW: job log hidden', case when v_n = 0 then 'PASS' else 'FAIL: ' || v_n end);

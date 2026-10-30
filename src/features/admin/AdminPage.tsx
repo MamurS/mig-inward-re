@@ -164,18 +164,18 @@ function UsersTab() {
             const changed = e.full_name !== (u.full_name ?? '') || e.role !== (u.role ?? '') || e.active !== u.active
             return (
               <TableRow key={u.id} className={!u.role || !u.active ? 'bg-warning-50' : undefined}>
-                <TableCell><Input value={e.full_name} onChange={(ev) => setEdits({ ...edits, [u.id]: { ...e, full_name: ev.target.value } })} className="h-8 w-48" /></TableCell>
+                <TableCell><Input value={e.full_name} onChange={(ev) => setEdits({ ...edits, [u.id]: { ...e, full_name: ev.target.value } })} className="h-8 w-48" aria-label={`${t('fields.name')} · ${u.email}`} /></TableCell>
                 <TableCell className="text-body">{u.email}</TableCell>
                 <TableCell>
                   <div className="w-40">
-                    <NativeSelect value={e.role} onChange={(ev) => setEdits({ ...edits, [u.id]: { ...e, role: ev.target.value as AppRole } })} className="h-8">
+                    <NativeSelect value={e.role} onChange={(ev) => setEdits({ ...edits, [u.id]: { ...e, role: ev.target.value as AppRole } })} className="h-8" aria-label={`${t('admin.users.role')} · ${u.email}`}>
                       <option value="">{t('admin.users.noRole')}</option>
                       {ALL_ROLES.map((r) => <option key={r} value={r}>{t(`roles.${r}`)}</option>)}
                     </NativeSelect>
                   </div>
                 </TableCell>
                 <TableCell>
-                  <input type="checkbox" checked={e.active} disabled={u.id === me?.id} onChange={(ev) => setEdits({ ...edits, [u.id]: { ...e, active: ev.target.checked } })} />
+                  <input type="checkbox" checked={e.active} disabled={u.id === me?.id} onChange={(ev) => setEdits({ ...edits, [u.id]: { ...e, active: ev.target.checked } })} aria-label={`${t('common.active')} · ${u.email}`} />
                 </TableCell>
                 <TableCell className="text-caption text-muted-foreground">{formatDate(u.created_at)}</TableCell>
                 <TableCell className="text-right whitespace-nowrap">
@@ -401,6 +401,7 @@ function RefTable({
                       ) : (
                         <Input
                           className={`h-8 ${c.width ?? 'w-40'}`}
+                          aria-label={`${c.label} · ${id}`}
                           value={String(val(c.key) ?? '')}
                           onChange={(ev) => setEdits({ ...edits, [id]: { ...e, [c.key]: ev.target.value } })}
                         />
@@ -408,7 +409,7 @@ function RefTable({
                     </TableCell>
                   ))}
                   <TableCell>
-                    <input type="checkbox" checked={Boolean(val('active'))} onChange={(ev) => setEdits({ ...edits, [id]: { ...e, active: ev.target.checked } })} />
+                    <input type="checkbox" checked={Boolean(val('active'))} onChange={(ev) => setEdits({ ...edits, [id]: { ...e, active: ev.target.checked } })} aria-label={`${t('common.active')} · ${id}`} />
                   </TableCell>
                   <TableCell className="text-right">
                     {edits[id] && (
@@ -547,7 +548,7 @@ function FxTab() {
         <CardContent className="flex flex-wrap items-end gap-3">
           <Field label={t('fields.currency')}>
             <div className="w-32">
-              <NativeSelect value={ccy} onChange={(e) => setCcy(e.target.value)}>
+              <NativeSelect value={ccy} onChange={(e) => setCcy(e.target.value)} aria-label={t('fields.currency')}>
                 <option value="">—</option>
                 {currencies.data?.filter((c) => c.code !== 'USD').map((c) => <option key={c.code} value={c.code}>{c.code}</option>)}
               </NativeSelect>

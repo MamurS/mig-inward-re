@@ -146,7 +146,7 @@ export function ClaimDetailPage() {
               {manage && live && <Button size="sm" onClick={() => setDialog('reserve')}><Plus />{t('claim.addReserve')}</Button>}
             </CardHeader>
             {chart.length > 1 && (
-              <div className="border-t px-4 pt-4" aria-label={t('claim.reserveHistory')}>
+              <div className="border-t px-4 pt-4" role="img" aria-label={t('claim.reserveHistory')}>
                 <ResponsiveContainer width="100%" height={180}>
                   <LineChart data={chart} margin={{ top: 4, right: 12, left: 4, bottom: 0 }}>
                     <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="var(--color-slate-200)" />

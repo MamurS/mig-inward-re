@@ -19,7 +19,7 @@ cannot fix, or an action only the owner can do.
 | B | Phase 3 claims (spec) | same branch name, restarted from main / MamurS/mig-inward-re#5 | ✅ merged |
 | C | Binders and bordereaux | same branch name, restarted from main / MamurS/mig-inward-re#6 | ✅ merged |
 | D | AI-assisted data entry (pluggable provider) | same branch name, restarted from main / MamurS/mig-inward-re#7 | ✅ merged |
-| E | Whole-system audit and polish | — | — |
+| E | Whole-system audit and polish | same branch name, restarted from main / MamurS/mig-inward-re#8 | ✅ merged |
 | F | Self-hosting runbook (prepare, do not execute) | — | — |
 
 ## A — Phase 2 steps 5–6
@@ -66,4 +66,16 @@ Branch: the session's branch name, restarted from `main` after #6 merged; PR Mam
 - [x] Advisor: nothing new (the documented definer RPCs; `ai_available` is invoker). Full suite green (build, vitest 106/106, Playwright 172 + 76 screenshot specs skipped; `feedback.spec.ts` timing passes alone — 107 ms once under full-suite load on the dev container, CI green); PR #7 merged.
 - **Owner action:** set `ANTHROPIC_API_KEY` (optional `AI_PROVIDER`, `AI_MODEL`) in Supabase → Edge Functions → Secrets, then Admin › AI → switch on.
 
-Next: **E — Whole-system audit and polish**, on the same branch name restarted from `main`.
+## E — Whole-system audit and polish
+
+Branch: the session's branch name, restarted from `main` after #7 merged; PR MamurS/mig-inward-re#8. Details: `docs/audit-progress.md`.
+
+- [x] Security: RLS on every table with policies, no `anon` grants (five views fixed, default privileges fixed), invoker views, audit log incl. reference data, storage policies, advisor reviewed. Migration `20261030150000_audit_hardening` run by the owner in the SQL editor and recorded.
+- [x] Performance with 10,000 submissions (rolled back): RLS checks once per query instead of per row (agenda 3.1 s → 0.06 s, register 3.9 s → 1.0 s); register and counterparty page no longer download `search_text`.
+- [x] Reconciliation `supabase/tests/reconciliation.sql`: no discrepancies. All DB rule suites pass after the RLS rewrite (rules_and_rls 52/52 — two stale checks fixed for Demo mode — demo_isolation, premium_review, claims_rules, binder_rules, ai_rules).
+- [x] Accessibility: axe WCAG 2.1 A/AA on 21 pages × 2 themes (`e2e/accessibility.spec.ts`), all fixed; RU / UZ wording fixes.
+- [x] User guides EN / RU / UZ for underwriter, finance, claims, management, admin (`docs/guides/`).
+- [x] Design-review screenshots in Demo mode (`docs/review-screenshots/demo/`, + zip).
+- [x] Full suite green; the receivables export test no longer races the filter. PR #8 merged.
+
+Next: **F — Self-hosting runbook** (prepare only), on the same branch name restarted from `main`.

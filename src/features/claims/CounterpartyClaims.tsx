@@ -65,9 +65,9 @@ export function CounterpartyClaims({ party }: { party: { id: string; name: strin
                     <dt className="text-caption text-muted-foreground">{t('claim.lrEarned')}</dt>
                     <dd className="text-lead font-semibold num">{pct(lr.lrEarned)}</dd>
                   </div>
-                  <p className="col-span-2 text-caption text-muted-foreground">{t('claim.lrExplain')}</p>
                 </dl>
               )}
+              {lr && <p className="text-caption text-muted-foreground">{t('claim.lrExplain')}</p>}
               {rows.some((r) => r.incurred_usd === null) && <p className="text-caption text-warning-700">{t('rcv.missingRate', { count: rows.filter((r) => r.incurred_usd === null).length })}</p>}
             </>
           )

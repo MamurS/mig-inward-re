@@ -88,6 +88,8 @@ test('Russian words: просрочено>45, корзина:61-90', async ({ pa
 test('export contains exactly the installments shown', async ({ page }) => {
   await open(page)
   await search(page, 'overdue')
+  // the previous rows stay on screen while the filtered list loads: count only once every row is overdue
+  await expect.poll(async () => (await daysOf(page)).every((d) => d > 0)).toBe(true)
   const shown = await rows(page).count()
   const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Export to Excel' }).click()])
   const zip = unzipSync(new Uint8Array(readFileSync((await download.path())!)))
