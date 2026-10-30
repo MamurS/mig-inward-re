@@ -105,7 +105,10 @@ export function DataTable<T>({
       return n
     })
 
-  const frozen = 'sticky left-0 z-[1] bg-card shadow-[inset_-1px_0_0_var(--color-border)] group-hover/row:bg-slate-50 group-data-[selected=true]/row:bg-brand-50'
+  // the frozen first column shows its divider only while the table is scrolled sideways (then it is needed)
+  const divider = 'group-data-[scrolled-x=true]/scroll:shadow-[inset_-1px_0_0_var(--color-border)]'
+  const frozen = `sticky left-0 z-[1] bg-card ${divider} group-hover/row:bg-slate-50 group-data-[selected=true]/row:bg-brand-50`
+  const [scrolledX, setScrolledX] = useState(false)
   const headCell = 'sticky top-0 z-[2] h-11 border-b bg-card px-3 text-left align-middle text-small font-medium whitespace-nowrap text-muted-foreground'
 
   return (
@@ -160,7 +163,14 @@ export function DataTable<T>({
         </div>
       </div>
 
-      <div className={cn('relative overflow-auto', maxHeight)}>
+      <div
+        className={cn('group/scroll relative overflow-auto', maxHeight)}
+        data-scrolled-x={scrolledX}
+        onScroll={(e) => {
+          const x = e.currentTarget.scrollLeft > 0
+          if (x !== scrolledX) setScrolledX(x)
+        }}
+      >
         <table className="w-full caption-bottom border-separate border-spacing-0 text-table">
           <thead>
             <tr>
@@ -180,7 +190,7 @@ export function DataTable<T>({
                   c.header
                 )
                 return (
-                  <th key={c.id} className={cn(headCell, c.align === 'right' && 'text-right', i === 0 && 'left-0 z-[3] shadow-[inset_-1px_-1px_0_var(--color-border)]')}>
+                  <th key={c.id} className={cn(headCell, c.align === 'right' && 'text-right', i === 0 && cn('left-0 z-[3]', divider))}>
                     {i === 0 && selectable ? (
                       <span className="inline-flex items-center gap-3">
                         <input

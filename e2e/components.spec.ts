@@ -55,8 +55,19 @@ test.describe('table v2 on the register', () => {
     const first = page.locator('main tbody tr').first().locator('td').first()
     const h0 = (await head.boundingBox())!
     const f0 = (await first.boundingBox())!
+    // at rest the first header cell looks like the others: same bottom line, no divider
+    const style = (i: number) => page.locator('main thead th').nth(i).evaluate((el) => {
+      const cs = getComputedStyle(el)
+      return { border: `${cs.borderBottomWidth} ${cs.borderBottomColor}`, shadow: cs.boxShadow }
+    })
+    const [s0, s1] = [await style(0), await style(1)]
+    expect(s0.border).toBe(s1.border)
+    expect(s0.shadow).toBe('none')
     await scroller.evaluate((el) => el.scrollBy(400, 200))
     await page.waitForTimeout(100)
+    // scrolled sideways: the frozen column shows its divider
+    expect((await style(0)).shadow).not.toBe('none')
+    expect(await first.evaluate((el) => getComputedStyle(el).boxShadow)).not.toBe('none')
     expect((await page.locator('main thead th').first().boundingBox())!.y).toBeCloseTo(h0.y, 0)
     expect((await page.locator('main tbody tr').nth(5).locator('td').first().boundingBox())!.x).toBeCloseTo(f0.x, 0)
     await context.close()
