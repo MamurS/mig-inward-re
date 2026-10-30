@@ -51,3 +51,10 @@ Earned premium and loss ratios: `src/features/claims/ratios.ts` with unit tests 
 Browser: `e2e/claims.spec.ts` (7) — register and search words, export; new claim with the coverage warning and comment; reserve movement, close-with-outstanding comment, large-loss and cash-call marks; finance offset payment and its receipt; Claims tab and counterparty card; dashboard figures and labelled loss ratios; roles, demo isolation, RU / UZ. Claims pages added to the overlap and large-text checks.
 
 Screenshots: `docs/claims/screenshots/` (register EN / RU / UZ, a large loss, the coverage warning, the dashboard section).
+
+Security advisor (30 Oct): the two new definer functions it lists are the
+documented kinds — `can_read_claims_of` (policy helper: answers only about the
+caller and one risk) and `run_daily_claim_follow_ups_now` (raises unless admin).
+All other new definer functions (triggers, `claim_signed_share`,
+`claim_outstanding`, `claim_check_large_loss`, the job, `_seed_demo_claims`)
+are not executable by `anon` or `authenticated`.

@@ -16,7 +16,7 @@ cannot fix, or an action only the owner can do.
 | part | scope | branch / PR | state |
 |---|---|---|---|
 | A | Phase 2 premium: steps 5 (dashboard, counterparty) and 6 (self-review), merge | `claude/mga-inward-reinsurance-phase-0-1-otvuzf` / MamurS/mig-inward-re#4 | ✅ merged |
-| B | Phase 3 claims (spec) | same branch name, restarted from main / MamurS/mig-inward-re#5 | in progress |
+| B | Phase 3 claims (spec) | same branch name, restarted from main / MamurS/mig-inward-re#5 | ✅ merged |
 | C | Binders and bordereaux | — | — |
 | D | AI-assisted data entry (pluggable provider) | — | — |
 | E | Whole-system audit and polish | — | — |
@@ -42,4 +42,4 @@ Branch: the session's branch name, restarted from `main` after #4 merged; PR Mam
 - [x] Register with its search words and export; new-claim form with the coverage check; claim detail (reserve chart, payments incl. offset, recoveries, follow-ups, documents, change log).
 - [x] Claims tab, counterparty claims card with both loss ratios, dashboard claims section with loss ratios by MGA / line / year.
 - [x] Settings (threshold, review days), demo counts, EN / RU / UZ, mock + e2e (7), overlap and large-text checks, screenshots.
-- [ ] Merge PR #5.
+- [x] Advisor reviewed; full suite green; PR #5 merged.
