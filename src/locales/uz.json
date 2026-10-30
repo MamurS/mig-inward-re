@@ -9,7 +9,8 @@
     "agenda": "Mening vazifalarim",
     "counterparties": "Kontragentlar",
     "admin": "Boshqaruv",
-    "receipts": "Tushumlar"
+    "receipts": "Tushumlar",
+    "receivables": "Debitorlik"
   },
   "roles": {
     "admin": "Administrator",
@@ -80,6 +81,10 @@
     "receipts": {
       "title": "Tushumlar",
       "subtitle": "MGA va brokerlardan olingan mukofot va har bir tushum nimani toʻlagani"
+    },
+    "receivables": {
+      "title": "Debitorlik qarzi",
+      "subtitle": "MGA bizga qarzdor bo'lgan summalar — muddati va yoshi bo'yicha, hamda biz qaytarishimiz kerak bo'lgan mukofotlar"
     }
   },
   "errors": {
@@ -331,7 +336,8 @@
     "scheduleNext": "Keyingi eslatmani rejalashtirish",
     "titleField": "Sarlavha",
     "titlePlaceholder": "Masalan: yangi shartlar boʻyicha MGA ga qoʻngʻiroq",
-    "type": "Turi"
+    "type": "Turi",
+    "team": "{{role}} jamoasi"
   },
   "cp": {
     "add": {
@@ -776,7 +782,9 @@
       "active": "Faqat faollar",
       "onlyInactive": "Faqat nofaollar",
       "unallocated": "Toʻliq taqsimlanmagan",
-      "allocated": "Toʻliq taqsimlangan"
+      "allocated": "Toʻliq taqsimlangan",
+      "premOverdue": "Kechikkan",
+      "payable": "MGA ga to'lanadigan (qaytarish)"
     },
     "kw": {
       "today": "Bugun qabul qilingan",
@@ -847,6 +855,16 @@
         "ref": "Raqami boʻyicha bitta tushum",
         "notes": "Maydonsiz valyuta kodi yoki toʻlovchi nomi ham saralaydi.",
         "languages": "Soʻzlar ingliz, rus va oʻzbek tillarida tushuniladi: taqsimlanmagan, valyuta:EUR, нераспределено."
+      },
+      "receivables": {
+        "text": "Istalgan joyda matn: raqam, sug'urtalanuvchi, MGA, broker",
+        "days": "45 kundan ortiq kechikkan",
+        "bucket": "Bir yoki bir nechta yosh guruhi",
+        "mga": "Bitta MGA, faqat kechikkanlar",
+        "due": "Keyingi 30 kun ichida to'lanadigan",
+        "payable": "MGA ga qaytariladigan mukofotlar (debitorlikdan alohida)",
+        "notes": "Holat yoki qaytarish ko'rsatilmasa, hali to'lanmagan summalar ko'rinadi. MGA, broker, valyuta yoki yosh guruhi nomining o'zi filtrlaydi.",
+        "languages": "So'zlar ingliz, rus va o'zbek tillarida ishlaydi: просрочено>45, корзина:61-90, qaytarish."
       }
     },
     "count_one": "{{count}} ta ariza",
@@ -887,6 +905,11 @@
         "placeholder": "Qidiruv yoki filtr: toʻlovchi, bank maʼlumotnomasi, valyuta…",
         "label": "Tushumlarni qidirish va saralash",
         "words": "raqam, maʼlumotnoma, toʻlovchi…"
+      },
+      "receivables": {
+        "placeholder": "Qidirish yoki filtr: sug'urtalanuvchi, MGA, overdue>45, bucket:61-90…",
+        "label": "Debitorlik bo'yicha qidirish",
+        "words": "raqam, sug'urtalanuvchi, MGA, broker…"
       }
     },
     "filters": "Filtrlar",
@@ -977,5 +1000,30 @@
   "demo": {
     "banner": "Siz faqat demo ma'lumotlarni ko'ryapsiz. Haqiqiy ma'lumotlar yashirilgan.",
     "leave": "Demo rejimdan chiqish"
+  },
+  "rcv": {
+    "bucket": "Qarz yoshi",
+    "daysOverdue": "Kechikkan kunlar",
+    "outstanding": "Qoldiq",
+    "usd": "Qoldiq, USD",
+    "noRate": "Bu valyuta uchun hali kurs yo'q: USD jamiga kirmaydi",
+    "noRateShort": "kurs yo'q",
+    "exported_one": "{{count}} ta to'lov eksport qilindi",
+    "exported_other": "{{count}} ta to'lov eksport qilindi",
+    "ageing": "Qarz yoshi, USD",
+    "totalOutstanding": "Olinadigan qoldiq",
+    "notDue": "Muddati kelmagan",
+    "bucketDays": "{{bucket}} kun",
+    "payableTile": "MGA ga to'lanadigan",
+    "payableSub_one": "{{count}} ta qaytarish",
+    "payableSub_other": "{{count}} ta qaytarish",
+    "count_one": "{{count}} ta to'lov",
+    "count_other": "{{count}} ta to'lov",
+    "countPayable_one": "{{count}} ta qaytarish to'lanadi",
+    "countPayable_other": "{{count}} ta qaytarish to'lanadi",
+    "missingRate_one": "{{count}} ta kurssiz USD jamiga kirmaydi",
+    "missingRate_other": "{{count}} ta kurssiz USD jamiga kirmaydi",
+    "none": "Qarz yo'q",
+    "noneHint": "Tasdiqlangan arizada mukofot jadvali bo'lganda to'lovlar shu yerda ko'rinadi."
   }
 }

@@ -93,6 +93,7 @@ const SCREENS: { name: string; path: string; role: FixtureRole; ready: string }[
   { name: 'counterparty', path: '/counterparties/20000000-0000-4000-8000-000000000001', role: 'underwriter', ready: 'main h1' },
   { name: 'tokens', path: '/admin/tokens', role: 'admin', ready: 'main h1' },
   { name: 'receipts', path: '/receipts', role: 'finance', ready: 'main tbody tr' },
+  { name: 'receivables', path: '/receivables', role: 'finance', ready: 'main tbody tr' },
 ]
 
 for (const lang of ['en', 'ru', 'uz'] as const) {

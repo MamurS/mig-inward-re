@@ -257,3 +257,61 @@ export const RECEIPTS_SERVER: ServerSpec = {
     return neg ? `and(${RECEIPT_TEXT.map((c) => `or(${c}.is.null,${c}.not.ilike.${v})`).join(',')})` : `or(${RECEIPT_TEXT.map((c) => `${c}.ilike.${v}`).join(',')})`
   },
 }
+
+// ---------------------------------------------------------------------------
+// Receivables (premium installments: what MGAs owe us, what we owe them back)
+// ---------------------------------------------------------------------------
+
+export const AGING_BUCKETS = ['0-30', '31-60', '61-90', '90+'] as const
+const bucketOptions = (): Option[] => AGING_BUCKETS.map((b) => ({ value: b, label: b, insert: b, names: [b] }))
+
+const INSTALLMENT_STATUS_WORDS: Record<string, string[]> = {
+  open: ['open', 'unpaid', 'открыт', 'открытые', 'не оплачен', 'ochiq', 'tolanmagan'],
+  partially_paid: ['partially_paid', 'partly', 'partial', 'частично', 'частично оплачен', 'qisman'],
+  paid: ['paid', 'оплачен', 'оплачено', 'оплаченные', 'tolangan'],
+  written_off: ['written_off', 'writtenoff', 'writeoff', 'списан', 'списано', 'hisobdan chiqarilgan'],
+}
+const installmentStatusOptions = (ctx: SearchContext): Option[] =>
+  Object.keys(INSTALLMENT_STATUS_WORDS).map((k) => ({ value: k, label: label(ctx, `prem.status.${k}`, k), insert: k, names: [...INSTALLMENT_STATUS_WORDS[k], label(ctx, `prem.status.${k}`, k)] }))
+
+export const RECEIVABLES: Scope = {
+  id: 'receivables',
+  fields: [
+    { key: 'mga', kind: 'list', aliases: ['мга', 'agent', 'агент'], labelKey: 'fields.mga', options: partyOptions('mga'), partial: 'contains' },
+    { key: 'broker', kind: 'list', aliases: ['брокер', 'vositachi'], labelKey: 'fields.broker', options: partyOptions('broker'), partial: 'contains' },
+    { key: 'uw', kind: 'list', aliases: ['underwriter', 'андеррайтер', 'андер', 'anderrayter'], labelKey: 'fields.underwriter', options: userOptions(), partial: 'contains' },
+    { key: 'ccy', kind: 'list', aliases: ['currency', 'cur', 'валюта', 'вал', 'valyuta'], labelKey: 'fields.currency', options: currencyOptions, partial: 'none' },
+    { key: 'bucket', kind: 'list', aliases: ['aging', 'ageing', 'age', 'корзина', 'возраст', 'yosh'], labelKey: 'rcv.bucket', options: bucketOptions, partial: 'none' },
+    { key: 'status', kind: 'list', aliases: ['state', 'статус', 'holat', 'holati'], labelKey: 'fields.status', options: installmentStatusOptions, partial: 'prefix' },
+    { key: 'ref', kind: 'like', aliases: ['refno', 'номер', 'реф', 'raqam'], labelKey: 'fields.refNo' },
+    { key: 'overdue', kind: 'num', aliases: ['days', 'dpd', 'дней', 'просрочено', 'kun', 'kechikkan'], labelKey: 'rcv.daysOverdue' },
+    { key: 'outstanding', kind: 'num', aliases: ['amount', 'left', 'остаток', 'сумма', 'qoldiq', 'summa'], labelKey: 'rcv.outstanding' },
+    { key: 'due', kind: 'date', looksBack: false, aliases: ['duedate', 'срок', 'оплата', 'muddat', 'tolov'], labelKey: 'prem.dueDate' },
+  ],
+  flags: [
+    { flag: 'overdue', words: ['late', 'просрочено', 'просрочен', 'просроченные', 'kechikkan', 'muddati otgan'], labelKey: 'search.flag.premOverdue' },
+    { flag: 'payable', words: ['return', 'returns', 'к оплате', 'кредиторка', 'возврат', 'возвраты', 'qaytarish', 'tolanadigan'], labelKey: 'search.flag.payable' },
+    { flag: 'mine', words: MINE.filter((w) => w !== 'me' && w !== 'я'), labelKey: 'search.flag.mine', needsUser: true },
+  ],
+  dateKeywordField: 'due',
+  exactFields: ['ccy', 'mga', 'broker', 'bucket', 'status'],
+  weak: ['open', 'paid', 'partly', 'partial', 'return', 'late', 'my', 'age', 'days', 'amount', 'left', 'week', 'month', 'hafta', 'неделя', 'месяц'],
+}
+
+/** Free text looks at the submission number, insured, MGA and broker. */
+const RECEIVABLE_TEXT = ['ref_no', 'insured_name', 'mga_name', 'broker_name']
+export const RECEIVABLES_SERVER: ServerSpec = {
+  list: { mga: 'mga_id', broker: 'broker_id', uw: 'underwriter_id', ccy: 'currency', bucket: 'aging_bucket', status: 'status' },
+  like: { ref: 'ref_no' },
+  num: { overdue: 'days_overdue', outstanding: 'outstanding_amount' },
+  date: { due: 'due_date' },
+  flags: {
+    overdue: (neg) => `days_overdue.${neg ? 'eq' : 'gt'}.0`,
+    payable: (neg) => `payable_amount.${neg ? 'lte' : 'gt'}.0`,
+    mine: (neg, userId) => (!userId ? null : neg ? `or(underwriter_id.is.null,underwriter_id.neq.${userId})` : `underwriter_id.eq.${userId}`),
+  },
+  textColumn: (w, neg) => {
+    const v = `"*${w.replace(/["\\*%]/g, '')}*"`
+    return neg ? `and(${RECEIVABLE_TEXT.map((c) => `or(${c}.is.null,${c}.not.ilike.${v})`).join(',')})` : `or(${RECEIVABLE_TEXT.map((c) => `${c}.ilike.${v}`).join(',')})`
+  },
+}

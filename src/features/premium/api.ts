@@ -184,3 +184,42 @@ export async function removeAllocation(id: string) {
   const { error } = await supabase.from('premium_allocations').delete().eq('id', id)
   if (error) throw error
 }
+
+export const MAX_RECEIVABLES = 2000
+
+/**
+ * The receivables register: installments through the search bar's database
+ * filter, oldest due first. `base` keeps receivable and payable apart:
+ * 'open' = what MGAs still owe (no return premium), 'receivable' = every
+ * receivable installment (a status was asked for), null = the query decides
+ * (payable: return premium we owe).
+ */
+export function useReceivables(filter: string | null, base: 'open' | 'receivable' | null, enabled = true) {
+  return useQuery({
+    queryKey: ['premium', 'receivables', base, filter],
+    enabled,
+    placeholderData: (prev) => prev,
+    queryFn: async () => {
+      let q = supabase.from('premium_installments_v').select('*', { count: 'exact' })
+      if (base) q = q.neq('type', 'return')
+      if (base === 'open') q = q.gt('outstanding_amount', 0)
+      if (filter) q = q.or(filter)
+      const { data, error, count } = await q.order('due_date', { ascending: true }).order('ref_no', { ascending: true }).limit(MAX_RECEIVABLES)
+      if (error) throw error
+      return { rows: data as InstallmentRow[], count: count ?? 0 }
+    },
+  })
+}
+
+/** Return premium still to pay back to MGAs: kept apart from what they owe us. */
+export function usePayableTotal() {
+  return useQuery({
+    queryKey: ['premium', 'payable-total'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('premium_installments_v').select('payable_amount, payable_usd').gt('payable_amount', 0)
+      if (error) throw error
+      const rows = data as Pick<InstallmentRow, 'payable_amount' | 'payable_usd'>[]
+      return { count: rows.length, usd: rows.reduce((s, r) => s + (r.payable_usd ?? 0), 0), missingRate: rows.filter((r) => r.payable_usd === null).length }
+    },
+  })
+}

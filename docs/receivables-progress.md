@@ -9,7 +9,7 @@ Approved plan: 6 steps, stop for review after each. Target Supabase project:
 | 1 | migrations and logic | ✅ applied and tested |
 | 2 | schedule on bind + Premium tab on submission detail | ✅ |
 | 3 | receipts register + new receipt with allocation | ✅ |
-| 4 | receivables register, ageing, follow-ups on the agenda | — |
+| 4 | receivables register, ageing, follow-ups on the agenda | ✅ (+ demo data) |
 | 5 | dashboard and counterparty additions | — |
 | 6 | self-review | — |
 
@@ -147,6 +147,27 @@ Screens:
   - receipts scope unit tests;
   - Receipts added to the Large-text fit check.
 
+## Step 4 — receivables register, ageing, finance follow-ups
+
+- **Receivables page** (`/receivables`, nav «Receivables»; finance, admin, management):
+  - every installment MGAs still owe, oldest due first: ref no. #n (links to the submission), insured, MGA, broker, due date, days overdue (ageing badge), currency, net, paid, outstanding, outstanding in USD, status;
+  - **ageing summary in USD** over exactly the rows the search shows: outstanding, not yet due, 0-30, 31-60, 61-90, 90+ (each tile filters by its bucket); rows with no FX rate are counted apart («… without an FX rate are not in the USD totals»);
+  - **receivable and payable stay apart:** return premium is never in the list or the totals; its own tile «Payable to MGAs» and the `payable` search show it;
+  - export to Excel = the rows shown.
+- **Search words** (EN / RU / UZ): `overdue>45` (days overdue; `просрочено>45`), `bucket:61-90|90+` (`корзина:`), `payable` (`возврат`, `qaytarish`), `overdue`, `mga:`, `broker:`, `uw:`, `ccy:`, `status:open|partially_paid|paid|written_off`, `due<30d`, `outstanding>10k`, `ref:`, `mine`. Without `status:` or `payable` the list shows what is still owed.
+- **Agenda — finance team follow-ups** (review item 4): your own agenda also lists your team's follow-ups (`assigned_role` = your role), so every finance user sees each overdue-premium follow-up; «Finance team» as the assignee; the amount column shows what is still owed on the installment; the link opens the submission; anyone in the team can close it and the closing records who (`done_by`, shown on the Done tab). The nav badge counts team items too. «Schedule next» keeps it a team follow-up.
+- **Database:** nothing new needed — `premium_installments_v` already has days overdue, bucket, outstanding / payable in USD; the `follow_ups_update_team` policy lets the team close. Checked rolled back: a finance user sees the 7 team follow-ups and closing one sets `done_by` to that user.
+- **Tests:** `e2e/receivables.spec.ts` (6): register order and tiles; `overdue>45`, bucket tile, `payable`; Russian words; export = shown; finance agenda team item closed and «(Nodira Saidova)» on the Done tab; management reads, no register for underwriters. Unit: receivables scope (words, PostgREST filters) and the ageing maths. Receivables added to the Large-text fit check.
+
+## Demo data (asked with step 4)
+
+- **Hidden by default, everywhere:** `is_demo` on counterparties, submissions (and their status history), installments, receipts, allocations, follow-ups, documents. A **restrictive RLS policy** `is_demo = demo_mode()` on each means a user out of demo mode never receives a demo row — lists, search, dashboard totals, exports all follow. The daily jobs skip demo rows.
+- **Demo mode** (per user, Appearance): shows only demo rows, with an amber **DEMO** banner across the top (it stays in view and has «Leave demo mode»).
+- **Never mixed:** a guard trigger makes children inherit the parent's flag and refuses links between the worlds (e.g. a real receipt paying a demo installment); a user writes only in their own mode. «DEMO » names are reserved for demo rows (and added automatically); demo numbers are DEMO-SUB-… / DEMO-RCP-… with their own counters.
+- **Loaded on the project:** 5 MGAs, 3 brokers (all «DEMO …»), 30 submissions in every status (back-dated through the status machine), schedules with overdue items in every bucket, a return premium, partly paid installments, 5 receipts (one USD receipt paying a EUR installment at 0.9205, one with money left unallocated), 26 follow-ups incl. 7 finance-team overdue-premium ones.
+- **Admin › Demo data:** counts, **Check links** (`demo_link_violations()` — none), **Delete all demo data** (also removes demo documents' files), **Load demo data**.
+- **Tests:** `supabase/tests/demo_isolation.sql` — 8 checks, rolled back: hidden when off (lists, views, dashboard total), prefix reserved, mixing refused, only demo when on, writes in own mode, jobs skip demo, link check clean and delete removes only demo, admin only. `e2e/demo.spec.ts` (6).
+
 ## Review items (asked with step 2)
 
 1. **SECURITY DEFINER functions the advisor lists** — all 11 have
@@ -176,8 +197,8 @@ Screens:
    in step 3 with the allocation form.
 4. **Finance team follow-ups** — closing one records who closed it already
    (`follow_ups.done_by` is set by the trigger to `auth.uid()`, not grantable;
-   `follow_ups_v.done_by_name`); showing them on every finance user's agenda is
-   in step 4 with the agenda changes.
+   `follow_ups_v.done_by_name`); every finance user's agenda shows them — done
+   in step 4.
 5. **Write-off reason, who and when** — done (above).
 6. **Status RPC share-argument typing** — restored and now kept by
    `scripts/write-db-types.mjs` (`p_written_share_pct` / `p_signed_share_pct`:

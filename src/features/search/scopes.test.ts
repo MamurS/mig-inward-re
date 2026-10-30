@@ -3,7 +3,7 @@ import { norm } from './normalize'
 import { parseQuery, type SearchContext, type Term } from './query'
 import { hasFlag, matchesQuery, type ClientSpec } from './client'
 import { toPostgrestFilter } from './postgrest'
-import { AGENDA, COUNTERPARTIES, FX, FX_SERVER, RECEIPTS, RECEIPTS_SERVER, REFERENCE, USERS } from './scopes'
+import { AGENDA, COUNTERPARTIES, FX, FX_SERVER, RECEIPTS, RECEIPTS_SERVER, RECEIVABLES, RECEIVABLES_SERVER, REFERENCE, USERS } from './scopes'
 
 const ctx: SearchContext = {
   today: '2026-10-30',
@@ -116,5 +116,30 @@ describe('receipts', () => {
     expect(f('-mt103')).toBe(
       'and(or(ref_no.is.null,ref_no.not.ilike."*mt103*"),or(bank_reference.is.null,bank_reference.not.ilike."*mt103*"),or(payer_name.is.null,payer_name.not.ilike."*mt103*"),or(notes.is.null,notes.not.ilike."*mt103*"))',
     )
+  })
+})
+
+describe('receivables', () => {
+  const rctx: SearchContext = { ...ctx, counterparties: [{ id: 'm1', name: 'Silk Road Underwriting Agency', type: 'mga' }, { id: 'b1', name: 'Tashkent Re Brokers', type: 'broker' }] }
+  const shape = (text: string) => parseQuery(text, rctx, RECEIVABLES).groups.map((g) => g.terms.map(summary))
+  const filter = (text: string) => toPostgrestFilter(parseQuery(text, rctx, RECEIVABLES), RECEIVABLES_SERVER, 'u1')
+
+  it('days overdue, ageing buckets and payable, in EN / RU / UZ', () => {
+    for (const w of ['overdue>45', 'просрочено>45', 'kechikkan>45', 'days>45']) expect(shape(w), w).toEqual([['overdue{"gt":"45"}']])
+    for (const w of ['bucket:61-90', 'корзина:61-90', 'yosh:61-90', '61-90']) expect(shape(w), w).toEqual([['bucket:61-90']])
+    expect(shape('bucket:61-90|90+')).toEqual([['bucket:61-90|90+']])
+    for (const w of ['payable', 'возврат', 'qaytarish']) expect(shape(w), w).toEqual([['payable']])
+    // the bare word is the flag; with a number it is the field
+    expect(shape('overdue')).toEqual([['overdue']])
+    expect(shape('mga:silk, overdue')).toEqual([['mga:m1', 'overdue']])
+  })
+
+  it('reaches the view’s columns', () => {
+    expect(filter('overdue>45')).toBe('and(days_overdue.gt.45)')
+    expect(filter('bucket:61-90|90+')).toBe('and(aging_bucket.in.("61-90","90+"))')
+    expect(filter('payable')).toBe('and(payable_amount.gt.0)')
+    expect(filter('overdue')).toBe('and(days_overdue.gt.0)')
+    expect(filter('due<30d')).toBe('and(due_date.gte.2026-10-30,due_date.lt.2026-11-30)')
+    expect(filter('tashkent')).toBe('and(or(ref_no.ilike."*tashkent*",insured_name.ilike."*tashkent*",mga_name.ilike."*tashkent*",broker_name.ilike."*tashkent*"))')
   })
 })

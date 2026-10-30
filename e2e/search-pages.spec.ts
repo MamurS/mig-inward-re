@@ -108,9 +108,16 @@ test.describe('agenda', () => {
     await search(page, 'assignee:all, overdue')
     await expect(page).toHaveURL(/\/agenda\?q=/)
     await expect(chips(page)).toHaveCount(2)
+    // every overdue open follow-up of the fixtures, plus the finance team's overdue-premium ones (made by the mock's daily job)
     const fu = SEEN.follow_ups_v as { done_at: string | null; is_overdue: boolean }[]
     const overdueOpen = fu.filter((f) => !f.done_at && f.is_overdue).length
-    await expect(page.getByRole('tab', { name: new RegExp(`\\(${overdueOpen}\\)`) })).toBeVisible()
+    const tab = page.getByRole('tab', { name: /^Open \(\d+\)$/ })
+    await expect(tab).toBeVisible()
+    const shownOf = async () => Number(/\((\d+)\)/.exec((await tab.textContent()) ?? '')?.[1] ?? 0)
+    // a premium follow-up links to its installment: «SUB-… #n»
+    const premium = page.locator('main [role="tabpanel"] a').filter({ hasText: /#\d+$/ })
+    await expect.poll(async () => (await shownOf()) - (await premium.count())).toBe(overdueOpen)
+    expect(await premium.count()).toBeGreaterThan(0)
     await search(page, 'assignee:all, zzzz-nothing')
     await expect(page.getByText('Nothing matches this search')).toBeVisible()
   })

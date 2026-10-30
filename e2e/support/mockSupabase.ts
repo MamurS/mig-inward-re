@@ -11,6 +11,7 @@ import { TABLES, USERS, fxRate, type FixtureRole } from './fixtures'
 import { createReceipt, generateSchedule, normalizePremium, premiumSeed, premiumViews } from './premium'
 
 const PROJECT_REF = 'jltrtqwaxvsrnqmjemzc'
+const n = (v: unknown) => Number(v ?? 0)
 type Row = Record<string, unknown>
 
 function b64url(obj: unknown) {
@@ -156,6 +157,20 @@ export async function installMock(
   }
   Object.assign(db, premiumSeed(db.submissions_v))
   normalizePremium(db, null)
+  // the daily premium job: one finance-team follow-up per overdue installment
+  for (const i of premiumViews(db, fxRate).premium_installments_v) {
+    if (i.type === 'return' || !(n(i.days_overdue) > 0) || !(n(i.outstanding_amount) > 0)) continue
+    const due = new Date(Date.now() - Math.min(n(i.days_overdue), 3) * 86_400_000).toISOString()
+    const fu: Row = {
+      id: crypto.randomUUID(), entity_type: 'premium', entity_id: i.id, type: 'premium_overdue', title: 'Premium overdue', due_at: due,
+      assigned_to: null, assigned_role: 'finance', done_at: null, done_by: null, outcome: null, created_at: due, created_by: null, updated_at: due,
+    }
+    db.follow_ups.push(fu)
+    db.follow_ups_v.push({
+      ...fu, entity_ref: `${i.ref_no} #${i.installment_no}`, entity_label: i.insured_name, submission_id: i.submission_id, submission_status: i.submission_status,
+      mga_id: i.mga_id, mga_name: i.mga_name, assigned_to_name: null, done_by_name: null, is_overdue: true, days_overdue: Math.min(n(i.days_overdue), 3),
+    })
+  }
   const PREMIUM_VIEWS = new Set(['premium_installments_v', 'premium_receipts_v', 'premium_schedule_check_v'])
 
   // demo data: the restrictive RLS policy is_demo = demo_mode() — a user sees only their own world
@@ -319,6 +334,15 @@ export async function installMock(
       const patch = req.postDataJSON() as Row
       const hit = filterRows(rows, params)
       for (const r of hit) Object.assign(r, patch)
+      if (table === 'follow_ups') {
+        // the trigger records who closed it; the view follows the table
+        const me = user ? db.profiles.find((p) => p.id === user.id) : null
+        for (const r of hit) {
+          if (patch.done_at) Object.assign(r, { done_by: user?.id ?? null })
+          const v = db.follow_ups_v.find((x) => x.id === r.id)
+          if (v) Object.assign(v, patch, patch.done_at ? { done_by: user?.id ?? null, done_by_name: me?.full_name ?? null, is_overdue: false } : {})
+        }
+      }
       if (table.startsWith('premium_')) normalizePremium(db, user?.id ?? null)
       return json((req.headers()['accept'] ?? '').includes('vnd.pgrst.object') ? hit[0] ?? null : hit)
     }

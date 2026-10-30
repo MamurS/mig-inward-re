@@ -8,7 +8,7 @@
 import type { BuilderSpec } from './builder'
 import type { Scope } from './query'
 import type { ServerSpec } from './postgrest'
-import { AGENDA, COUNTERPARTIES, FX, FX_SERVER, RECEIPTS, RECEIPTS_SERVER, REFERENCE, SUBMISSIONS, SUBMISSIONS_SERVER, USERS } from './scopes'
+import { AGENDA, COUNTERPARTIES, FX, FX_SERVER, RECEIPTS, RECEIPTS_SERVER, RECEIVABLES, RECEIVABLES_SERVER, REFERENCE, SUBMISSIONS, SUBMISSIONS_SERVER, USERS } from './scopes'
 
 export type PageSearch = {
   scope: Scope
@@ -147,7 +147,35 @@ export const RECEIPTS_PAGE: PageSearch = {
   ],
 }
 
-export const PAGE_SEARCHES: PageSearch[] = [SUBMISSIONS_PAGE, COUNTERPARTIES_PAGE, AGENDA_PAGE, USERS_PAGE, REFERENCE_PAGE, FX_PAGE, RECEIPTS_PAGE]
+export const RECEIVABLES_PAGE: PageSearch = {
+  scope: RECEIVABLES,
+  server: RECEIVABLES_SERVER,
+  path: '/receivables',
+  builder: {
+    items: [
+      { kind: 'chips', field: 'bucket' },
+      { kind: 'multi', field: 'mga' },
+      { kind: 'multi', field: 'broker' },
+      { kind: 'chips', field: 'ccy' },
+      { kind: 'chips', field: 'status' },
+      { kind: 'multi', field: 'uw' },
+      { kind: 'range', field: 'overdue' },
+      { kind: 'dates', field: 'due' },
+    ],
+    toggles: [{ flag: 'overdue' }, { flag: 'payable' }],
+  },
+  suggest: ['mga', 'broker', 'bucket', 'ccy'],
+  examples: [
+    { q: 'tashkent', key: 'text' },
+    { q: 'overdue>45', key: 'days' },
+    { q: 'bucket:61-90|90+', key: 'bucket' },
+    { q: 'mga:"Silk Road", overdue', key: 'mga' },
+    { q: 'due<30d', key: 'due' },
+    { q: 'payable', key: 'payable' },
+  ],
+}
+
+export const PAGE_SEARCHES: PageSearch[] = [SUBMISSIONS_PAGE, COUNTERPARTIES_PAGE, AGENDA_PAGE, USERS_PAGE, REFERENCE_PAGE, FX_PAGE, RECEIPTS_PAGE, RECEIVABLES_PAGE]
 
 /** The search for this location: the page's own list, or (here: false) the register. */
 export function pageSearchFor(pathname: string, search: string): { page: PageSearch; here: boolean } {
