@@ -18,7 +18,7 @@ cannot fix, or an action only the owner can do.
 | A | Phase 2 premium: steps 5 (dashboard, counterparty) and 6 (self-review), merge | `claude/mga-inward-reinsurance-phase-0-1-otvuzf` / MamurS/mig-inward-re#4 | ✅ merged |
 | B | Phase 3 claims (spec) | same branch name, restarted from main / MamurS/mig-inward-re#5 | ✅ merged |
 | C | Binders and bordereaux | same branch name, restarted from main / MamurS/mig-inward-re#6 | ✅ merged |
-| D | AI-assisted data entry (pluggable provider) | — | — |
+| D | AI-assisted data entry (pluggable provider) | same branch name, restarted from main / MamurS/mig-inward-re#7 | 🔄 in progress |
 | E | Whole-system audit and polish | — | — |
 | F | Self-hosting runbook (prepare, do not execute) | — | — |
 
@@ -54,5 +54,15 @@ Branch: the session's branch name, restarted from `main` after #5 merged; PR Mam
 - [x] Unit tests (`validate.test.ts`, 13), e2e `binders.spec.ts` (8), binder pages in the overlap and large-text checks.
 - [x] Screenshots `docs/binders/screenshots/`; advisor reviewed; full suite green (build, vitest 93/93, Playwright 168 + 76 screenshot specs skipped); PR #6 merged.
 
-Next: **D — AI-assisted data entry**, on the same branch name restarted from `main`.
+## D — AI-assisted data entry
+
+Branch: the session's branch name, restarted from `main` after #6 merged; PR MamurS/mig-inward-re#7. Details and the self-review: `docs/ai-progress.md`. Defaults: `docs/decisions.md` rows 27–35.
+
+- [x] Database: settings (off by default, roles, daily limit), `ai_usage_log`, `ai_cache`, `ai_usage_v`, `ai_available()`; RLS, grants, audit, demo. `supabase/tests/ai_rules.sql` 3/3.
+- [x] Edge Function `ai-extract` deployed (Anthropic `claude-haiku-5-5` default, Ollama / OpenAI-compatible alternative; strict JSON with value, confidence, source; caps, cache, daily limit, usage log).
+- [x] Submission form «Fill from document» (review panel, fuzzy counterparty match, duplicate warning, marked fields, nothing saved until Save); AI mapping in the bordereau wizard; Admin › AI.
+- [x] Unit tests (13), e2e `ai.spec.ts` (5), EN / RU / UZ.
+- [ ] Migration `demo_data_ai` (demo delete / counts cover the AI tables) — waiting for the owner to run it in the SQL editor.
+- [ ] Full suite, advisor, merge #7.
+- **Owner action:** set `ANTHROPIC_API_KEY` (optional `AI_PROVIDER`, `AI_MODEL`) in Supabase → Edge Functions → Secrets, then Admin › AI → switch on.
 
