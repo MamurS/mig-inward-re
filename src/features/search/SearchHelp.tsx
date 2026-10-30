@@ -1,23 +1,11 @@
 import { useTranslation } from 'react-i18next'
 import { Popover as P } from 'radix-ui'
 import { CornerDownLeft } from 'lucide-react'
+import type { PageSearch } from './pages'
 
-/** The syntax, by example — each example can be tried in one click. */
-const EXAMPLES = [
-  { q: 'evon', key: 'text' },
-  { q: '"Yigit Agro"', key: 'phrase' },
-  { q: 'Sevil, property, bound', key: 'and' },
-  { q: 'Sevil, bound; IUC, offered', key: 'or' },
-  { q: 'status:offered|bound', key: 'pipe' },
-  { q: '-declined', key: 'exclude' },
-  { q: 'mga:Sevil, ccy:USD', key: 'fields' },
-  { q: 'premium>100k, share>=10', key: 'numbers' },
-  { q: 'received>=2026-10-01', key: 'dates' },
-  { q: 'expiry<30d', key: 'within' },
-  { q: 'overdue, mine', key: 'keywords' },
-] as const
-
-export function SearchHelp({ open, onOpenChange, onTry }: { open: boolean; onOpenChange: (o: boolean) => void; onTry: (q: string) => void }) {
+/** The syntax, by example — the page's own examples; each can be tried in one click. */
+export function SearchHelp({ open, onOpenChange, onTry, page }: { open: boolean; onOpenChange: (o: boolean) => void; onTry: (q: string) => void; page: PageSearch }) {
+  const id = page.scope.id
   const { t } = useTranslation()
   return (
     <P.Root open={open} onOpenChange={onOpenChange}>
@@ -35,7 +23,7 @@ export function SearchHelp({ open, onOpenChange, onTry }: { open: boolean; onOpe
             <p className="mt-1 text-small text-muted-foreground">{t('search.help.intro')}</p>
           </div>
           <ul className="grid gap-1">
-            {EXAMPLES.map((e) => (
+            {page.examples.map((e) => (
               <li key={e.key}>
                 <button
                   type="button"
@@ -43,14 +31,14 @@ export function SearchHelp({ open, onOpenChange, onTry }: { open: boolean; onOpe
                   className="group grid w-full grid-cols-[minmax(0,14rem)_minmax(0,1fr)_auto] items-baseline gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-brand-50"
                 >
                   <code className="truncate rounded-sm bg-muted px-2 py-0.5 font-mono text-small text-foreground" title={e.q}>{e.q}</code>
-                  <span className="text-small text-muted-foreground">{t(`search.help.ex.${e.key}`)}</span>
+                  <span className="text-small text-muted-foreground">{t(`search.help.${id}.${e.key}`)}</span>
                   <CornerDownLeft className="size-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" aria-hidden />
                 </button>
               </li>
             ))}
           </ul>
-          <p className="text-small text-muted-foreground">{t('search.help.fields')}</p>
-          <p className="text-small text-muted-foreground">{t('search.help.languages')}</p>
+          <p className="text-small text-muted-foreground">{t(`search.help.${id}.notes`)}</p>
+          <p className="text-small text-muted-foreground">{t(`search.help.${id}.languages`)}</p>
         </P.Content>
       </P.Portal>
     </P.Root>

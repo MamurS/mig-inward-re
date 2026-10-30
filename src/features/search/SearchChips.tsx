@@ -3,38 +3,27 @@ import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { removeTerm, type ParsedQuery, type Term } from './query'
-
-const FIELD_LABEL: Record<string, string> = {
-  status: 'fields.status', mga: 'fields.mga', broker: 'fields.broker', lob: 'fields.lob', country: 'fields.insuredCountry',
-  ccy: 'fields.currencyShort', uw: 'fields.underwriter', type: 'fields.businessType', ref: 'fields.refNo',
-  premium: 'search.f.premium', share: 'fields.share', si: 'search.f.si',
-  received: 'fields.receivedAt', inception: 'fields.periodFrom', expiry: 'fields.periodTo', bound: 'fields.boundAt',
-}
+import { fieldOf, removeTerm, type ParsedQuery, type Scope, type Term } from './query'
 
 /** How a part of the query reads back to the user («MGA: Sevil», «Premium (USD) > 100k», «Not: declined»). */
-export function termLabel(term: Term, t: TFunction): string {
+export function termLabel(term: Term, t: TFunction, scope: Scope): string {
+  const fieldLabel = (key: string) => t(fieldOf(scope, key)?.labelKey ?? key)
   let label: string
   switch (term.kind) {
     case 'text':
       label = term.phrase ? `“${term.words.join(' ')}”` : term.words.join(' ')
       break
-    case 'field': {
-      const values =
-        term.field === 'type' ? term.labels.map((v) => t(`businessType.${v}`))
-        : term.field === 'broker' ? term.labels.map((v) => (v === '—' ? t('sub.directNoBroker') : v))
-        : term.labels
-      label = `${t(FIELD_LABEL[term.field])}: ${values.join(' | ')}`
+    case 'field':
+      label = `${fieldLabel(term.field)}: ${term.labels.join(' | ')}`
       break
-    }
     case 'num':
-      label = `${t(FIELD_LABEL[term.field])} ${term.display}`
+      label = `${fieldLabel(term.field)} ${term.display}`
       break
     case 'date':
-      label = term.keyword ? t(`search.kw.${term.keyword}`) : `${t(FIELD_LABEL[term.field])} ${term.display}`.replace(/\s+$/, '')
+      label = term.keyword ? t(`search.kw.${term.keyword}`) : `${fieldLabel(term.field)} ${term.display}`.replace(/\s+$/, '')
       break
     case 'flag':
-      label = t(`search.flag.${term.flag}`)
+      label = t(scope.flags.find((f) => f.flag === term.flag)?.labelKey ?? term.flag)
       break
   }
   return term.neg ? t('search.not', { label }) : label
@@ -45,7 +34,7 @@ export function termLabel(term: Term, t: TFunction): string {
  * so users see how their text was understood. × removes that part from the
  * text too. Parts searched as plain text say so.
  */
-export function SearchChips({ query, count, onChange }: { query: ParsedQuery; count: React.ReactNode; onChange: (text: string) => void }) {
+export function SearchChips({ query, scope, count, onChange }: { query: ParsedQuery; scope: Scope; count: React.ReactNode; onChange: (text: string) => void }) {
   const { t } = useTranslation()
   return (
     <div className="mb-4 grid gap-2" data-search-chips>
@@ -55,7 +44,7 @@ export function SearchChips({ query, count, onChange }: { query: ParsedQuery; co
             <Fragment key={gi}>
               {gi > 0 && <span className="px-1 text-caption font-semibold tracking-wide text-muted-foreground uppercase">{t('search.or')}</span>}
               {g.terms.map((term) => {
-                const label = termLabel(term, t)
+                const label = termLabel(term, t, scope)
                 const asText = term.kind === 'text' && term.asText
                 return (
                   <span

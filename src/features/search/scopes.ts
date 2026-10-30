@@ -1,0 +1,108 @@
+/**
+ * What each page's search knows — its fields, values and keywords (EN / RU /
+ * UZ), and how a query reaches its rows: in the database (server: a
+ * PostgREST filter) or over the rows already loaded (client: small,
+ * reference-sized lists). One parser (query.ts) reads them all.
+ */
+import type { Option, Scope, SearchContext } from './query'
+import type { ServerSpec } from './postgrest'
+
+const label = (ctx: SearchContext, key: string, fallback: string) => ctx.t?.(key) ?? fallback
+
+// ---------------------------------------------------------------------------
+// Submissions (the register)
+// ---------------------------------------------------------------------------
+
+export const STATUS_KEYS = ['received', 'under_review', 'offered', 'no_response', 'bound', 'declined', 'ntu'] as const
+export type StatusKey = (typeof STATUS_KEYS)[number]
+
+/** Every status in EN / RU / UZ, with the usual synonyms. */
+export const STATUS_WORDS: Record<StatusKey, string[]> = {
+  received: ['received', 'new', 'получена', 'получен', 'получено', 'новая', 'новые', 'qabulqilindi', 'qabul', 'yangi'],
+  under_review: ['under_review', 'underreview', 'review', 'inreview', 'на рассмотрении', 'рассмотрение', 'korib chiqilmoqda', 'korib'],
+  offered: ['offered', 'offer', 'quoted', 'предложение', 'предложена', 'котировка', 'taklif berildi', 'taklif'],
+  no_response: ['no_response', 'noresponse', 'nores', 'нет ответа', 'безответа', 'javob yoq', 'javobsiz'],
+  bound: ['bound', 'подтверждена', 'подтвержден', 'связан', 'связана', 'связанные', 'связанный', 'tasdiqlandi', 'tasdiqlangan', 'boglangan'],
+  declined: ['declined', 'decline', 'отклонена', 'отклонено', 'отказ', 'rad etildi', 'rad', 'radetilgan'],
+  ntu: ['ntu', 'nottakenup', 'не принята', 'qabulqilinmadi'],
+}
+
+const BUSINESS_TYPE_WORDS: Record<string, string[]> = {
+  facultative: ['facultative', 'fac', 'факультатив', 'факультативный', 'fakultativ'],
+  binder: ['binder', 'биндер'],
+}
+
+const NO_BROKER = ['none', 'direct', 'нет', 'прямой', 'прямая', 'без', 'yoq', 'togridan']
+const MINE = ['mine', 'my', 'me', 'мои', 'мое', 'моё', 'я', 'mening', 'meniki']
+
+const statusOptions = (ctx: SearchContext): Option[] =>
+  STATUS_KEYS.map((s) => ({ value: s, label: label(ctx, `status.${s}`, s), insert: s, names: [...STATUS_WORDS[s], label(ctx, `status.${s}`, s)] }))
+
+const partyOptions = (type: string) => (ctx: SearchContext): Option[] => [
+  ...(type === 'broker' ? [{ value: 'none', label: label(ctx, 'sub.directNoBroker', '—'), insert: 'none', names: [], codes: NO_BROKER }] : []),
+  ...ctx.counterparties.filter((c) => c.type === type).map((c) => ({ value: c.id, label: c.name, insert: c.name, names: [c.name] })),
+]
+
+const lobOptions = (ctx: SearchContext): Option[] =>
+  ctx.lobs.map((l) => ({
+    value: l.id, label: ctx.localName?.(l) ?? l.name, insert: l.name,
+    names: [l.name, l.name_ru, l.name_uz].filter((x): x is string => Boolean(x)), codes: [l.code],
+  }))
+
+const countryOptions = (ctx: SearchContext): Option[] =>
+  ctx.countries.map((c) => ({
+    value: c.code, label: ctx.localName?.(c) ?? c.name, insert: c.code,
+    names: [c.name, c.name_ru, c.name_uz].filter((x): x is string => Boolean(x)), codes: [c.code],
+  }))
+
+const currencyOptions = (ctx: SearchContext): Option[] => ctx.currencies.map((c) => ({ value: c, label: c, insert: c, names: [c] }))
+
+const userOptions = (filter?: (u: SearchContext['users'][number]) => boolean) => (ctx: SearchContext): Option[] =>
+  ctx.users.filter((u) => !filter || filter(u)).map((u) => ({ value: u.id, label: u.name, insert: u.name, names: [u.name], codes: u.id === ctx.userId ? MINE : [] }))
+
+const businessTypeOptions = (ctx: SearchContext): Option[] =>
+  Object.keys(BUSINESS_TYPE_WORDS).map((k) => ({ value: k, label: label(ctx, `businessType.${k}`, k), insert: k, names: [...BUSINESS_TYPE_WORDS[k], label(ctx, `businessType.${k}`, k)] }))
+
+export const SUBMISSIONS: Scope = {
+  id: 'submissions',
+  fields: [
+    { key: 'status', kind: 'list', aliases: ['state', 'статус', 'состояние', 'holat', 'holati'], labelKey: 'fields.status', options: statusOptions, partial: 'prefix' },
+    { key: 'mga', kind: 'list', aliases: ['мга', 'agent', 'агент'], labelKey: 'fields.mga', options: partyOptions('mga'), partial: 'contains' },
+    { key: 'broker', kind: 'list', aliases: ['брокер', 'vositachi'], labelKey: 'fields.broker', options: partyOptions('broker'), partial: 'contains' },
+    { key: 'lob', kind: 'list', aliases: ['line', 'class', 'вид', 'класс', 'линия', 'yonalish', 'sinf', 'soha'], labelKey: 'fields.lob', options: lobOptions, partial: 'contains' },
+    { key: 'country', kind: 'list', aliases: ['страна', 'mamlakat', 'davlat'], labelKey: 'fields.insuredCountry', options: countryOptions, partial: 'contains' },
+    { key: 'ccy', kind: 'list', aliases: ['currency', 'cur', 'валюта', 'вал', 'valyuta'], labelKey: 'fields.currency', options: currencyOptions, partial: 'none' },
+    { key: 'uw', kind: 'list', aliases: ['underwriter', 'андеррайтер', 'андер', 'anderrayter'], labelKey: 'fields.underwriter', options: userOptions(), partial: 'contains' },
+    { key: 'type', kind: 'list', aliases: ['тип', 'turi', 'tur'], labelKey: 'fields.businessType', options: businessTypeOptions, partial: 'prefix' },
+    { key: 'ref', kind: 'like', aliases: ['refno', 'номер', 'реф', 'raqam'], labelKey: 'fields.refNo' },
+    { key: 'premium', kind: 'num', aliases: ['prem', 'премия', 'mukofot'], labelKey: 'search.f.premium' },
+    { key: 'share', kind: 'num', aliases: ['доля', 'ulush'], labelKey: 'fields.share' },
+    { key: 'si', kind: 'num', aliases: ['suminsured', 'sum', 'сумма', 'сс', 'summa'], labelKey: 'search.f.si' },
+    { key: 'received', kind: 'date', looksBack: true, aliases: ['recv', 'получена', 'получено', 'поступила', 'qabul', 'qabulqilindi', 'kelgan'], labelKey: 'fields.receivedAt' },
+    { key: 'inception', kind: 'date', looksBack: false, aliases: ['start', 'from', 'начало', 'с', 'boshlanish', 'boshi'], labelKey: 'fields.periodFrom' },
+    { key: 'expiry', kind: 'date', looksBack: false, aliases: ['expires', 'end', 'to', 'окончание', 'конец', 'по', 'tugash', 'oxiri'], labelKey: 'fields.periodTo' },
+    { key: 'bound', kind: 'date', looksBack: true, aliases: ['boundon', 'подтверждена', 'tasdiqlandi'], labelKey: 'fields.boundAt' },
+  ],
+  flags: [
+    { flag: 'overdue', words: ['late', 'просрочено', 'просрочен', 'просроченные', 'просрочка', 'kechikkan', 'muddati otgan'], labelKey: 'search.flag.overdue' },
+    { flag: 'expired', words: ['истекло', 'истек', 'истекшие', 'просроченное предложение', 'eskirgan', 'muddati tugagan'], labelKey: 'search.flag.expired' },
+    { flag: 'mine', words: MINE.filter((w) => w !== 'me' && w !== 'я'), labelKey: 'search.flag.mine', needsUser: true },
+  ],
+  dateKeywordField: 'received',
+  exactFields: ['status', 'ccy', 'mga', 'broker', 'lob', 'country'],
+  weak: ['new', 'yangi', 'review', 'offer', 'quoted', 'taklif', 'qabul', 'rad', 'korib', 'decline', 'отказ', 'javobsiz', 'nores', 'my', 'late', 'week', 'month', 'hafta', 'неделя', 'месяц', 'с', 'по'],
+}
+
+export const SUBMISSIONS_SERVER: ServerSpec = {
+  list: { status: 'status', mga: 'mga_id', broker: 'broker_id', lob: 'lob_id', country: 'insured_country', ccy: 'currency', uw: 'underwriter_id', type: 'business_type' },
+  like: { ref: 'ref_no' },
+  num: { premium: 'our_gross_premium_usd', share: 'share_pct', si: 'sum_insured_100_usd' },
+  date: { received: 'received_at', inception: 'period_from', expiry: 'period_to', bound: 'bound_at' },
+  flags: {
+    overdue: (neg) => `follow_up_overdue.${neg ? 'not.is' : 'is'}.true`,
+    expired: (neg) => `offer_expired.${neg ? 'not.is' : 'is'}.true`,
+    mine: (neg, userId) => (!userId ? null : neg ? `or(underwriter_id.is.null,underwriter_id.neq.${userId})` : `underwriter_id.eq.${userId}`),
+  },
+  textColumn: 'search_text',
+}
+

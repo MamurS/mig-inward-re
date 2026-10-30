@@ -1,6 +1,7 @@
 /**
  * The search bar's record: suggestions open over the register in each theme
- * and text size (EN), chips for an OR query, the help popover, and RU / UZ.
+ * and text size (EN), chips for an OR query, the filter builder, the help
+ * popover, and RU / UZ.
  * Run: SHOTS=docs/search-bar/screenshots npx playwright test screenshots-search
  * Skipped unless SHOTS names an output folder.
  */
@@ -34,6 +35,11 @@ test.describe('search bar screenshots', () => {
         await page.keyboard.type(', mga:s')
         await settle(page)
         await page.screenshot({ path: `${OUT}/${theme}-${textSize}-suggestions.jpg`, type: 'jpeg', quality: 82 })
+        await page.getByRole('combobox').fill('status:offered|bound, ccy:USD, premium:10k..500k, overdue, -declined')
+        await page.keyboard.press('Escape')
+        await page.getByRole('button', { name: 'Filters' }).click()
+        await settle(page)
+        await page.screenshot({ path: `${OUT}/${theme}-${textSize}-builder.jpg`, type: 'jpeg', quality: 82 })
         await context.close()
       })
     }

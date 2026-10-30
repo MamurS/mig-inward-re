@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
-import { Building2, Clock, CornerDownLeft, FileText, Plus, Search, X } from 'lucide-react'
+import { Building2, Clock, CornerDownLeft, FileText, ListFilter, Plus, Search, X } from 'lucide-react'
 import { useAuth } from '@/auth/AuthProvider'
 import { NAV_ITEMS } from '@/components/layout/nav'
 import { StatusBadge } from '@/components/StatusBadge'
@@ -11,11 +11,12 @@ import { supabase } from '@/lib/supabase'
 import { can } from '@/lib/roles'
 import { cn, isMac } from '@/lib/utils'
 import type { SubmissionStatus } from '@/lib/status'
-import { parseRegister, registerLink, registerParams } from '@/features/submissions/filters'
 import { compact, norm } from './normalize'
-import { currentToken, quoteValue, STATUS_KEYS, STATUS_WORDS, type FieldKey } from './query'
-import { forgetSearch, readRecent, rememberSearch, useSearchContext } from './useSearch'
+import { currentToken, fieldOf, parseQuery, quoteValue, type ListField } from './query'
+import { forgetSearch, readRecent, rememberSearch, usePageSearch, useSearchContext } from './useSearch'
+import { pageLink, SUBMISSIONS_PAGE } from './pages'
 import { SearchHelp } from './SearchHelp'
+import { FilterBuilder } from './FilterBuilder'
 
 /** Other components focus the bar with this event (e.g. an empty state's «Search»). */
 export const FOCUS_SEARCH = 'mig:focus-search'
@@ -47,14 +48,16 @@ export function SearchBar() {
   const { session, role } = useAuth()
   const userId = session?.user.id ?? null
   const ctx = useSearchContext()
-  const onRegister = location.pathname === '/submissions'
-  const urlQ = onRegister ? (params.get('q') ?? '') : ''
+  const { page, here } = usePageSearch()
+  const scope = page.scope
+  const urlQ = here ? (params.get('q') ?? '') : ''
 
   const [text, setText] = useState(urlQ)
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(-1)
   const [helpOpen, setHelpOpen] = useState(false)
-  const [recent, setRecent] = useState<string[]>(() => readRecent(userId))
+  const [builderOpen, setBuilderOpen] = useState(false)
+  const [recent, setRecent] = useState<string[]>(() => readRecent(userId, scope.id))
   const inputRef = useRef<HTMLInputElement>(null)
   const wrapRef = useRef<HTMLDivElement>(null)
   const written = useRef<string | null>(null) // the last q this bar wrote to the URL
@@ -69,24 +72,27 @@ export function SearchBar() {
     pushNext.current = true
   }, [urlQ, location.pathname])
 
-  useEffect(() => setRecent(readRecent(userId)), [userId])
+  useEffect(() => setRecent(readRecent(userId, scope.id)), [userId, scope.id])
 
   function writeUrl(q: string, push: boolean) {
     written.current = q
-    const cur = parseRegister(new URLSearchParams(window.location.search))
-    setParams(registerParams({ ...cur, q }), { replace: !push })
+    // only q changes: the page's other params (sort, tab) stay
+    const next = new URLSearchParams(window.location.search)
+    if (q) next.set('q', q)
+    else next.delete('q')
+    setParams(next, { replace: !push })
   }
 
   // Live filtering on the register (debounced)
   useEffect(() => {
-    if (!onRegister || text === urlQ) return
+    if (!here || text === urlQ) return
     const h = setTimeout(() => {
       writeUrl(text, pushNext.current)
       pushNext.current = false
     }, 200)
     return () => clearTimeout(h)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [text, onRegister])
+  }, [text, here])
 
   // Ctrl / ⌘ K focuses the bar from anywhere
   useEffect(() => {
@@ -112,19 +118,19 @@ export function SearchBar() {
   /** Run the search: filter the register (here) or open it (elsewhere). */
   function submit(q = text) {
     const clean = q.trim()
-    rememberSearch(userId, clean)
-    setRecent(readRecent(userId))
+    rememberSearch(userId, clean, scope.id)
+    setRecent(readRecent(userId, scope.id))
     setOpen(false)
     setActive(-1)
-    if (onRegister) {
+    if (here) {
       if (clean !== urlQ) writeUrl(clean, true)
       pushNext.current = true
     } else {
-      navigate(registerLink(clean))
+      navigate(pageLink(SUBMISSIONS_PAGE, clean))
     }
   }
 
-  const tok = currentToken(text)
+  const tok = currentToken(text, scope)
   const typed = norm(tok.value.trim())
   const [debounced, setDebounced] = useState('')
   useEffect(() => {
@@ -135,7 +141,7 @@ export function SearchBar() {
   // Direct hits: submissions by ref no. or insured
   const records = useQuery({
     queryKey: ['search', 'records', debounced],
-    enabled: open && debounced.length >= 2,
+    enabled: open && Boolean(page.records) && debounced.length >= 2,
     staleTime: 30_000,
     queryFn: async () => {
       const v = `"*${debounced.replace(/["\\*%,()]/g, '')}*"`
@@ -152,9 +158,9 @@ export function SearchBar() {
 
   const items: Item[] = useMemo(() => {
     const out: Item[] = []
-    const replaceToken = (field: FieldKey | null, value: string) =>
+    const replaceToken = (field: string | null, value: string) =>
       text.slice(0, tok.start) + (tok.neg ? '-' : '') + (field ? `${field}:` : '') + quoteValue(value)
-    const fieldItem = (field: FieldKey, value: string, label: string, kind: string, icon: ReactNode = <Search />): Item => {
+    const fieldItem = (field: string, value: string, label: string, kind: string, icon: ReactNode = <Search />): Item => {
       const complete = replaceToken(field, value)
       return {
         id: `f:${field}:${value}`,
@@ -185,46 +191,27 @@ export function SearchBar() {
           submit(r)
         },
         onRemove: () => {
-          forgetSearch(userId, r)
-          setRecent(readRecent(userId))
+          forgetSearch(userId, r, scope.id)
+          setRecent(readRecent(userId, scope.id))
         },
       })
     }
     if (!ctx) return out
 
     // values for what is being typed: field:value suggestions
-    const want = (f: FieldKey) => tok.field === null || tok.field === f
     const minLen = tok.field ? 0 : 2
     if (typed.length >= minLen && (tok.field || typed)) {
       const c = compact(tok.value)
       const values: Item[] = []
-      if (want('status')) {
-        for (const s of STATUS_KEYS) {
-          const label = t(`status.${s}`)
-          if (!c || compact(label).includes(c) || STATUS_WORDS[s].some((w) => compact(w).startsWith(c))) values.push(fieldItem('status', s, label, t('search.kind.status')))
-        }
-      }
-      for (const f of ['mga', 'broker'] as const) {
-        if (!want(f)) continue
-        for (const cp of ctx.counterparties.filter((x) => x.type === f && (!c || compact(x.name).includes(c))).slice(0, 4)) {
-          values.push(fieldItem(f, cp.name, cp.name, t(`search.kind.${f}`), <Building2 />))
-        }
-      }
-      if (want('lob')) {
-        for (const l of ctx.lobs.filter((l) => !c || [l.name, l.name_ru, l.name_uz, l.code].some((n) => n && compact(n).includes(c))).slice(0, 3)) {
-          values.push(fieldItem('lob', l.name, ctx.localName?.(l) ?? l.name, t('search.kind.lob')))
-        }
-      }
-      if (want('ccy')) {
-        for (const code of ctx.currencies.filter((x) => !c || x.toLowerCase().startsWith(c)).slice(0, 3)) values.push(fieldItem('ccy', code, code, t('search.kind.ccy')))
-      }
-      if (want('country') && tok.field === 'country') {
-        for (const co of ctx.countries.filter((x) => !c || [x.name, x.name_ru, x.name_uz].some((n) => n && compact(n).includes(c))).slice(0, 5)) {
-          values.push(fieldItem('country', co.code, ctx.localName?.(co) ?? co.name, t('search.kind.country')))
-        }
-      }
-      if (want('uw') && tok.field === 'uw') {
-        for (const u of ctx.users.filter((u) => !c || compact(u.name).includes(c)).slice(0, 5)) values.push(fieldItem('uw', u.name, u.name, t('search.kind.uw')))
+      for (const key of tok.field ? [tok.field] : page.suggest) {
+        const f = fieldOf(scope, key)
+        if (f?.kind !== 'list') continue
+        const hits = (f as ListField)
+          .options(ctx)
+          .filter((o) => !c || compact(o.label).includes(c) || o.names.some((n) => compact(n).startsWith(c)) || (tok.field && (o.codes ?? []).some((n) => compact(n).startsWith(c))))
+          .slice(0, tok.field ? MAX_VALUES : 4)
+        const icon = key === 'mga' || key === 'broker' ? <Building2 /> : undefined
+        for (const o of hits) values.push(fieldItem(key, o.insert, o.label, t(f.labelKey), icon))
       }
       out.push(...values.slice(0, MAX_VALUES))
     }
@@ -239,7 +226,7 @@ export function SearchBar() {
         label: <span className="truncate">{highlight(s.ref_no, debounced)} · {highlight(s.insured_name, debounced)}</span>,
         hint: <StatusBadge status={s.status} />,
         run: () => {
-          rememberSearch(userId, text.trim())
+          rememberSearch(userId, text.trim(), scope.id)
           setOpen(false)
           navigate(`/submissions/${s.id}`)
         },
@@ -260,7 +247,7 @@ export function SearchBar() {
     }
     return out
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [text, recent, ctx, records.data, debounced, role, t])
+  }, [text, recent, ctx, records.data, debounced, role, t, page])
 
   useEffect(() => setActive(-1), [text])
 
@@ -332,8 +319,8 @@ export function SearchBar() {
               pushNext.current = true
             }}
             onKeyDown={onKeyDown}
-            placeholder={t('search.placeholder')}
-            aria-label={t('search.label')}
+            placeholder={t(`search.page.${scope.id}.placeholder`)}
+            aria-label={t(`search.page.${scope.id}.label`)}
             role="combobox"
             aria-expanded={showPanel}
             aria-controls="search-suggestions"
@@ -351,15 +338,34 @@ export function SearchBar() {
               onClick={() => {
                 setText('')
                 inputRef.current?.focus()
-                if (onRegister) writeUrl('', true)
+                if (here) writeUrl('', true)
               }}
               className="flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               <X className="size-[18px]" />
             </button>
           ) : (
-            <kbd className="mr-2 hidden shrink-0 rounded-sm border bg-background px-2 text-caption text-muted-foreground sm:inline">{isMac() ? '⌘K' : 'Ctrl K'}</kbd>
+            <kbd className="mr-1 hidden shrink-0 rounded-sm border bg-background px-2 text-caption text-muted-foreground sm:inline">{isMac() ? '⌘K' : 'Ctrl K'}</kbd>
           )}
+          <span className="h-6 w-px shrink-0 bg-border" aria-hidden />
+          <button
+            type="button"
+            aria-label={t('search.filters')}
+            title={t('search.filters')}
+            aria-haspopup="dialog"
+            aria-expanded={builderOpen}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => {
+              setOpen(false)
+              setBuilderOpen((o) => !o)
+            }}
+            className={cn(
+              'flex size-8 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-muted hover:text-foreground',
+              builderOpen ? 'bg-brand-50 text-brand-700' : 'text-muted-foreground',
+            )}
+          >
+            <ListFilter className="size-[18px]" />
+          </button>
         </div>
 
         {showPanel && (
@@ -428,9 +434,22 @@ export function SearchBar() {
           </div>
         )}
       </div>
+      <FilterBuilder
+        open={builderOpen}
+        onOpenChange={setBuilderOpen}
+        page={page}
+        ctx={ctx}
+        parsed={ctx ? parseQuery(text, ctx, scope) : null}
+        onApply={(q) => {
+          setBuilderOpen(false)
+          setText(q)
+          submit(q)
+        }}
+      />
       <SearchHelp
         open={helpOpen}
         onOpenChange={setHelpOpen}
+        page={page}
         onTry={(example) => {
           setHelpOpen(false)
           setText(example)

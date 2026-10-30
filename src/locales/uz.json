@@ -699,8 +699,6 @@
     }
   },
   "search": {
-    "label": "Arizalarni qidirish va saralash",
-    "placeholder": "Qidiruv yoki filtr: sugʻurtalanuvchi, MGA, holat, valyuta…",
     "clear": "Qidiruvni tozalash",
     "suggestions": "Takliflar",
     "enterToSearch": "Qidirish uchun Enter bosing",
@@ -749,7 +747,7 @@
     "help": {
       "title": "Qanday qidirish kerak",
       "intro": "Soʻzlarni yozing — hamma joydan qidiriladi, yoki filtrlarni qoʻshing. Sinab koʻrish uchun misolni bosing.",
-      "ex": {
+      "submissions": {
         "text": "Hamma joyda matn: raqam, sugʻurtalanuvchi, risk, MGA, broker, mamlakat, tur, izohlar. Soʻzning bir qismi yetarli.",
         "phrase": "Aniq ibora",
         "and": ", — VA: barcha qismlar mos kelishi kerak",
@@ -760,13 +758,43 @@
         "numbers": "Sonlar: bizning mukofot USD da, ulush %, si (sugʻurta summasi, USD); k, m, bn",
         "dates": "Sanalar: received, inception, expiry, bound; oraliq .. bilan",
         "within": "Keyingi (yoki oxirgi) N kun ichida",
-        "keywords": "Kalit soʻzlar: overdue / kechikkan, expired / eskirgan, noresponse, mine / mening, today / bugun, thisweek, thismonth"
-      },
-      "fields": "Holat, MGA, tur yoki valyutaga aynan mos soʻz (tasdiqlandi, USD) filtrga aylanadi; qolgani matn sifatida qidiriladi.",
-      "languages": "Filtr nomlari va soʻzlar ingliz, rus va oʻzbek tillarida tushuniladi: статус:связан, holat:tasdiqlandi, валюта:usd, просрочено, bugun."
+        "keywords": "Kalit soʻzlar: overdue / kechikkan, expired / eskirgan, noresponse, mine / mening, today / bugun, thisweek, thismonth",
+        "notes": "Holat, MGA, tur yoki valyutaga aynan mos soʻz (tasdiqlandi, USD) filtrga aylanadi; qolgani matn sifatida qidiriladi.",
+        "languages": "Filtr nomlari va soʻzlar ingliz, rus va oʻzbek tillarida tushuniladi: статус:связан, holat:tasdiqlandi, валюта:usd, просрочено, bugun."
+      }
     },
     "count_one": "{{count}} ta ariza",
     "count_other": "{{count}} ta ariza",
-    "startTyping": "Nom, raqam yoki filtr yozing, masalan holat:tasdiqlandi"
+    "startTyping": "Nom, raqam yoki filtr yozing, masalan holat:tasdiqlandi",
+    "page": {
+      "submissions": {
+        "placeholder": "Qidiruv yoki filtr: sugʻurtalanuvchi, MGA, holat, valyuta…",
+        "label": "Arizalarni qidirish va saralash"
+      }
+    },
+    "filters": "Filtrlar",
+    "builder": {
+      "title": "Filtrlar",
+      "intro": "Nimani koʻrishni tanlang. «Qoʻllash» qidiruvni satrga yozadi — uni u yerda oʻqish va oʻzgartirish mumkin.",
+      "words": "Soʻzlarni oʻz ichiga oladi",
+      "wordsHint": "nom, raqam, risk, izohlar…",
+      "from": "dan",
+      "to": "gacha",
+      "min": "dan",
+      "max": "gacha",
+      "only": "Faqat koʻrsatish",
+      "kept": "Qidiruvingizdan yana saqlandi:",
+      "preview": "Qidiruv",
+      "nothing": "Hammasi (filtrsiz)",
+      "clear": "Hammasini tozalash",
+      "apply": "Qoʻllash",
+      "any": "Istalgan",
+      "nSelected": "{{count}} ta tanlandi",
+      "find": "Topish…",
+      "noMatch": "Hech narsa topilmadi",
+      "clearField": "Tozalash",
+      "orNotice": "Qidiruvingizda YOKI guruhlari (;) bor — uni satrda oʻzgartiring yoki bu yerda yangi filtr boshlang.",
+      "startOver": "Yangi filtr"
+    }
   }
 }

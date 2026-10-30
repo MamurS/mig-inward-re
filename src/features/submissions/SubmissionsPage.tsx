@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils'
 import { errorMessage } from '@/lib/errors'
 import { hasLegacyFilters, legacyToQuery, parseRegister, registerParams, type RegisterState, type SortKey } from './filters'
 import { useParsedQuery } from '@/features/search/useSearch'
+import { SUBMISSIONS_PAGE } from '@/features/search/pages'
 import { textWords } from '@/features/search/query'
 import { SearchChips } from '@/features/search/SearchChips'
 import { FOCUS_SEARCH } from '@/features/search/SearchBar'
@@ -31,7 +32,7 @@ export function SubmissionsPage() {
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const state = useMemo(() => parseRegister(params), [params])
-  const { ctx, parsed, filter } = useParsedQuery(state.q)
+  const { ctx, parsed, filter } = useParsedQuery(state.q, SUBMISSIONS_PAGE)
 
   // Merge into the browser's current URL, not this render's copy (the search bar writes it too).
   const setState = (patch: Partial<RegisterState>, push = false) =>
@@ -134,6 +135,7 @@ export function SubmissionsPage() {
       {parsed && (
         <SearchChips
           query={parsed}
+          scope={SUBMISSIONS_PAGE.scope}
           onChange={(q) => setState({ q }, true)}
           count={
             <span className="inline-flex items-center gap-2">

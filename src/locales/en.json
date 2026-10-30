@@ -699,8 +699,6 @@
     }
   },
   "search": {
-    "label": "Search or filter submissions",
-    "placeholder": "Search or filter: insured, MGA, status, currency…",
     "clear": "Clear search",
     "suggestions": "Suggestions",
     "enterToSearch": "Press Enter to search",
@@ -749,7 +747,7 @@
     "help": {
       "title": "How to search",
       "intro": "Type words to search everywhere, or mix in filters. Click an example to try it.",
-      "ex": {
+      "submissions": {
         "text": "Text anywhere: ref no., insured, risk, MGA, broker, country, line, notes. Part of a word is enough.",
         "phrase": "An exact phrase",
         "and": ", means AND: every part must match",
@@ -760,13 +758,43 @@
         "numbers": "Numbers: our premium in USD, share %, si (sum insured, USD); k, m, bn",
         "dates": "Dates: received, inception, expiry, bound; ranges with ..",
         "within": "Within the next (or last) N days",
-        "keywords": "Keywords: overdue, expired, noresponse, mine, today, thisweek, thismonth"
-      },
-      "fields": "A word that is exactly a status, MGA, line or currency (bound, USD) filters by it; anything else is searched as text.",
-      "languages": "Filter names and words work in English, Russian and Uzbek: статус:связан, holat:tasdiqlandi, валюта:usd, просрочено, bugun."
+        "keywords": "Keywords: overdue, expired, noresponse, mine, today, thisweek, thismonth",
+        "notes": "A word that is exactly a status, MGA, line or currency (bound, USD) filters by it; anything else is searched as text.",
+        "languages": "Filter names and words work in English, Russian and Uzbek: статус:связан, holat:tasdiqlandi, валюта:usd, просрочено, bugun."
+      }
     },
     "count_one": "{{count}} submission",
     "count_other": "{{count}} submissions",
-    "startTyping": "Type a name, a ref no. or a filter such as status:bound"
+    "startTyping": "Type a name, a ref no. or a filter such as status:bound",
+    "page": {
+      "submissions": {
+        "placeholder": "Search or filter: insured, MGA, status, currency…",
+        "label": "Search or filter submissions"
+      }
+    },
+    "filters": "Filters",
+    "builder": {
+      "title": "Filters",
+      "intro": "Pick what you want to see. Apply writes the search into the bar — you can read and change it there.",
+      "words": "Contains the words",
+      "wordsHint": "name, ref no., risk, notes…",
+      "from": "from",
+      "to": "to",
+      "min": "min",
+      "max": "max",
+      "only": "Show only",
+      "kept": "Also kept from your search:",
+      "preview": "Search",
+      "nothing": "Everything (no filter)",
+      "clear": "Clear all",
+      "apply": "Apply",
+      "any": "Any",
+      "nSelected": "{{count}} selected",
+      "find": "Find…",
+      "noMatch": "Nothing matches",
+      "clearField": "Clear",
+      "orNotice": "Your search has OR groups (;) — edit it in the bar, or start a new filter here.",
+      "startOver": "Start a new filter"
+    }
   }
 }

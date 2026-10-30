@@ -198,6 +198,64 @@ test('dashboard tiles and old links fill the bar with the equivalent query', asy
   await context.close()
 })
 
+test('filter builder: controls write the query into the bar', async ({ page }) => {
+  await installMock(page.context(), 'underwriter', 'en')
+  await register(page)
+  await page.getByRole('button', { name: 'Filters' }).click()
+  const fb = page.getByRole('dialog', { name: 'Filters' })
+  await expect(fb).toBeVisible()
+  await fb.getByRole('button', { name: 'Bound', exact: true }).click()
+  await fb.getByRole('button', { name: 'MGA' }).click()
+  await page.getByRole('checkbox', { name: 'Caspian Specialty MGA' }).check()
+  await page.keyboard.press('Escape') // closes the checklist, not the builder
+  await expect(fb).toBeVisible()
+  await fb.getByLabel('Our premium (USD) — min').fill('10k')
+  await fb.getByRole('switch', { name: 'Follow-up overdue' }).click()
+  const text = 'status:bound, mga:"Caspian Specialty MGA", premium>=10k, overdue'
+  await expect(fb.locator('[data-builder-preview]')).toHaveText(text)
+  await fb.getByRole('button', { name: 'Apply' }).click()
+  await expect(fb).toHaveCount(0)
+  await expect(bar(page)).toHaveValue(text)
+  await expect(chips(page)).toHaveCount(4)
+  await expect.poll(() => new URL(page.url()).searchParams.get('q')).toBe(text)
+})
+
+test('filter builder opens on what the bar says, and keeps what it cannot show', async ({ page }) => {
+  await installMock(page.context(), 'underwriter', 'en')
+  await register(page, 'status:offered|bound, ccy:USD, -declined')
+  await page.getByRole('button', { name: 'Filters' }).click()
+  const fb = page.getByRole('dialog', { name: 'Filters' })
+  await expect(fb.getByRole('button', { name: 'Offered', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await expect(fb.getByRole('button', { name: 'Bound', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await expect(fb.getByRole('button', { name: 'USD', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await expect(fb).toContainText('-declined')
+  // editing the text updates the builder
+  await page.keyboard.press('Escape')
+  await bar(page).click()
+  await bar(page).fill('noresponse')
+  await page.getByRole('button', { name: 'Filters' }).click()
+  await expect(fb.getByRole('switch', { name: 'No response' })).toHaveAttribute('aria-checked', 'true')
+  await expect(fb.getByRole('button', { name: 'Offered', exact: true })).toHaveAttribute('aria-pressed', 'false')
+  await fb.getByRole('button', { name: 'Clear all' }).click()
+  await fb.getByRole('button', { name: 'Apply' }).click()
+  await expect(bar(page)).toHaveValue('')
+  await expect(chips(page)).toHaveCount(0)
+})
+
+test('filter builder in Russian and Uzbek', async ({ page }) => {
+  await installMock(page.context(), 'underwriter', 'ru')
+  await register(page)
+  await page.getByRole('button', { name: 'Фильтры' }).click()
+  const fb = page.getByRole('dialog', { name: 'Фильтры' })
+  await fb.getByRole('button', { name: 'Подтверждена', exact: true }).click()
+  await fb.getByRole('button', { name: 'Применить' }).click()
+  await expect(chips(page).first()).toContainText('Статус: Подтверждена')
+  await installMock(page.context(), 'underwriter', 'uz')
+  await register(page)
+  await page.getByRole('button', { name: 'Filtrlar' }).click()
+  await expect(page.getByRole('dialog', { name: 'Filtrlar' }).getByRole('button', { name: 'Qoʻllash' })).toBeVisible()
+})
+
 for (const theme of ['grey', 'blue', 'green', 'orange'] as const) {
   for (const textSize of ['normal', 'large'] as const) {
     test(`the bar looks right · ${theme} · ${textSize}`, async ({ browser }) => {
@@ -220,6 +278,16 @@ for (const theme of ['grey', 'blue', 'green', 'orange'] as const) {
       expect((await page.locator('main h1').boundingBox())!.y).toBeCloseTo(title.y, 0)
       // placeholder fits or truncates — the bar never pushes the page sideways
       expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0)
+      // the filter builder fits the window and its Apply button is reachable
+      await page.keyboard.press('Escape')
+      await page.getByRole('button', { name: 'Filters' }).click()
+      const fb = page.locator('[data-filter-builder]')
+      await expect(fb).toBeVisible()
+      const box = (await fb.boundingBox())!
+      expect(box.x).toBeGreaterThanOrEqual(0)
+      expect(box.x + box.width).toBeLessThanOrEqual(1280)
+      expect(box.y + box.height).toBeLessThanOrEqual(800)
+      await expect(fb.getByRole('button', { name: 'Apply' })).toBeInViewport()
       await context.close()
     })
   }

@@ -45,6 +45,25 @@
 - **Full suite:** vitest 52/52, Playwright 85/85.
   - The feedback test (actions answer within 100 ms) now times opening the search panel (6 ms) and removing a chip (49 ms).
 
+## Filter builder
+
+The funnel icon at the right of the pill opens plain controls for the page's fields.
+- **Short lists** (status, currency, business type) are chips.
+- **Long lists** (MGA, broker, line, country, underwriter) are searchable checklists.
+- **Ranges:** premium min / max, and from / to dates for received, inception and expiry.
+- **Switches:** overdue, offer expired, no response.
+
+**How it connects to the bar**
+- **Apply** writes the equivalent text into the bar. The text is shown live under «Search» while you pick.
+- The builder always **opens on what the bar says**, so editing the text updates the builder.
+- Whatever the builder has no control for is kept exactly as typed: exclusions, `ref:`, relative or open-ended ranges.
+- A search with OR groups shows a notice instead of controls.
+
+**Tests**
+- `builder.test.ts`: 6 tests on the round trip.
+- `e2e/search.spec.ts`: building a query from the controls, reading the bar back into them, RU/UZ, and the builder fitting the window in 4 themes × 2 text sizes.
+- Screenshots: `<theme>-<size>-builder.jpg`.
+
 ## Screenshots (`screenshots/`)
 
 - **Each theme and text size:** `<theme>-<size>-chips.jpg` and `<theme>-<size>-suggestions.jpg`, using the query `Silk Road Underwriting Agency, bound; caspian, -declined, premium>10k`.

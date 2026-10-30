@@ -292,6 +292,20 @@ equivalent query (`overdue`, `status:offered|no_response`, `mga:"…"`).
 Suggestions: recent searches (per user, with ×), `field:value` matches, direct
 hits, pages; ↑ ↓ Enter Tab Esc; a syntax tip with a help popover.
 
+**Filter builder.** The funnel icon at the right of the pill opens plain
+controls for the page's fields (chips for short lists, searchable checklists
+for long ones, min / max, from / to dates, switches). Apply writes the
+equivalent query text into the bar (shown live as «Search: …» while you pick),
+and the builder always opens on what the bar says — so people filter without
+the syntax and learn it by seeing it. It edits one AND group; what it has no
+control for (exclusions, OR, `ref:`, relative or open-ended ranges) is kept
+exactly as typed. Model: `search/builder.ts` (unit-tested round trip).
+
+**One engine, a scope per page.** `query.ts` is the parser; `scopes.ts` says
+what each page's search knows (fields with EN/RU/UZ aliases, values, keywords);
+`pages.ts` says which scope runs where, where its rows are filtered, the
+builder's controls and the help examples.
+
 ## Interaction rules
 
 - **Focus** — a 2 px `ring` (sky-400) outline on `:focus-visible`; outlines

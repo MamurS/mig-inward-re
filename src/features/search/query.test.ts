@@ -1,8 +1,11 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { NORM_DROP, NORM_FROM, NORM_TO, norm } from './normalize'
-import { currentToken, parseQuery, removeTerm, tidy, type DateTerm, type FieldTerm, type NumTerm, type SearchContext, type Term, type TextTerm } from './query'
+import { currentToken as currentTokenIn, parseQuery, removeTerm, tidy, type DateTerm, type FieldTerm, type NumTerm, type SearchContext, type Term } from './query'
 import { toPostgrestFilter } from './postgrest'
+import { SUBMISSIONS, SUBMISSIONS_SERVER } from './scopes'
+
+const currentToken = (text: string) => currentTokenIn(text, SUBMISSIONS)
 
 const ctx: SearchContext = {
   today: '2026-10-30', // a Friday
@@ -26,7 +29,7 @@ const ctx: SearchContext = {
   users: [{ id: 'u1', name: 'Malika Karimova' }, { id: 'u2', name: 'Bekzod Usmanov' }],
 }
 
-const p = (text: string) => parseQuery(text, ctx)
+const p = (text: string) => parseQuery(text, ctx, SUBMISSIONS)
 const only = (text: string) => {
   const q = p(text)
   expect(q.groups).toHaveLength(1)
@@ -187,7 +190,7 @@ describe('messy input never throws', () => {
     expect(shape('new')).toEqual([['status:received']])
   })
   it('syntax characters never reach the database unescaped', () => {
-    const f = toPostgrestFilter(p('a(b)*c%d"e\\f'), 'u1')!
+    const f = toPostgrestFilter(p('a(b)*c%d"e\\f'), SUBMISSIONS_SERVER, 'u1')!
     expect(f).toBe('and(search_text.ilike."*abcdef*")')
   })
 })
@@ -216,7 +219,7 @@ describe('editing', () => {
 })
 
 describe('database filter', () => {
-  const f = (text: string) => toPostgrestFilter(p(text), 'u1')
+  const f = (text: string) => toPostgrestFilter(p(text), SUBMISSIONS_SERVER, 'u1')
   it('groups are OR, parts AND', () => {
     expect(f('Sevil, bound; IUC, offered')).toBe(
       'and(mga_id.in.("m1"),status.in.("bound")),and(search_text.ilike."*iuc*",status.in.("offered"))',

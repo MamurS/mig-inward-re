@@ -1,7 +1,8 @@
 /**
- * The search language of the top bar — one pure function from text to a
- * structured query (DESIGN.md «Search»). Never throws: whatever it cannot read
- * becomes free text, marked so the chips can say «searched as text».
+ * The search language of the top bar — one engine for every page. A page's
+ * Scope (scopes.ts) says which fields, values and keywords it knows; the
+ * engine turns text into a structured query with them. Never throws: whatever
+ * it cannot read becomes free text, marked so the chips say «searched as text».
  *
  *   ;            OR between groups          Sevil, bound; IUC, offered
  *   ,            AND between parts          Sevil, property, bound
@@ -9,33 +10,27 @@
  *   "…"          exact phrase               "Yigit Agro"
  *   field:a|b    one of several values      status:offered|bound
  *   > < >= <= .. numbers and dates          premium>100k  inception:2026-01-01..2026-06-30  expiry<30d
- *   keywords     overdue expired noresponse mine today thisweek thismonth
+ *   keywords     per page                   overdue  expired  mine  today  inactive …
  *
- * Field names, keywords and status words are recognised in EN, RU and UZ;
- * matching ignores case, diacritics and apostrophes (normalize.ts).
+ * Field names, keywords and values are recognised in EN, RU and UZ; matching
+ * ignores case, diacritics and apostrophes (normalize.ts).
  */
 import { compact, norm } from './normalize'
 
-export const STATUS_KEYS = ['received', 'under_review', 'offered', 'no_response', 'bound', 'declined', 'ntu'] as const
-export type StatusKey = (typeof STATUS_KEYS)[number]
-
-export type FieldKey = 'status' | 'mga' | 'broker' | 'lob' | 'country' | 'ccy' | 'uw' | 'type' | 'ref'
-export type NumKey = 'premium' | 'share' | 'si'
-export type DateKey = 'received' | 'inception' | 'expiry' | 'bound'
-export type Flag = 'overdue' | 'expired' | 'mine'
 export type Range = { gte?: string; gt?: string; lte?: string; lt?: string }
+export type DateKeyword = 'today' | 'thisweek' | 'thismonth'
 
 type Span = { id: string; start: number; end: number; raw: string; neg: boolean }
 export type TextTerm = Span & { kind: 'text'; words: string[]; phrase: boolean; asText?: boolean }
-export type FieldTerm = Span & { kind: 'field'; field: FieldKey; values: string[]; labels: string[] }
-export type NumTerm = Span & { kind: 'num'; field: NumKey; range: Range; display: string }
-export type DateTerm = Span & { kind: 'date'; field: DateKey; range: Range; display: string; keyword?: 'today' | 'thisweek' | 'thismonth' }
-export type FlagTerm = Span & { kind: 'flag'; flag: Flag }
+export type FieldTerm = Span & { kind: 'field'; field: string; values: string[]; labels: string[] }
+export type NumTerm = Span & { kind: 'num'; field: string; range: Range; display: string }
+export type DateTerm = Span & { kind: 'date'; field: string; range: Range; display: string; keyword?: DateKeyword }
+export type FlagTerm = Span & { kind: 'flag'; flag: string }
 export type Term = TextTerm | FieldTerm | NumTerm | DateTerm | FlagTerm
 export type Group = { terms: Term[] }
 export type ParsedQuery = { text: string; groups: Group[] }
 
-/** What the parser needs to know about the world (reference data, today, the user). */
+/** What the parser needs to know about the world (reference data, today, the user, labels). */
 export type SearchContext = {
   today: string // YYYY-MM-DD, Tashkent
   userId: string | null
@@ -43,77 +38,96 @@ export type SearchContext = {
   lobs: { id: string; code: string; name: string; name_ru?: string | null; name_uz?: string | null }[]
   countries: { code: string; name: string; name_ru?: string | null; name_uz?: string | null }[]
   currencies: string[]
-  users: { id: string; name: string }[]
-  /** Status labels in the UI language (chips); the parser knows all three languages itself. */
-  statusLabel?: (s: StatusKey) => string
-  /** A country's or line's name in the UI language (chips). */
+  users: { id: string; name: string; role?: string | null }[]
+  /** UI-language labels (chips, suggestions, the builder); without it values label themselves. */
+  t?: (key: string) => string
+  /** A country's or line's name in the UI language. */
   localName?: (row: { name: string; name_ru?: string | null; name_uz?: string | null }) => string
 }
 
 // ---------------------------------------------------------------------------
-// Vocabulary (compared after compact(): lower case, no diacritics, apostrophes, spaces)
+// Scopes: what one page's search knows
 // ---------------------------------------------------------------------------
 
-const FIELD_ALIASES: Record<FieldKey | NumKey | DateKey, string[]> = {
-  status: ['status', 'state', 'статус', 'состояние', 'holat', 'holati'],
-  mga: ['mga', 'мга', 'agent', 'агент'],
-  broker: ['broker', 'брокер', 'vositachi'],
-  lob: ['lob', 'line', 'class', 'вид', 'класс', 'линия', 'yonalish', 'sinf', 'soha'],
-  country: ['country', 'страна', 'mamlakat', 'davlat'],
-  ccy: ['ccy', 'currency', 'cur', 'валюта', 'вал', 'valyuta'],
-  uw: ['uw', 'underwriter', 'андеррайтер', 'андер', 'anderrayter'],
-  type: ['type', 'тип', 'turi', 'tur'],
-  ref: ['ref', 'refno', 'номер', 'реф', 'raqam'],
-  premium: ['premium', 'prem', 'премия', 'mukofot'],
-  share: ['share', 'доля', 'ulush'],
-  si: ['si', 'suminsured', 'sum', 'сумма', 'сс', 'summa'],
-  received: ['received', 'recv', 'получена', 'получено', 'поступила', 'qabul', 'qabulqilindi', 'kelgan'],
-  inception: ['inception', 'start', 'from', 'начало', 'с', 'boshlanish', 'boshi'],
-  expiry: ['expiry', 'expires', 'end', 'to', 'окончание', 'конец', 'по', 'tugash', 'oxiri'],
-  bound: ['bound', 'boundon', 'подтверждена', 'tasdiqlandi'],
-}
-const FIELD_OF = new Map<string, FieldKey | NumKey | DateKey>()
-for (const [k, list] of Object.entries(FIELD_ALIASES)) for (const a of list) FIELD_OF.set(compact(a), k as FieldKey)
-const NUM_FIELDS = new Set<string>(['premium', 'share', 'si'])
-const DATE_FIELDS = new Set<string>(['received', 'inception', 'expiry', 'bound'])
+/** One value of a list field. `names` also count as a bare word / part; `codes` only after `field:`. */
+export type Option = { value: string; label: string; insert: string; names: string[]; codes?: string[] }
 
-/** Every status in EN / RU / UZ, with the usual synonyms. */
-export const STATUS_WORDS: Record<StatusKey, string[]> = {
-  received: ['received', 'new', 'получена', 'получен', 'получено', 'новая', 'новые', 'qabulqilindi', 'qabul', 'yangi'],
-  under_review: ['under_review', 'underreview', 'review', 'inreview', 'на рассмотрении', 'рассмотрение', 'korib chiqilmoqda', 'korib'],
-  offered: ['offered', 'offer', 'quoted', 'предложение', 'предложена', 'котировка', 'taklif berildi', 'taklif'],
-  no_response: ['no_response', 'noresponse', 'nores', 'нет ответа', 'безответа', 'javob yoq', 'javobsiz'],
-  bound: ['bound', 'подтверждена', 'подтвержден', 'связан', 'связана', 'связанные', 'связанный', 'tasdiqlandi', 'tasdiqlangan', 'boglangan'],
-  declined: ['declined', 'decline', 'отклонена', 'отклонено', 'отказ', 'rad etildi', 'rad', 'radetilgan'],
-  ntu: ['ntu', 'nottakenup', 'не принята', 'qabulqilinmadi'],
-}
-const STATUS_OF = new Map<string, StatusKey>()
-for (const [k, list] of Object.entries(STATUS_WORDS)) for (const w of list) STATUS_OF.set(compact(w), k as StatusKey)
+type FieldBase = { key: string; aliases: string[]; labelKey: string }
+export type ListField = FieldBase & { kind: 'list'; options: (ctx: SearchContext) => Option[]; partial: 'prefix' | 'contains' | 'none' }
+export type LikeField = FieldBase & { kind: 'like' }
+export type NumField = FieldBase & { kind: 'num' }
+export type DateField = FieldBase & { kind: 'date'; looksBack: boolean }
+export type FieldDef = ListField | LikeField | NumField | DateField
 
-const TYPE_WORDS: Record<string, string[]> = {
-  facultative: ['facultative', 'fac', 'факультатив', 'факультативный', 'fakultativ'],
-  binder: ['binder', 'биндер', 'binder'],
+export type FlagDef = { flag: string; words: string[]; labelKey: string; needsUser?: boolean }
+
+export type Scope = {
+  id: string
+  fields: FieldDef[]
+  flags: FlagDef[]
+  /** the date field «today / thisweek / thismonth» filter (none: those words are text) */
+  dateKeywordField?: string
+  /** list fields whose option names, typed as a bare word or a whole part, filter by it */
+  exactFields: string[]
+  /** synonyms that only count when they stand alone in their part («new» in «New York Life» is text) */
+  weak: string[]
 }
 
-const FLAG_WORDS: Record<Flag, string[]> = {
-  overdue: ['overdue', 'late', 'просрочено', 'просрочен', 'просроченные', 'просрочка', 'kechikkan', 'muddati otgan'],
-  expired: ['expired', 'истекло', 'истек', 'истекшие', 'просроченное предложение', 'eskirgan', 'muddati tugagan'],
-  mine: ['mine', 'my', 'мои', 'мое', 'моё', 'mening', 'meniki'],
-}
-const DATE_KEYWORDS: Record<'today' | 'thisweek' | 'thismonth', string[]> = {
+const DATE_KEYWORDS: Record<DateKeyword, string[]> = {
   today: ['today', 'сегодня', 'bugun'],
   thisweek: ['thisweek', 'week', 'эта неделя', 'на этой неделе', 'неделя', 'bu hafta', 'hafta'],
   thismonth: ['thismonth', 'month', 'этот месяц', 'в этом месяце', 'месяц', 'bu oy'],
 }
-const KEYWORD_OF = new Map<string, Flag | 'today' | 'thisweek' | 'thismonth'>()
-for (const [k, list] of Object.entries({ ...FLAG_WORDS, ...DATE_KEYWORDS })) for (const w of list) KEYWORD_OF.set(compact(w), k as Flag)
+const DATE_KEYWORD_OF = new Map<string, DateKeyword>()
+for (const [k, list] of Object.entries(DATE_KEYWORDS)) for (const w of list) DATE_KEYWORD_OF.set(compact(w), k as DateKeyword)
 
-/** Synonyms that only count as a filter when they stand alone in their part («new» in «New York Life» is text). */
-const WEAK = new Set(
-  ['new', 'yangi', 'review', 'offer', 'quoted', 'taklif', 'qabul', 'rad', 'korib', 'decline', 'отказ', 'javobsiz', 'nores', 'my', 'late', 'week', 'month', 'hafta', 'неделя', 'месяц', 'с', 'по'].map(compact),
-)
+/** Lookup tables for a scope, built once per scope object. */
+type Vocab = {
+  field: Map<string, FieldDef>
+  flag: Map<string, FlagDef>
+  weak: Set<string>
+}
+const VOCAB = new WeakMap<Scope, Vocab>()
+function vocab(scope: Scope): Vocab {
+  let v = VOCAB.get(scope)
+  if (!v) {
+    v = { field: new Map(), flag: new Map(), weak: new Set(scope.weak.map(compact)) }
+    for (const f of scope.fields) for (const a of [f.key, ...f.aliases]) v.field.set(compact(a), f)
+    for (const f of scope.flags) for (const w of [f.flag, ...f.words]) v.flag.set(compact(w), f)
+    VOCAB.set(scope, v)
+  }
+  return v
+}
 
-const NO_BROKER = new Set(['none', 'direct', 'нет', 'прямой', 'прямая', 'без', 'yoq', 'togridan'].map(compact))
+export const fieldOf = (scope: Scope, key: string) => scope.fields.find((f) => f.key === key)
+
+/** A field's value → ids / codes: exact names or codes win; otherwise names that start with / contain it. */
+export function resolveList(field: ListField, value: string, ctx: SearchContext): { values: string[]; labels: string[] } | null {
+  const c = compact(value)
+  if (!c) return null
+  const options = field.options(ctx)
+  let hits = options.filter((o) => [...o.names, ...(o.codes ?? [])].some((n) => compact(n) === c))
+  if (!hits.length && field.partial !== 'none') {
+    hits = options.filter((o) => o.names.some((n) => (field.partial === 'prefix' ? compact(n).startsWith(c) : compact(n).includes(c))))
+  }
+  if (!hits.length) return null
+  const seen = new Set<string>()
+  hits = hits.filter((o) => !seen.has(o.value) && seen.add(o.value))
+  return { values: hits.map((o) => o.value), labels: hits.map((o) => o.label) }
+}
+
+/** A whole part (or a single word) that names something exactly becomes that filter. */
+function exactName(text: string, scope: Scope, ctx: SearchContext): { field: string; value: string; label: string } | null {
+  const c = compact(text)
+  if (!c) return null
+  for (const key of scope.exactFields) {
+    const f = fieldOf(scope, key)
+    if (f?.kind !== 'list') continue
+    const o = f.options(ctx).find((x) => x.names.some((n) => compact(n) === c))
+    if (o) return { field: key, value: o.value, label: o.label }
+  }
+  return null
+}
 
 // ---------------------------------------------------------------------------
 // Dates
@@ -143,18 +157,15 @@ function parseDate(v: string): { from: string; to: string } | null {
   return null
 }
 
-/** Received and bound look back from today; inception and expiry look ahead. */
-const LOOKS_BACK = new Set<DateKey>(['received', 'bound'])
-
 function relativeDays(v: string): number | null {
   const m = /^(\d{1,4})\s*(d|д|дн|дней|дня|kun)$/.exec(norm(v))
   return m ? Number(m[1]) : null
 }
 
-function dateRange(field: DateKey, op: string, value: string, today: string): Range | null {
+function dateRange(looksBack: boolean, op: string, value: string, today: string): Range | null {
   const n = relativeDays(value)
   if (n !== null) {
-    const back = LOOKS_BACK.has(field)
+    const back = looksBack
     const edge = back ? addDays(today, -n) : addDays(today, n)
     if (op === '>' || op === '>=') return back ? { [op === '>' ? 'lt' : 'lte']: edge } : { [op === '>' ? 'gt' : 'gte']: edge }
     // :, =, <, <=  → within the next / last n days
@@ -180,7 +191,7 @@ function dateRange(field: DateKey, op: string, value: string, today: string): Ra
   return null
 }
 
-function keywordRange(k: 'today' | 'thisweek' | 'thismonth', today: string): Range {
+function keywordRange(k: DateKeyword, today: string): Range {
   if (k === 'today') return { gte: today, lte: today }
   if (k === 'thisweek') {
     const dow = (new Date(`${today}T00:00:00Z`).getUTCDay() + 6) % 7 // Monday = 0
@@ -219,85 +230,6 @@ function numRange(op: string, value: string): Range | null {
   const n = parseNumber(value)
   if (n === null) return null
   return { [op === '>' ? 'gt' : op === '>=' ? 'gte' : op === '<' ? 'lt' : 'lte']: String(n) }
-}
-
-// ---------------------------------------------------------------------------
-// Values of list fields → ids / codes
-// ---------------------------------------------------------------------------
-
-/** Exact (normalised) name matches win; otherwise everything whose name contains the value. */
-function pick<T>(items: T[], names: (x: T) => (string | null | undefined)[], value: string): T[] {
-  const c = compact(value)
-  if (!c) return []
-  const exact = items.filter((x) => names(x).some((n) => n && compact(n) === c))
-  if (exact.length) return exact
-  return items.filter((x) => names(x).some((n) => n && compact(n).includes(c)))
-}
-
-function resolve(field: FieldKey, value: string, ctx: SearchContext): { values: string[]; labels: string[] } | null {
-  const v = value.trim()
-  if (!v) return null
-  const one = (values: string[], labels: string[]) => (values.length ? { values, labels } : null)
-  switch (field) {
-    case 'status': {
-      const exact = STATUS_OF.get(compact(v))
-      if (exact) return one([exact], [ctx.statusLabel?.(exact) ?? exact])
-      const c = compact(v)
-      const hits = STATUS_KEYS.filter((k) => STATUS_WORDS[k].some((w) => compact(w).startsWith(c)))
-      return one(hits, hits.map((k) => ctx.statusLabel?.(k) ?? k))
-    }
-    case 'mga':
-    case 'broker': {
-      if (field === 'broker' && NO_BROKER.has(compact(v))) return { values: ['none'], labels: ['—'] }
-      const hits = pick(ctx.counterparties.filter((c) => c.type === field), (c) => [c.name], v)
-      return one(hits.map((c) => c.id), hits.map((c) => c.name))
-    }
-    case 'lob': {
-      const hits = pick(ctx.lobs, (l) => [l.code, l.name, l.name_ru, l.name_uz], v)
-      return one(hits.map((l) => l.id), hits.map((l) => ctx.localName?.(l) ?? l.name))
-    }
-    case 'country': {
-      const exactCode = ctx.countries.filter((c) => c.code.toLowerCase() === v.toLowerCase())
-      const hits = exactCode.length ? exactCode : pick(ctx.countries, (c) => [c.name, c.name_ru, c.name_uz], v)
-      return one(hits.map((c) => c.code), hits.map((c) => ctx.localName?.(c) ?? c.name))
-    }
-    case 'ccy': {
-      const hits = ctx.currencies.filter((c) => c.toLowerCase() === v.toLowerCase())
-      return one(hits, hits)
-    }
-    case 'uw': {
-      if (KEYWORD_OF.get(compact(v)) === 'mine' && ctx.userId) {
-        const me = ctx.users.find((u) => u.id === ctx.userId)
-        return { values: [ctx.userId], labels: [me?.name ?? v] }
-      }
-      const hits = pick(ctx.users, (u) => [u.name], v)
-      return one(hits.map((u) => u.id), hits.map((u) => u.name))
-    }
-    case 'type': {
-      const c = compact(v)
-      const hits = Object.keys(TYPE_WORDS).filter((k) => TYPE_WORDS[k].some((w) => compact(w).startsWith(c)))
-      return one(hits, hits)
-    }
-    case 'ref':
-      return { values: [v], labels: [v] }
-  }
-}
-
-/** A whole part (or a single word) that names something exactly becomes that filter. */
-function exactName(text: string, ctx: SearchContext): { field: FieldKey; value: string; label: string } | null {
-  const c = compact(text)
-  if (!c) return null
-  const status = STATUS_OF.get(c)
-  if (status) return { field: 'status', value: status, label: ctx.statusLabel?.(status) ?? status }
-  const ccy = ctx.currencies.find((x) => x.toLowerCase() === c)
-  if (ccy) return { field: 'ccy', value: ccy, label: ccy }
-  const cp = ctx.counterparties.find((x) => (x.type === 'mga' || x.type === 'broker') && compact(x.name) === c)
-  if (cp) return { field: cp.type as FieldKey, value: cp.id, label: cp.name }
-  const lob = ctx.lobs.find((l) => [l.name, l.name_ru, l.name_uz].some((n) => n && compact(n) === c))
-  if (lob) return { field: 'lob', value: lob.id, label: ctx.localName?.(lob) ?? lob.name }
-  const country = ctx.countries.find((x) => [x.name, x.name_ru, x.name_uz].some((n) => n && compact(n) === c))
-  if (country) return { field: 'country', value: country.code, label: ctx.localName?.(country) ?? country.name }
-  return null
 }
 
 // ---------------------------------------------------------------------------
@@ -357,7 +289,8 @@ const nextId = () => `t${++seq}`
 
 const OP_RE = /^([^:<>=]+?)(>=|<=|>|<|=|:)(.*)$/s
 
-function parseToken(tok: Piece, ctx: SearchContext, alone: boolean): Term | 'word' {
+function parseToken(tok: Piece, scope: Scope, ctx: SearchContext, alone: boolean): Term | 'word' {
+  const v = vocab(scope)
   let raw = tok.text
   let neg = false
   if (raw.startsWith('-') && raw.length > 1) {
@@ -377,56 +310,60 @@ function parseToken(tok: Piece, ctx: SearchContext, alone: boolean): Term | 'wor
   // field:value, field>value …
   const m = OP_RE.exec(raw)
   if (m) {
-    const key = FIELD_OF.get(compact(m[1]))
+    const field = v.field.get(compact(m[1]))
     const op = m[2]
     const value = unquote(m[3].trim())
-    if (key && value) {
-      if (NUM_FIELDS.has(key)) {
+    if (field && value) {
+      if (field.kind === 'num') {
         const range = numRange(op, value)
-        if (range) return { ...base, kind: 'num', field: key as NumKey, range, display: `${op === ':' ? '=' : op} ${value}` }
-      } else if (DATE_FIELDS.has(key)) {
-        const range = dateRange(key as DateKey, op, value, ctx.today)
-        if (range) return { ...base, kind: 'date', field: key as DateKey, range, display: `${op === ':' ? '' : `${op} `}${value}` }
+        if (range) return { ...base, kind: 'num', field: field.key, range, display: `${op === ':' ? '=' : op} ${value}` }
+      } else if (field.kind === 'date') {
+        const range = dateRange(field.looksBack, op, value, ctx.today)
+        if (range) return { ...base, kind: 'date', field: field.key, range, display: `${op === ':' ? '' : `${op} `}${value}` }
       } else if (op === ':' || op === '=') {
         const parts = value.split('|').map((x) => unquote(x.trim())).filter(Boolean)
-        const res = parts.map((x) => resolve(key as FieldKey, x, ctx))
+        const res = parts.map((x) => (field.kind === 'like' ? { values: [x], labels: [x] } : resolveList(field, x, ctx)))
         if (res.length && res.every(Boolean)) {
           const values = [...new Set(res.flatMap((r) => r!.values))]
           const labels = [...new Set(res.flatMap((r) => r!.labels))]
-          return { ...base, kind: 'field', field: key as FieldKey, values, labels }
+          return { ...base, kind: 'field', field: field.key, values, labels }
         }
       }
     }
     // not understood: search for its words as text, and say so
     // (a known field with a value we cannot match searches the value; an unknown «field» searches it all)
-    const words = cleanWord(key && value ? value : raw).split(/[\s|:<>=]+/).filter(Boolean)
+    const words = cleanWord(field && value ? value : raw).split(/[\s|:<>=]+/).filter(Boolean)
     return { ...base, kind: 'text', words: words.length ? words : [cleanWord(raw)].filter(Boolean), phrase: false, asText: true }
   }
 
   // single words: keywords, statuses, currencies, names
-  if (!alone && !neg && WEAK.has(compact(raw))) return 'word'
-  const kw = KEYWORD_OF.get(compact(raw))
-  if (kw === 'today' || kw === 'thisweek' || kw === 'thismonth') {
-    return { ...base, kind: 'date', field: 'received', range: keywordRange(kw, ctx.today), display: kw, keyword: kw }
-  }
-  if (kw === 'mine' && !ctx.userId) return { ...base, kind: 'text', words: [cleanWord(raw)], phrase: false, asText: true }
-  if (kw) return { ...base, kind: 'flag', flag: kw }
-  const named = exactName(raw, ctx)
+  if (!alone && !neg && v.weak.has(compact(raw))) return 'word'
+  const kw = keyword(compact(raw), scope, ctx, base)
+  if (kw) return kw
+  const named = exactName(raw, scope, ctx)
   if (named) return { ...base, kind: 'field', field: named.field, values: [named.value], labels: [named.label] }
   if (neg) return { ...base, kind: 'text', words: [cleanWord(raw)].filter(Boolean), phrase: false }
   return 'word'
 }
 
-function parsePart(text: string, part: Piece, ctx: SearchContext): Term[] {
+/** A keyword of this scope (a flag, or today / thisweek / thismonth), or null. */
+function keyword(c: string, scope: Scope, ctx: SearchContext, base: Span): Term | null {
+  const dk = DATE_KEYWORD_OF.get(c)
+  if (dk && scope.dateKeywordField) {
+    return { ...base, kind: 'date', field: scope.dateKeywordField, range: keywordRange(dk, ctx.today), display: dk, keyword: dk }
+  }
+  const flag = vocab(scope).flag.get(c)
+  if (flag && (!flag.needsUser || ctx.userId)) return { ...base, kind: 'flag', flag: flag.flag }
+  return null
+}
+
+function parsePart(text: string, part: Piece, scope: Scope, ctx: SearchContext): Term[] {
   // the whole part names something («Silk Road Underwriting Agency», «на рассмотрении», «this week»)
   if (!/["':<>=]/.test(part.text) && !part.text.startsWith('-') && /\s/.test(part.text)) {
     const base = { id: nextId(), start: part.start, end: part.end, raw: part.text, neg: false }
-    const kw = KEYWORD_OF.get(compact(part.text))
-    if (kw === 'today' || kw === 'thisweek' || kw === 'thismonth') {
-      return [{ ...base, kind: 'date', field: 'received', range: keywordRange(kw, ctx.today), display: kw, keyword: kw }]
-    }
-    if (kw && (kw !== 'mine' || ctx.userId)) return [{ ...base, kind: 'flag', flag: kw }]
-    const named = exactName(part.text, ctx)
+    const kw = keyword(compact(part.text), scope, ctx, base)
+    if (kw) return [kw]
+    const named = exactName(part.text, scope, ctx)
     if (named) return [{ ...base, kind: 'field', field: named.field, values: [named.value], labels: [named.label] }]
   }
   const out: Term[] = []
@@ -443,7 +380,7 @@ function parsePart(text: string, part: Piece, ctx: SearchContext): Term[] {
   }
   const toks = tokens(text, part)
   for (const tok of toks) {
-    const t = parseToken(tok, ctx, toks.length === 1)
+    const t = parseToken(tok, scope, ctx, toks.length === 1)
     if (t === 'word') run.push(tok)
     else {
       flush()
@@ -454,13 +391,13 @@ function parsePart(text: string, part: Piece, ctx: SearchContext): Term[] {
   return out
 }
 
-export function parseQuery(text: string, ctx: SearchContext): ParsedQuery {
+export function parseQuery(text: string, ctx: SearchContext, scope: Scope): ParsedQuery {
   const groups: Group[] = []
   for (const g of splitOutsideQuotes(text, 0, text.length, ';')) {
     const terms: Term[] = []
     for (const p of splitOutsideQuotes(text, g.start, g.end, ',')) {
       const part = trimPiece(text, p)
-      if (part) terms.push(...parsePart(text, part, ctx))
+      if (part) terms.push(...parsePart(text, part, scope, ctx))
     }
     if (terms.length) groups.push({ terms })
   }
@@ -502,7 +439,7 @@ export function quoteValue(v: string): string {
 }
 
 /** The token being typed at the end of the text (for suggestions): its span, field (if any) and value. */
-export function currentToken(text: string): { start: number; end: number; neg: boolean; field: FieldKey | null; value: string } {
+export function currentToken(text: string, scope: Scope): { start: number; end: number; neg: boolean; field: string | null; value: string } {
   let inQ = false
   let start = 0
   for (let i = 0; i < text.length; i++) {
@@ -517,8 +454,8 @@ export function currentToken(text: string): { start: number; end: number; neg: b
     tok = tok.slice(1)
   }
   const m = /^([^:]+):(.*)$/s.exec(tok)
-  const key = m ? FIELD_OF.get(compact(m[1])) : undefined
-  const field = key && !NUM_FIELDS.has(key) && !DATE_FIELDS.has(key) ? (key as FieldKey) : null
+  const def = m ? vocab(scope).field.get(compact(m[1])) : undefined
+  const field = def && (def.kind === 'list' || def.kind === 'like') ? def.key : null
   const value = unquote(field ? m![2].split('|').pop()! : tok)
   return { start, end: text.length, neg, field, value }
 }
