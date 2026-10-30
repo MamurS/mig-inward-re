@@ -201,12 +201,12 @@
   --color-input: #cdc8c2; /* oklch(83.5% 0.010 72.6) */
   --color-ring: #468de4; /* oklch(63.9% 0.149 254.9) */
   --color-link: #1c5eab; /* oklch(48.4% 0.139 255.2) */
-  --color-sidebar: #fafbfe; /* oklch(98.8% 0.004 271.4) */
+  --color-sidebar: #eef4fd; /* oklch(96.5% 0.014 258.3) */
   --color-sidebar-foreground: #3e3a37; /* oklch(35.1% 0.008 59.4) */
   --color-sidebar-muted: #635d58; /* oklch(48.2% 0.011 62.4) */
-  --color-sidebar-accent: #e9f3ff; /* oklch(96.0% 0.019 252.9) */
+  --color-sidebar-accent: #d0e4ff; /* oklch(91.2% 0.043 255.9) */
   --color-sidebar-accent-foreground: #0c3b71; /* oklch(35.5% 0.105 255.3) */
-  --color-sidebar-hover: #f3f1ef; /* oklch(95.9% 0.003 67.8) */
+  --color-sidebar-hover: #f7fbff; /* oklch(98.6% 0.007 247.9) */
   --color-sidebar-border: #e5e2de; /* oklch(91.4% 0.006 75.4) */
   --color-brand-50: #f7fbff; /* oklch(98.6% 0.007 247.9) */
   --color-brand-100: #e9f3ff; /* oklch(96.0% 0.019 252.9) */
@@ -301,9 +301,10 @@
   --color-ring: #3690e2;
   --color-link: #0061a8;
   --color-canvas: #edf9ff;
-  --color-sidebar: #f7fcff;
-  --color-sidebar-accent: #e9f3ff;
+  --color-sidebar: #e7f6ff;
+  --color-sidebar-accent: #cce5ff;
   --color-sidebar-accent-foreground: #003d6d;
+  --color-sidebar-hover: #f6fbff;
   --color-data-1: #3690e2;
   --color-seq-1: #e9f3ff;
   --color-seq-2: #cce5ff;
@@ -332,9 +333,10 @@
   --color-ring: #2ca04a;
   --color-link: #006e29;
   --color-canvas: #eefdd8;
-  --color-sidebar: #f5ffe5;
-  --color-sidebar-accent: #dbfade;
+  --color-sidebar: #ebf9d8;
+  --color-sidebar-accent: #b7efbe;
   --color-sidebar-accent-foreground: #004517;
+  --color-sidebar-hover: #f1fdf3;
   --color-data-1: #2ca04a;
   --color-seq-1: #dbfade;
   --color-seq-2: #b7efbe;
@@ -363,9 +365,10 @@
   --color-ring: #df6a09;
   --color-link: #9a4600;
   --color-canvas: #fff5ee;
-  --color-sidebar: #fffbf7;
-  --color-sidebar-accent: #ffeee6;
+  --color-sidebar: #fff1e7;
+  --color-sidebar-accent: #ffdac7;
   --color-sidebar-accent-foreground: #642b00;
+  --color-sidebar-hover: #fff9f5;
   --color-data-1: #df6a09;
   --color-seq-1: #ffeee6;
   --color-seq-2: #ffdac7;

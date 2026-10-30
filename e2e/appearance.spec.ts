@@ -141,8 +141,8 @@ for (const lang of ['en', 'ru', 'uz'] as const) {
       const report = await page.evaluate(() => {
         const doc = document.documentElement
         const pageOverflow = doc.scrollWidth - doc.clientWidth
-        // nav labels are never cut: they fit, or wrap to a second line
-        const nav = [...document.querySelectorAll('aside a span')].filter((el) => {
+        // nav labels and the brand's subtitle are never cut: they fit, or wrap to a second line
+        const nav = [...document.querySelectorAll('aside a span, aside [data-brand] div')].filter((el) => {
           const e = el as HTMLElement
           return e.scrollWidth > e.clientWidth + 1 || e.scrollHeight > e.clientHeight + 1 || getComputedStyle(e).textOverflow === 'ellipsis'
         }).map((e) => e.textContent)

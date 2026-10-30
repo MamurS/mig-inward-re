@@ -84,13 +84,16 @@ on the profile (`profiles.ui_theme`, `ui_text_size`):
 
 ### Sidebar
 
-Light and frosted: the theme's sidebar tint at 72 % behind
+Light and frosted, in the theme's colour: a visible but quiet tint of the
+theme (more saturated than the page), at 88 % behind
 `backdrop-filter: saturate(1.4) blur(18px)`, a solid tint where that is not
 supported (`glass-sidebar` in `index.css`), a hairline right border, no heavy
 shadow. Dark text (`sidebar-foreground` slate-800, `sidebar-muted` slate-600),
-20 px icons; the active item is a soft accent pill (`sidebar-accent` brand-100,
-text brand-800, medium weight); hover is a gentle slate-100. No navy in the
-sidebar except the logo chip.
+20 px icons; the active item is a pill in the accent tint (`sidebar-accent`
+brand-200, text brand-800, medium weight); hover is a lighter wash
+(`sidebar-hover` brand-50). Labels and the subtitle wrap rather than being
+cut. No navy in the sidebar except the logo chip. `e2e/contrast.spec.ts`
+measures every label against what shows through (≥ 4.5 : 1, all four themes).
 
 ### Roles (shadcn/ui vocabulary)
 
@@ -139,17 +142,17 @@ Canvas (no theme) `#f8f6f5`. Pairing across every ramp, every theme accent, canv
 
 | theme | 50 | 100 | 200 | 300 | 400 | 500 | 600 | 700 | 800 | 900 | canvas | sidebar |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| grey | `#f7fbff` | `#e9f3ff` | `#d0e4ff` | `#a4cbff` | `#468de4` | `#2770c4` | `#1c5eab` | `#134d8e` | `#0c3b71` | `#002047` | `#f5f7fa` | `#fafbfe` |
-| blue | `#f6fbff` | `#e9f3ff` | `#cce5ff` | `#9dcdff` | `#3690e2` | `#0b72c2` | `#0061a8` | `#004e8a` | `#003d6d` | `#002240` | `#edf9ff` | `#f7fcff` |
-| green | `#f1fdf3` | `#dbfade` | `#b7efbe` | `#88db94` | `#2ca04a` | `#008131` | `#006e29` | `#005920` | `#004517` | `#002809` | `#eefdd8` | `#f5ffe5` |
-| orange | `#fff9f5` | `#ffeee6` | `#ffdac7` | `#ffb991` | `#df6a09` | `#b45300` | `#9a4600` | `#7f3800` | `#642b00` | `#3b1600` | `#fff5ee` | `#fffbf7` |
+| grey | `#f7fbff` | `#e9f3ff` | `#d0e4ff` | `#a4cbff` | `#468de4` | `#2770c4` | `#1c5eab` | `#134d8e` | `#0c3b71` | `#002047` | `#f5f7fa` | `#eef4fd` |
+| blue | `#f6fbff` | `#e9f3ff` | `#cce5ff` | `#9dcdff` | `#3690e2` | `#0b72c2` | `#0061a8` | `#004e8a` | `#003d6d` | `#002240` | `#edf9ff` | `#e7f6ff` |
+| green | `#f1fdf3` | `#dbfade` | `#b7efbe` | `#88db94` | `#2ca04a` | `#008131` | `#006e29` | `#005920` | `#004517` | `#002809` | `#eefdd8` | `#ebf9d8` |
+| orange | `#fff9f5` | `#ffeee6` | `#ffdac7` | `#ffb991` | `#df6a09` | `#b45300` | `#9a4600` | `#7f3800` | `#642b00` | `#3b1600` | `#fff5ee` | `#fff1e7` |
 
 | theme | white on primary | link on white | active nav | sidebar muted text | muted text on canvas | ring on white |
 |---|---|---|---|---|---|---|
-| grey | 6.48 | 6.48 | 9.96 | 6.27 | 6.04 | 3.39 |
-| blue | 6.41 | 6.41 | 9.92 | 6.28 | 6.05 | 3.36 |
-| green | 6.44 | 6.44 | 10.06 | 6.28 | 6.08 | 3.37 |
-| orange | 6.46 | 6.46 | 9.87 | 6.30 | 6.04 | 3.39 |
+| grey | 6.48 | 6.48 | 8.63 | 5.87 | 6.04 | 3.39 |
+| blue | 6.41 | 6.41 | 8.59 | 5.88 | 6.05 | 3.36 |
+| green | 6.44 | 6.44 | 8.64 | 5.89 | 6.08 | 3.37 |
+| orange | 6.46 | 6.46 | 8.53 | 5.87 | 6.04 | 3.39 |
 
 ### Status scale
 
@@ -201,12 +204,12 @@ data-1 `#468de4` (3.39 : 1 on white) · data-2 `#c37c00` (3.39 : 1 on white) · 
 | ring | `#468de4` |
 | link | `#1c5eab` |
 | canvas | `#f5f7fa` |
-| sidebar | `#fafbfe` |
+| sidebar | `#eef4fd` |
 | sidebar-foreground | `#3e3a37` |
 | sidebar-muted | `#635d58` |
-| sidebar-accent | `#e9f3ff` |
+| sidebar-accent | `#d0e4ff` |
 | sidebar-accent-foreground | `#0c3b71` |
-| sidebar-hover | `#f3f1ef` |
+| sidebar-hover | `#f7fbff` |
 | sidebar-border | `#e5e2de` |
 
 ## Type

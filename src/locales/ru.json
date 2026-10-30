@@ -547,7 +547,12 @@
       "rateShort": "USD за единицу",
       "source": "Источник",
       "invalid": "Выберите валюту и дату и укажите курс больше 0.",
-      "confirmDelete": "Удалить курс {{ccy}} на {{date}}?"
+      "confirmDelete": "Удалить курс {{ccy}} на {{date}}?",
+      "groupedHelp": "Последний курс каждой валюты; более ранние курсы скрыты под ним.",
+      "history_one": "ещё {{count}} курс",
+      "history_few": "ещё {{count}} курса",
+      "history_many": "ещё {{count}} курсов",
+      "history_other": "ещё {{count}} курса"
     },
     "settings": {
       "groups": {

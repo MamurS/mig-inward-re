@@ -62,12 +62,13 @@ export function AppLayout() {
   )
 
   const brand = (
-    <div className="flex h-16 items-center gap-3 px-5">
+    <div className="flex min-h-16 items-center gap-3 px-5 py-2">
       {/* the brand lives in the logo mark */}
       <div className="flex size-9 shrink-0 items-center justify-center rounded-control bg-navy-800 text-caption font-display-bold text-white">MIG</div>
-      <div className="min-w-0 leading-tight">
-        <div className="truncate text-body font-semibold text-sidebar-foreground">{t('app.name')}</div>
-        <div className="truncate text-caption text-sidebar-muted" title={t('app.tagline')}>{t('app.tagline')}</div>
+      <div className="min-w-0 leading-tight" data-brand>
+        <div className="text-body font-semibold break-words text-sidebar-foreground">{t('app.name')}</div>
+        {/* the subtitle wraps (two lines in Russian) instead of being cut */}
+        <div className="text-caption leading-tight break-words text-sidebar-muted">{t('app.tagline')}</div>
       </div>
     </div>
   )

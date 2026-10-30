@@ -173,6 +173,27 @@ test.describe('admin', () => {
     await expect(chips(page).first()).toContainText('Currency: EUR')
     await expect.poll(async () => new Set((await rows(page).locator('td:first-child').allTextContents()).map((x) => x.trim()))).toEqual(new Set(['EUR']))
   })
+
+  test('FX rates: one row per currency, latest first; the history unfolds under it', async ({ page }) => {
+    await installMock(page.context(), 'admin', 'en')
+    await page.goto('/admin?tab=fx')
+    await rows(page).first().waitFor()
+    await page.waitForLoadState('networkidle')
+    const codes = (await rows(page).locator('td:first-child').allTextContents()).map((x) => x.trim())
+    expect(new Set(codes).size).toBe(codes.length) // folded: each currency once
+    expect(codes).toEqual([...codes].sort())
+    const eur = page.locator('[data-fx-history="EUR"]')
+    await expect(eur).toHaveAttribute('aria-expanded', 'false')
+    await eur.click()
+    await expect(eur).toHaveAttribute('aria-expanded', 'true')
+    const past = page.locator('main tr[data-fx-past]')
+    await expect.poll(() => past.count()).toBeGreaterThan(0)
+    await expect(past.first().locator('td').first()).toHaveText('EUR')
+    await eur.click()
+    await expect(past).toHaveCount(0)
+    // the add-a-rate form is still there
+    await expect(page.locator('main select')).toHaveCount(1)
+  })
 })
 
 test('a page without a list searches submissions', async ({ page }) => {

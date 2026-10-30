@@ -545,7 +545,10 @@
       "rateShort": "USD per unit",
       "source": "Source",
       "invalid": "Choose a currency and date and enter a rate above 0.",
-      "confirmDelete": "Delete the {{ccy}} rate of {{date}}?"
+      "confirmDelete": "Delete the {{ccy}} rate of {{date}}?",
+      "groupedHelp": "The latest rate of each currency; earlier rates fold away under it.",
+      "history_one": "{{count}} earlier rate",
+      "history_other": "{{count}} earlier rates"
     },
     "settings": {
       "groups": {

@@ -1,7 +1,8 @@
 /**
  * Part E — accessibility: axe-core (WCAG 2.1 A and AA rules) on every main
- * page and form, in the default theme and in the darkest one. Any violation
- * fails with the rule, the impact and the first elements it found.
+ * page and form, in all four themes (grey, blue, green, orange). Any
+ * violation fails with the rule, the impact and the first elements it found.
+ * The sidebar's own contrast, measured on what is painted, is in contrast.spec.ts.
  */
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
@@ -37,7 +38,7 @@ async function violations(page: Page) {
   return r.violations.map((v) => `${v.id} (${v.impact}): ${v.nodes.slice(0, 3).map((n) => n.target.join(' ')).join(' | ')}`)
 }
 
-for (const theme of ['grey', 'blue'] as const) {
+for (const theme of ['grey', 'blue', 'green', 'orange'] as const) {
   for (const p of PAGES) {
     test(`${p.name} · ${theme}`, async ({ page }) => {
       await installMock(page.context(), p.role, 'en', { theme })

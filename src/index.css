@@ -36,13 +36,13 @@
   }
 }
 
-/* The light, frosted sidebar: translucent theme tint + blur, hairline edge.
+/* The light, frosted sidebar: the theme's tint, slightly translucent + blur, hairline edge.
    Solid fallback where backdrop-filter is unsupported. */
 @utility glass-sidebar {
   background-color: var(--color-sidebar);
   border-right: 1px solid var(--color-sidebar-border);
   @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-    background-color: color-mix(in oklab, var(--color-sidebar) 72%, transparent);
+    background-color: color-mix(in oklab, var(--color-sidebar) 88%, transparent);
     -webkit-backdrop-filter: saturate(1.4) blur(18px);
     backdrop-filter: saturate(1.4) blur(18px);
   }

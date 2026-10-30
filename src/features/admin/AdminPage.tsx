@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Database, KeyRound, Loader2, Play, Plus, Save, ShieldCheck, Trash2, UserPlus } from 'lucide-react'
+import { ChevronDown, ChevronRight, Database, KeyRound, Loader2, Play, Plus, Save, ShieldCheck, Trash2, UserPlus } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/PageHeader'
 import { Button } from '@/components/ui/button'
@@ -19,7 +19,8 @@ import { useAuth } from '@/auth/AuthProvider'
 import { DOCUMENTS_BUCKET } from '@/lib/documents'
 import { supabase } from '@/lib/supabase'
 import { ALL_ROLES, type AppRole } from '@/lib/roles'
-import { formatDate, formatDateTime, isoDate } from '@/lib/format'
+import { formatDate, formatDateTime, formatNumber, isoDate } from '@/lib/format'
+import { cn } from '@/lib/utils'
 import { cleanDecimal, isDecimal } from '@/lib/decimal'
 import { errorMessage } from '@/lib/errors'
 import type { Tables } from '@/lib/database.types'
@@ -531,6 +532,21 @@ function FxTab() {
     await Promise.all([qc.invalidateQueries({ queryKey: ['admin', 'fx'] }), qc.invalidateQueries({ queryKey: ['submissions'] }), qc.invalidateQueries({ queryKey: ['fx'] })])
   }
 
+  // grouped by currency (A–Z), the latest rate first; earlier ones fold away under it
+  const groups = useMemo(() => {
+    const by = new Map<string, Tables<'fx_rates'>[]>()
+    for (const r of rates.data ?? []) by.set(r.currency, [...(by.get(r.currency) ?? []), r])
+    return [...by.entries()].sort(([a], [b]) => a.localeCompare(b))
+  }, [rates.data])
+  const searching = !!parsed && parsed.groups.length > 0
+  const [open, setOpen] = useState<Set<string>>(new Set())
+  const toggle = (currency: string) =>
+    setOpen((prev) => {
+      const next = new Set(prev)
+      if (!next.delete(currency)) next.add(currency)
+      return next
+    })
+
   async function remove(r: Tables<'fx_rates'>) {
     if (!window.confirm(t('admin.fx.confirmDelete', { ccy: r.currency, date: formatDate(r.rate_date) }))) return
     const { error } = await supabase.from('fx_rates').delete().eq('currency', r.currency).eq('rate_date', r.rate_date)
@@ -568,39 +584,64 @@ function FxTab() {
         </CardContent>
       </Card>
       <Card className="gap-0 py-0">
-        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 py-4">
+        <CardHeader className="gap-1 py-4">
           <CardTitle>{t('admin.tabs.fx')}</CardTitle>
+          <p className="text-caption text-muted-foreground">{t('admin.fx.groupedHelp')}</p>
         </CardHeader>
-        <div className="max-h-[480px] overflow-y-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead>{t('fields.currency')}</TableHead>
-                <TableHead>{t('admin.fx.date')}</TableHead>
-                <TableHead className="text-right">{t('admin.fx.rateShort')}</TableHead>
-                <TableHead>{t('admin.fx.source')}</TableHead>
-                <TableHead />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rates.data?.map((r) => (
-                <TableRow key={`${r.currency}-${r.rate_date}`}>
-                  <TableCell className="font-mono">{r.currency}</TableCell>
-                  <TableCell>{formatDate(r.rate_date)}</TableCell>
-                  <TableCell className="text-right font-mono tabular-nums">{String(r.rate_to_usd)}</TableCell>
-                  <TableCell className="text-caption text-muted-foreground">{r.source ?? '—'}</TableCell>
-                  <TableCell className="text-right">
-                    <Button size="icon" variant="ghost" onClick={() => void remove(r)} aria-label={t('common.delete')}>
-                      <Trash2 />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        <Table>
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              <TableHead>{t('fields.currency')}</TableHead>
+              <TableHead>{t('admin.fx.date')}</TableHead>
+              <TableHead className="text-right">{t('admin.fx.rateShort')}</TableHead>
+              <TableHead>{t('admin.fx.source')}</TableHead>
+              <TableHead />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {groups.map(([currency, list]) => {
+              const [latest, ...history] = list
+              // a search shows every matching rate; otherwise the history waits behind its toggle
+              const expanded = searching || open.has(currency)
+              return (
+                <Fragment key={currency}>
+                  <FxRow r={latest} onRemove={remove}>
+                    {history.length > 0 && (
+                      <Button size="sm" variant="ghost" aria-expanded={expanded} disabled={searching} onClick={() => toggle(currency)} data-fx-history={currency}>
+                        {expanded ? <ChevronDown /> : <ChevronRight />}
+                        {t('admin.fx.history', { count: history.length })}
+                      </Button>
+                    )}
+                  </FxRow>
+                  {expanded && history.map((r) => <FxRow key={r.rate_date} r={r} onRemove={remove} past />)}
+                </Fragment>
+              )
+            })}
+          </TableBody>
+        </Table>
       </Card>
     </div>
+  )
+}
+
+/** One rate: the latest of its currency (bold code), or an earlier one under it (muted, indented). */
+function FxRow({ r, past = false, onRemove, children }: { r: Tables<'fx_rates'>; past?: boolean; onRemove: (r: Tables<'fx_rates'>) => void; children?: ReactNode }) {
+  const { t } = useTranslation()
+  return (
+    <TableRow className={cn(past && 'bg-muted/40 text-muted-foreground')} data-fx-past={past || undefined}>
+      <TableCell className={cn('font-mono', past ? 'pl-8' : 'font-semibold')}>{r.currency}</TableCell>
+      <TableCell>{formatDate(r.rate_date)}</TableCell>
+      <TableCell className="text-right font-mono tabular-nums">{formatNumber(Number(r.rate_to_usd), { maximumFractionDigits: 10 })}</TableCell>
+      <TableCell className="text-caption text-muted-foreground">{r.source ?? '—'}</TableCell>
+      <TableCell>
+        <div className="flex items-center justify-end gap-2">
+          {children}
+          <Button size="icon" variant="ghost" onClick={() => onRemove(r)} aria-label={t('common.delete')}>
+            <Trash2 />
+          </Button>
+        </div>
+      </TableCell>
+    </TableRow>
   )
 }
 

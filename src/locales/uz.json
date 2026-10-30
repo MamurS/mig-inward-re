@@ -545,7 +545,10 @@
       "rateShort": "Birlik uchun USD",
       "source": "Manba",
       "invalid": "Valyuta va sanani tanlang, 0 dan katta kurs kiriting.",
-      "confirmDelete": "{{date}} sanadagi {{ccy}} kursi oʻchirilsinmi?"
+      "confirmDelete": "{{date}} sanadagi {{ccy}} kursi oʻchirilsinmi?",
+      "groupedHelp": "Har bir valyutaning soʻnggi kursi; oldingi kurslar uning ostida yigʻilgan.",
+      "history_one": "yana {{count}} ta kurs",
+      "history_other": "yana {{count}} ta kurs"
     },
     "settings": {
       "groups": {
