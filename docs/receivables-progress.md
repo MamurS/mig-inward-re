@@ -188,6 +188,11 @@ Screens:
    | `can_edit_premium_schedule` | true / false about the caller and one submission |
    | `is_own_installment` | true / false: the caller is the underwriter of that installment's submission (UUID-checked input) |
 
+   Added with demo data (same pattern, checked by the advisor on 30 Oct):
+   `seed_demo_data`, `delete_demo_data`, `demo_link_violations`,
+   `demo_data_counts` raise / return nothing unless `has_role('admin')`;
+   `demo_mode` answers only about the caller's own profile.
+
    The last six are policy helpers: definer so RLS on `profiles` doesn't
    recurse; they only answer questions about the caller and reveal no data.
    The other 29 definer functions (triggers, internal workers, the cron jobs)
