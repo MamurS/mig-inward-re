@@ -20,7 +20,7 @@ cannot fix, or an action only the owner can do.
 | C | Binders and bordereaux | same branch name, restarted from main / MamurS/mig-inward-re#6 | ✅ merged |
 | D | AI-assisted data entry (pluggable provider) | same branch name, restarted from main / MamurS/mig-inward-re#7 | ✅ merged |
 | E | Whole-system audit and polish | same branch name, restarted from main / MamurS/mig-inward-re#8 | ✅ merged |
-| F | Self-hosting runbook (prepare, do not execute) | — | — |
+| F | Self-hosting runbook (prepare, do not execute) | same branch name, restarted from main / MamurS/mig-inward-re#9 | ✅ merged |
 
 ## A — Phase 2 steps 5–6
 
@@ -78,4 +78,9 @@ Branch: the session's branch name, restarted from `main` after #7 merged; PR Mam
 - [x] Design-review screenshots in Demo mode (`docs/review-screenshots/demo/`, + zip).
 - [x] Full suite green; the receivables export test no longer races the filter. PR #8 merged.
 
-Next: **F — Self-hosting runbook** (prepare only), on the same branch name restarted from `main`.
+## F — Self-hosting runbook (prepared, not executed)
+
+- [x] `docs/self-hosting/`: list of Cloud dependencies and their replacements, the runbook (server, stack, database, functions, data and files, frontend, rehearsal, cut-over, operations, rollback), the cut-over checklist. Checked against the live project (Postgres 17, pg_cron jobs, the documents bucket, both Edge Functions, auth settings). No Cloud-only feature is needed.
+- [x] Final report: `docs/final-report.md`; README brought up to date.
+
+Roadmap A → F complete.

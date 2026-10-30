@@ -3,11 +3,11 @@
 Internal system for Mosaic Insurance Group (Tashkent) to register, assess, offer and track inward
 reinsurance shares from MGA partners, with a dashboard of all MGA business for management.
 
-**Phase 0–1 (done):** submissions register, form and detail page, status machine, documents,
-follow-ups with a daily job, My agenda, Dashboard, counterparty (MGA / broker) pages, admin,
-EN / RU / UZ.
-**Later phases (designed for, not built):** premium & installments (2), claims (3), binders &
-bordereaux (4), AI email parsing (5).
+**Built:** submissions register, form and detail page, status machine, documents, follow-ups,
+My agenda, dashboards, counterparties, admin (phases 0–1); premium, receipts and receivables (2);
+claims (3); binders and bordereaux (4); AI-assisted data entry (5); Demo mode; EN / RU / UZ.
+Where things stand: `docs/final-report.md`. User guides: `docs/guides/`. Moving to MIG's own
+servers (prepared, not executed): `docs/self-hosting/`.
 
 ---
 
