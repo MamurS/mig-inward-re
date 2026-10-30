@@ -143,7 +143,7 @@ export function BinderDetailPage() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="grid min-w-0 content-start gap-4">
           <Card className="gap-0 py-0">
             <CardHeader className="py-4"><CardTitle>{t('binder.byPeriod')}</CardTitle></CardHeader>
@@ -161,24 +161,24 @@ export function BinderDetailPage() {
                   <tbody>
                     {grid.map((r) => (
                       <tr key={r.start} className="h-12 border-b last:border-0">
-                        <td className="px-4 py-2 whitespace-nowrap">{formatDate(r.start)} – {formatDate(r.end)}</td>
+                        <td className="px-4 py-2 align-top"><span className="block whitespace-nowrap">{formatDate(r.start)} –</span><span className="block whitespace-nowrap">{formatDate(r.end)}</span></td>
                         {kinds.map((k) => {
                           const p = r.cells[k]
                           if (!p) return <td key={k} className="px-4 py-2 text-muted-foreground">—</td>
                           const bdx = bordereaux.data?.find((x) => x.id === p.bordereau_id)
                           return (
-                            <td key={k} className="px-4 py-2" data-period={`${r.start}:${k}`} data-state={p.state}>
-                              <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-1">
-                                <PeriodStateBadge state={p.state} />
+                            <td key={k} className="px-4 py-2 align-top" data-period={`${r.start}:${k}`} data-state={p.state}>
+                              <PeriodStateBadge state={p.state} />
+                              <span className="mt-1 block text-caption whitespace-nowrap text-muted-foreground">
                                 {bdx ? (
                                   <button type="button" className="text-link num hover:underline" onClick={() => setOpenBdx(bdx)}>{p.ref_no}</button>
                                 ) : p.state === 'missing' && canUpload ? (
-                                  <button type="button" className="text-small text-link hover:underline" onClick={() => setUpload({ kind: k })}>{t('bdx.uploadNow')}</button>
+                                  <button type="button" className="text-link hover:underline" onClick={() => setUpload({ kind: k })}>{t('bdx.uploadNow')}</button>
                                 ) : (
-                                  <span className="text-caption text-muted-foreground">{t('binder.dueOn', { date: formatDate(p.due_date) })}</span>
+                                  t('binder.dueOn', { date: formatDate(p.due_date) })
                                 )}
                               </span>
-                              {p.received_date && <span className="block text-caption text-muted-foreground">{t('binder.receivedOn', { date: formatDate(p.received_date) })}</span>}
+                              {p.received_date && <span className="block text-caption whitespace-nowrap text-muted-foreground">{t('binder.receivedOn', { date: formatDate(p.received_date) })}</span>}
                             </td>
                           )
                         })}
