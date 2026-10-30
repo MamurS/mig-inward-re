@@ -143,7 +143,8 @@ export function DataTable<T>({
       </div>
 
       <div
-        className={cn('group/scroll relative overflow-auto', maxHeight)}
+        className={cn('group/scroll relative overflow-auto outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50', maxHeight)}
+        tabIndex={0}
         data-scrolled-x={scrolledX}
         onScroll={(e) => {
           const x = e.currentTarget.scrollLeft > 0
@@ -160,7 +161,6 @@ export function DataTable<T>({
                     type="button"
                     onClick={() => onSort(c.sortKey!)}
                     className={cn('inline-flex items-center gap-1 rounded-sm hover:text-foreground', c.align === 'right' && 'flex-row-reverse')}
-                    aria-sort={sorted ? (sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}
                   >
                     {c.header}
                     {sorted ? (sort.dir === 'asc' ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />) : <ChevronsUpDown className="size-3 opacity-40" />}
@@ -169,7 +169,11 @@ export function DataTable<T>({
                   c.header
                 )
                 return (
-                  <th key={c.id} className={cn(headCell, c.align === 'right' && 'text-right', i === 0 && cn('left-0 z-[3]', divider))}>
+                  <th
+                    key={c.id}
+                    className={cn(headCell, c.align === 'right' && 'text-right', i === 0 && cn('left-0 z-[3]', divider))}
+                    aria-sort={sorted ? (sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}
+                  >
                     {i === 0 && selectable ? (
                       <span className="inline-flex items-center gap-3">
                         <input
