@@ -8,7 +8,7 @@
 import type { BuilderSpec } from './builder'
 import type { Scope } from './query'
 import type { ServerSpec } from './postgrest'
-import { AGENDA, BINDERS, BINDERS_SERVER, CLAIMS, CLAIMS_SERVER, COUNTERPARTIES, FX, FX_SERVER, RECEIPTS, RECEIPTS_SERVER, RECEIVABLES, RECEIVABLES_SERVER, REFERENCE, SUBMISSIONS, SUBMISSIONS_SERVER, USERS } from './scopes'
+import { AGENDA, AI_USAGE, AI_USAGE_SERVER, BINDERS, BINDERS_SERVER, CLAIMS, CLAIMS_SERVER, COUNTERPARTIES, FX, FX_SERVER, RECEIPTS, RECEIPTS_SERVER, RECEIVABLES, RECEIVABLES_SERVER, REFERENCE, SUBMISSIONS, SUBMISSIONS_SERVER, USERS } from './scopes'
 
 export type PageSearch = {
   scope: Scope
@@ -229,7 +229,22 @@ export const BINDERS_PAGE: PageSearch = {
   ],
 }
 
-export const PAGE_SEARCHES: PageSearch[] = [SUBMISSIONS_PAGE, COUNTERPARTIES_PAGE, AGENDA_PAGE, USERS_PAGE, REFERENCE_PAGE, FX_PAGE, RECEIPTS_PAGE, RECEIVABLES_PAGE, CLAIMS_PAGE, BINDERS_PAGE]
+export const AI_USAGE_PAGE: PageSearch = {
+  scope: AI_USAGE,
+  server: AI_USAGE_SERVER,
+  path: '/admin',
+  params: { tab: 'ai' },
+  builder: { items: [{ kind: 'chips', field: 'status' }, { kind: 'chips', field: 'kind' }, { kind: 'multi', field: 'user' }, { kind: 'dates', field: 'date' }], toggles: [] },
+  suggest: ['status', 'kind', 'user'],
+  examples: [
+    { q: 'status:error|refused', key: 'status' },
+    { q: 'kind:bordereau_mapping', key: 'kind' },
+    { q: 'date>=7d', key: 'date' },
+    { q: 'slip', key: 'text' },
+  ],
+}
+
+export const PAGE_SEARCHES: PageSearch[] = [SUBMISSIONS_PAGE, COUNTERPARTIES_PAGE, AGENDA_PAGE, USERS_PAGE, REFERENCE_PAGE, FX_PAGE, RECEIPTS_PAGE, RECEIVABLES_PAGE, CLAIMS_PAGE, BINDERS_PAGE, AI_USAGE_PAGE]
 
 /** The search for this location: the page's own list, or (here: false) the register. */
 export function pageSearchFor(pathname: string, search: string): { page: PageSearch; here: boolean } {

@@ -80,3 +80,12 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* A form field filled by AI-assisted entry, until the user changes it: a ring
+   coloured by how sure the reading was (the banner above the form lists them). */
+[data-ai] {
+  box-shadow: 0 0 0 2px var(--ai-ring), 0 0 0 4px color-mix(in oklab, var(--ai-ring) 30%, transparent);
+}
+[data-ai="high"] { --ai-ring: var(--color-success-500); }
+[data-ai="medium"] { --ai-ring: var(--color-warning-500); }
+[data-ai="low"] { --ai-ring: var(--color-danger-500); }

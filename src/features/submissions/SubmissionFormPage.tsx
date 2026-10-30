@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { Controller, useForm, useWatch, type UseFormRegisterReturn } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Info, Loader2, Save } from 'lucide-react'
+import { ArrowLeft, Info, Loader2, Save, Sparkles, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/PageHeader'
 import { Button } from '@/components/ui/button'
@@ -27,6 +27,11 @@ import { useCounterparties, useCountries, useCurrencies, useLinesOfBusiness, use
 import { QuickAddCounterparty } from '@/features/counterparties/QuickAddCounterparty'
 import { useSubmission, type SubmissionRow } from './api'
 import { useAllBinders } from '@/features/binders/api'
+import { useAiAvailable } from '@/features/ai/api'
+import { AiFillPanel, aiFieldLabel } from '@/features/ai/AiFillPanel'
+import { ConfidenceBadge } from '@/features/ai/ConfidenceBadge'
+import { confidenceLevel } from '@/features/ai/match'
+import type { Suggestion } from '@/features/ai/apply'
 
 // ---------------------------------------------------------------------------
 // Schema: every numeric field is kept as a string (exact decimal) until saved.
@@ -86,6 +91,12 @@ type FormValues = z.infer<typeof schema>
 const toStr = (v: number | string | null | undefined) => (v === null || v === undefined ? '' : String(v))
 const orNull = (v: string) => (v.trim() === '' ? null : v.trim())
 const decOrNull = (v: string) => (v.trim() === '' ? null : cleanDecimal(v))
+
+/** The fields AI-assisted entry can fill (the ids of their inputs). */
+const LABEL_KEYS = Object.fromEntries(
+  ['insured_name', 'insured_country', 'mga_id', 'broker_id', 'lob_id', 'risk_description', 'period_from', 'period_to', 'currency', 'sum_insured_100', 'limit_100',
+    'deductible', 'gross_premium_100', 'commission_pct', 'brokerage_pct', 'written_share_pct', 'ppw_date', 'payment_terms_days', 'offer_valid_until'].map((k) => [k, true]),
+)
 
 /** The fields the form marks as required — the footer shows how many are filled. */
 const REQUIRED = ['received_at', 'mga_id', 'source_party_id', 'insured_name', 'currency'] as const
@@ -200,12 +211,41 @@ function SubmissionForm({ existing, binderId }: { existing: SubmissionRow | null
     register,
     handleSubmit,
     setValue,
+    getValues,
+    setFocus,
     control,
     formState: { errors, isSubmitting, isDirty },
   } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: defaults, mode: 'onTouched' })
 
   const v = useWatch({ control })
   const sourceTouched = useRef(Boolean(existing))
+
+  // AI-assisted entry: fields filled from a document stay marked (ring + banner) until the user changes them; nothing is saved until Save
+  const aiAvailable = useAiAvailable()
+  const [aiOpen, setAiOpen] = useState(false)
+  const [aiFilled, setAiFilled] = useState<Record<string, Suggestion>>({})
+  function applyAi(picked: Suggestion[]) {
+    for (const s of picked) setValue(s.form as keyof FormValues, s.value as never, { shouldDirty: true, shouldValidate: true, shouldTouch: true })
+    setAiFilled((prev) => ({ ...prev, ...Object.fromEntries(picked.map((s) => [s.form, s])) }))
+    toast.success(t('ai.applied', { count: picked.length }))
+  }
+  useEffect(() => {
+    const current = getValues() as Record<string, unknown>
+    const gone = Object.keys(aiFilled).filter((k) => current[k] !== aiFilled[k].value)
+    if (gone.length) setAiFilled((prev) => Object.fromEntries(Object.entries(prev).filter(([k]) => !gone.includes(k))))
+    for (const k of Object.keys(LABEL_KEYS)) {
+      const el = document.getElementById(k)
+      if (!el) continue
+      const s = aiFilled[k]
+      if (s && !gone.includes(k)) {
+        el.setAttribute('data-ai', confidenceLevel(s.confidence))
+        el.setAttribute('title', s.source ? `AI · ${Math.round(s.confidence * 100)} % · «${s.source}»` : `AI · ${Math.round(s.confidence * 100)} %`)
+      } else if (el.hasAttribute('data-ai')) {
+        el.removeAttribute('data-ai')
+        el.removeAttribute('title')
+      }
+    }
+  }, [v, aiFilled, getValues])
 
   // Default "received from" = broker if there is one, otherwise the MGA (until the user picks it)
   useEffect(() => {
@@ -289,7 +329,29 @@ function SubmissionForm({ existing, binderId }: { existing: SubmissionRow | null
         ]}
         title={existing ? t('sub.editTitle', { ref: existing.ref_no }) : t('sub.newTitle')}
         subtitle={existing ? existing.insured_name ?? undefined : t('sub.newSubtitle')}
+        actions={aiAvailable.data ? <Button type="button" variant="outline" onClick={() => setAiOpen(true)} data-ai-open><Sparkles />{t('ai.fillButton')}</Button> : undefined}
       />
+
+      {Object.keys(aiFilled).length > 0 && (
+        <div className="mb-4 grid gap-2 rounded-lg border border-brand-200 bg-brand-50 p-3 text-body" data-ai-banner>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="inline-flex items-center gap-2 font-medium"><Sparkles className="size-4 text-brand-600" />{t('ai.bannerTitle', { count: Object.keys(aiFilled).length })}</p>
+            <Button type="button" size="sm" variant="ghost" onClick={() => setAiFilled({})}><X />{t('ai.bannerDismiss')}</Button>
+          </div>
+          <p className="text-caption text-muted-foreground">{t('ai.bannerHint')}</p>
+          <ul className="flex flex-wrap gap-2">
+            {Object.values(aiFilled).map((s) => (
+              <li key={s.form}>
+                <button type="button" onClick={() => setFocus(s.form as keyof FormValues)} className="inline-flex items-center gap-2 rounded-full border bg-background px-3 py-1 text-small hover:bg-slate-50" title={s.source ?? undefined}>
+                  {t(aiFieldLabel(s.form))}
+                  <ConfidenceBadge value={s.confidence} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      <AiFillPanel open={aiOpen} onClose={() => setAiOpen(false)} onApply={applyAi} excludeId={existing?.id ?? undefined} />
 
       {existing && (
         <div className="mb-4 flex items-center gap-2 text-body text-muted-foreground">

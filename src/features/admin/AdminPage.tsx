@@ -29,8 +29,9 @@ import { matchesQuery, type ClientSpec } from '@/features/search/client'
 import { FX_PAGE, REFERENCE_PAGE, USERS_PAGE } from '@/features/search/pages'
 import { useListSearch } from '@/features/search/useSearch'
 import { SearchChips } from '@/features/search/SearchChips'
+import { AiAdminTab } from '@/features/ai/AiAdminTab'
 
-const TABS = ['users', 'reference', 'fx', 'settings', 'jobs', 'demo'] as const
+const TABS = ['users', 'reference', 'fx', 'settings', 'ai', 'jobs', 'demo'] as const
 
 export function AdminPage() {
   const { t } = useTranslation()
@@ -46,6 +47,7 @@ export function AdminPage() {
           <TabsTrigger value="reference">{t('admin.tabs.reference')}</TabsTrigger>
           <TabsTrigger value="fx">{t('admin.tabs.fx')}</TabsTrigger>
           <TabsTrigger value="settings">{t('admin.tabs.settings')}</TabsTrigger>
+          <TabsTrigger value="ai">{t('admin.tabs.ai')}</TabsTrigger>
           <TabsTrigger value="jobs">{t('admin.tabs.jobs')}</TabsTrigger>
           <TabsTrigger value="demo">{t('admin.tabs.demo')}</TabsTrigger>
         </TabsList>
@@ -53,6 +55,7 @@ export function AdminPage() {
         <TabsContent value="reference"><ReferenceTab /></TabsContent>
         <TabsContent value="fx"><FxTab /></TabsContent>
         <TabsContent value="settings"><SettingsTab /></TabsContent>
+        <TabsContent value="ai"><AiAdminTab /></TabsContent>
         <TabsContent value="jobs"><JobsTab /></TabsContent>
         <TabsContent value="demo"><DemoTab /></TabsContent>
       </Tabs>

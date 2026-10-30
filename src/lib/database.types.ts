@@ -17,6 +17,101 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_cache: {
+        Row: {
+          cache_key: string
+          created_at: string
+          hits: number
+          is_demo: boolean
+          kind: string
+          last_hit_at: string | null
+          model: string
+          result: Json
+        }
+        Insert: {
+          cache_key: string
+          created_at?: string
+          hits?: number
+          is_demo?: boolean
+          kind: string
+          last_hit_at?: string | null
+          model: string
+          result: Json
+        }
+        Update: {
+          cache_key?: string
+          created_at?: string
+          hits?: number
+          is_demo?: boolean
+          kind?: string
+          last_hit_at?: string | null
+          model?: string
+          result?: Json
+        }
+        Relationships: []
+      }
+      ai_usage_log: {
+        Row: {
+          created_at: string
+          duration_ms: number | null
+          error: string | null
+          file_bytes: number | null
+          file_name: string | null
+          file_sha256: string | null
+          id: string
+          input_tokens: number | null
+          is_demo: boolean
+          kind: string
+          model: string | null
+          output_tokens: number | null
+          provider: string | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          file_bytes?: number | null
+          file_name?: string | null
+          file_sha256?: string | null
+          id?: string
+          input_tokens?: number | null
+          is_demo?: boolean
+          kind: string
+          model?: string | null
+          output_tokens?: number | null
+          provider?: string | null
+          status: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          file_bytes?: number | null
+          file_name?: string | null
+          file_sha256?: string | null
+          id?: string
+          input_tokens?: number | null
+          is_demo?: boolean
+          kind?: string
+          model?: string | null
+          output_tokens?: number | null
+          provider?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_usage_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           action: string
@@ -1959,6 +2054,35 @@ export type Database = {
       }
     }
     Views: {
+      ai_usage_v: {
+        Row: {
+          created_at: string | null
+          duration_ms: number | null
+          error: string | null
+          file_bytes: number | null
+          file_name: string | null
+          id: string | null
+          input_tokens: number | null
+          kind: string | null
+          model: string | null
+          output_tokens: number | null
+          provider: string | null
+          search_text: string | null
+          status: string | null
+          user_id: string | null
+          user_name: string | null
+          user_role: Database["public"]["Enums"]["app_role"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_usage_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       binder_capacity_v: {
         Row: {
           aggregate_limit: number | null
@@ -2717,6 +2841,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      ai_available: { Args: never; Returns: boolean }
       apply_submission_status: {
         Args: {
           p_actor: string

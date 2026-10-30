@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AlertTriangle, CheckCircle2, Loader2, Upload, XCircle } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Loader2, Sparkles, Upload, XCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -17,6 +17,8 @@ import { useCountries, useCurrencies } from '@/hooks/useReference'
 import { cn } from '@/lib/utils'
 import { fetchExistingKeys, importBordereau, saveTemplate, useInvalidateBinders, useTemplates, type BinderLob, type BinderRow, type BordereauKind, type PeriodRow } from './api'
 import { MAX_ROWS, headersOf, readTable, type SheetRows } from './parse'
+import { AiError, suggestMapping, useAiAvailable } from '@/features/ai/api'
+import { ConfidenceBadge } from '@/features/ai/ConfidenceBadge'
 import { FIELDS, applyTemplate, autoMap, checkRows, linesTotal, periodOf, toPayload, type CheckedLine, type Issue, type Mapping } from './validate'
 
 type Step = 'file' | 'map' | 'review' | 'done'
@@ -61,6 +63,33 @@ export function BordereauWizard({ open, onClose, binder, lobs, periods, initialK
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<{ ref: string; lines: number; installments: number; docError: string | null } | null>(null)
   const templates = useTemplates(binder.mga_id, kind)
+  const aiAvailable = useAiAvailable()
+  const [aiMap, setAiMap] = useState<Record<string, { confidence: number; reason: string | null }>>({})
+  const [aiBusy, setAiBusy] = useState(false)
+
+  // AI suggests the mapping from the column titles and three sample rows (the file itself is not sent)
+  async function suggestWithAi() {
+    setAiBusy(true)
+    setError(null)
+    try {
+      const r = await suggestMapping({
+        bordereauKind: kind,
+        targets: FIELDS[kind].map((f) => ({ key: f.key, label: t(`bdx.field.${f.key}`), required: Boolean(f.required) })),
+        columns: headers,
+        samples: rows.slice(headerRow, headerRow + 3).map((row) => headers.map((_, j) => { const c = row[j]; return c instanceof Date ? c.toISOString().slice(0, 10) : c === null || c === undefined ? '' : String(c) })),
+        headerRow,
+      })
+      const took = r.mapping.filter((m) => m.column && m.confidence >= 0.5)
+      setMapping((m) => ({ ...m, ...Object.fromEntries(took.map((x) => [x.field, x.column!])) }))
+      setAiMap(Object.fromEntries(took.map((x) => [x.field, { confidence: x.confidence, reason: x.reason }])))
+      toast.success(t('ai.mappingApplied', { count: took.length }))
+    } catch (e) {
+      const code = e instanceof AiError ? e.code : 'error'
+      setError(code === 'not_configured' ? t('ai.notConfigured') : code === 'disabled' ? t('ai.disabled') : code === 'limit' ? t('ai.limit') : e instanceof Error ? e.message : String(e))
+    } finally {
+      setAiBusy(false)
+    }
+  }
 
   const kinds = (binder.bordereau_kinds?.length ? binder.bordereau_kinds : (['risk', 'premium', 'claims'] as BordereauKind[]))
   // periods to choose: the ones owed for this kind (missing first), then any month of the binder
@@ -282,6 +311,14 @@ export function BordereauWizard({ open, onClose, binder, lobs, periods, initialK
               <Field label={t('bdx.headerRow')} hint={t('bdx.headerRowHint')}>
                 <Input inputMode="numeric" className="text-right tabular-nums" value={String(headerRow)} onChange={(e) => setHeaderRow(Math.max(1, Math.min(50, Number(e.target.value) || 1)))} />
               </Field>
+              {aiAvailable.data && (
+                <div className="flex items-end">
+                  <Button type="button" variant="outline" onClick={() => void suggestWithAi()} disabled={aiBusy} data-ai-mapping>
+                    {aiBusy ? <Loader2 className="animate-spin" /> : <Sparkles />}
+                    {t('ai.suggestMapping')}
+                  </Button>
+                </div>
+              )}
               {(templates.data?.length ?? 0) > 0 && (
                 <Field label={t('bdx.template')}>
                   <NativeSelect
@@ -318,10 +355,21 @@ export function BordereauWizard({ open, onClose, binder, lobs, periods, initialK
                     <tr key={f.key} className="h-12 border-b last:border-0">
                       <td className="px-2">{t(`bdx.field.${f.key}`)}{f.required && <span className="text-destructive" aria-hidden>*</span>}</td>
                       <td className="px-2">
-                        <NativeSelect aria-label={t(`bdx.field.${f.key}`)} value={mapping[f.key] ?? ''} onChange={(e) => setMapping((m) => ({ ...m, [f.key]: e.target.value }))} className={cn(f.required && !mapping[f.key] && 'border-danger-500')}>
-                          <option value="">{t('bdx.notInFile')}</option>
-                          {headers.map((h) => <option key={h} value={h}>{h}</option>)}
-                        </NativeSelect>
+                        <span className="flex items-center gap-2">
+                          <NativeSelect
+                            aria-label={t(`bdx.field.${f.key}`)}
+                            value={mapping[f.key] ?? ''}
+                            onChange={(e) => {
+                              setMapping((m) => ({ ...m, [f.key]: e.target.value }))
+                              setAiMap((a) => Object.fromEntries(Object.entries(a).filter(([k]) => k !== f.key)))
+                            }}
+                            className={cn(f.required && !mapping[f.key] && 'border-danger-500')}
+                          >
+                            <option value="">{t('bdx.notInFile')}</option>
+                            {headers.map((h) => <option key={h} value={h}>{h}</option>)}
+                          </NativeSelect>
+                          {aiMap[f.key] && <ConfidenceBadge value={aiMap[f.key].confidence} title={aiMap[f.key].reason ?? undefined} className="shrink-0" />}
+                        </span>
                       </td>
                       <td className="max-w-64 truncate px-2 text-caption text-muted-foreground" title={sample}>{sample || '—'}</td>
                     </tr>
