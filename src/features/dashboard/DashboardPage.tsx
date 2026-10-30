@@ -22,6 +22,7 @@ import { errorMessage } from '@/lib/errors'
 import { STATUS_SOLID, type SubmissionStatus } from '@/lib/status'
 import { PremiumDashboard } from '@/features/premium/PremiumDashboard'
 import { ClaimsDashboard } from '@/features/claims/ClaimsDashboard'
+import { BindersDashboard } from '@/features/binders/BindersDashboard'
 
 type Row = {
   id: string
@@ -230,6 +231,7 @@ export function DashboardPage() {
 
       {seesPremium && <PremiumDashboard />}
       {seesClaims && <ClaimsDashboard />}
+      <BindersDashboard />
 
       {/* What needs an answer first, then how we are doing */}
       <div className="mb-4 grid gap-4 xl:grid-cols-3">

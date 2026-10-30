@@ -8,7 +8,7 @@
 import type { BuilderSpec } from './builder'
 import type { Scope } from './query'
 import type { ServerSpec } from './postgrest'
-import { AGENDA, CLAIMS, CLAIMS_SERVER, COUNTERPARTIES, FX, FX_SERVER, RECEIPTS, RECEIPTS_SERVER, RECEIVABLES, RECEIVABLES_SERVER, REFERENCE, SUBMISSIONS, SUBMISSIONS_SERVER, USERS } from './scopes'
+import { AGENDA, BINDERS, BINDERS_SERVER, CLAIMS, CLAIMS_SERVER, COUNTERPARTIES, FX, FX_SERVER, RECEIPTS, RECEIPTS_SERVER, RECEIVABLES, RECEIVABLES_SERVER, REFERENCE, SUBMISSIONS, SUBMISSIONS_SERVER, USERS } from './scopes'
 
 export type PageSearch = {
   scope: Scope
@@ -203,7 +203,33 @@ export const CLAIMS_PAGE: PageSearch = {
   ],
 }
 
-export const PAGE_SEARCHES: PageSearch[] = [SUBMISSIONS_PAGE, COUNTERPARTIES_PAGE, AGENDA_PAGE, USERS_PAGE, REFERENCE_PAGE, FX_PAGE, RECEIPTS_PAGE, RECEIVABLES_PAGE, CLAIMS_PAGE]
+export const BINDERS_PAGE: PageSearch = {
+  scope: BINDERS,
+  server: BINDERS_SERVER,
+  path: '/binders',
+  builder: {
+    items: [
+      { kind: 'chips', field: 'status' },
+      { kind: 'multi', field: 'mga' },
+      { kind: 'multi', field: 'uw' },
+      { kind: 'chips', field: 'ccy' },
+      { kind: 'range', field: 'capacity' },
+      { kind: 'dates', field: 'expires' },
+    ],
+    toggles: [{ flag: 'missing' }, { flag: 'late' }, { flag: 'full' }],
+  },
+  suggest: ['status', 'mga', 'ccy'],
+  examples: [
+    { q: 'cargo', key: 'text' },
+    { q: 'status:active', key: 'status' },
+    { q: 'missing', key: 'missing' },
+    { q: 'capacity>=80', key: 'capacity' },
+    { q: 'expires<90d', key: 'expires' },
+    { q: 'mga:"Caspian"', key: 'mga' },
+  ],
+}
+
+export const PAGE_SEARCHES: PageSearch[] = [SUBMISSIONS_PAGE, COUNTERPARTIES_PAGE, AGENDA_PAGE, USERS_PAGE, REFERENCE_PAGE, FX_PAGE, RECEIPTS_PAGE, RECEIVABLES_PAGE, CLAIMS_PAGE, BINDERS_PAGE]
 
 /** The search for this location: the page's own list, or (here: false) the register. */
 export function pageSearchFor(pathname: string, search: string): { page: PageSearch; here: boolean } {

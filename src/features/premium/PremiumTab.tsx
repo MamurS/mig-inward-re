@@ -21,10 +21,10 @@ import { isZeroMoney, sumMoney } from './schedule'
 import { ScheduleEditor } from './ScheduleEditor'
 import { AdjustmentDialog, SettleReturnDialog, undoWriteOff, WriteOffDialog } from './InstallmentDialogs'
 
-const STATUS_TONE: Record<string, BadgeTone> = { open: 'info', partially_paid: 'warning', paid: 'success', written_off: 'neutral' }
+export const STATUS_TONE: Record<string, BadgeTone> = { open: 'info', partially_paid: 'warning', paid: 'success', written_off: 'neutral' }
 
 /** The installment's status in words: return premium reads «to pay / settled». */
-function statusKey(i: InstallmentRow) {
+export function statusKey(i: InstallmentRow) {
   if (i.type === 'return') return i.status === 'paid' ? 'settled' : i.status === 'written_off' ? 'written_off' : 'to_pay'
   return i.status ?? 'open'
 }

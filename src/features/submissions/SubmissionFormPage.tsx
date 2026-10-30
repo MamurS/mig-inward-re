@@ -21,11 +21,12 @@ import { FullPageSpinner } from '@/components/FullPageSpinner'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/auth/AuthProvider'
 import { calcFigures, cleanDecimal, isDecimal, toScaled } from '@/lib/decimal'
-import { formatAmount, formatPct, isoDate } from '@/lib/format'
+import { formatAmount, formatDate as formatDateShort, formatPct, isoDate } from '@/lib/format'
 import { errorMessage } from '@/lib/errors'
 import { useCounterparties, useCountries, useCurrencies, useLinesOfBusiness, useLocalName, useUsers, userName } from '@/hooks/useReference'
 import { QuickAddCounterparty } from '@/features/counterparties/QuickAddCounterparty'
 import { useSubmission, type SubmissionRow } from './api'
+import { useAllBinders } from '@/features/binders/api'
 
 // ---------------------------------------------------------------------------
 // Schema: every numeric field is kept as a string (exact decimal) until saved.
@@ -50,6 +51,7 @@ const schema = z
     broker_id: z.string(),
     source_party_id: z.string().min(1, 'v.required'),
     business_type: z.enum(['facultative', 'binder']),
+    binder_id: z.string(),
     underwriter_id: z.string(),
     insured_name: z.string().trim().min(1, 'v.required'),
     insured_country: z.string(),
@@ -95,6 +97,7 @@ function rowToForm(r: SubmissionRow): FormValues {
     broker_id: r.broker_id ?? '',
     source_party_id: r.source_party_id ?? '',
     business_type: r.business_type ?? 'facultative',
+    binder_id: '',
     underwriter_id: r.underwriter_id ?? '',
     insured_name: r.insured_name ?? '',
     insured_country: r.insured_country ?? '',
@@ -124,6 +127,7 @@ function formToPayload(v: FormValues) {
     broker_id: orNull(v.broker_id),
     source_party_id: v.source_party_id,
     business_type: v.business_type,
+    binder_id: v.business_type === 'binder' ? orNull(v.binder_id) : null,
     underwriter_id: orNull(v.underwriter_id),
     insured_name: v.insured_name.trim(),
     insured_country: orNull(v.insured_country),
@@ -151,12 +155,22 @@ export function SubmissionFormPage() {
   const { id } = useParams()
   const isEdit = Boolean(id)
   const existing = useSubmission(id)
-  if (isEdit && existing.isLoading) return <FullPageSpinner />
+  // the binder link lives on the table, not the register view
+  const link = useQuery({
+    queryKey: ['submissions', 'binder-link', id],
+    enabled: isEdit,
+    queryFn: async () => {
+      const { data, error } = await supabase.from('submissions').select('binder_id').eq('id', id!).maybeSingle()
+      if (error) throw error
+      return data?.binder_id ?? null
+    },
+  })
+  if (isEdit && (existing.isLoading || link.isLoading)) return <FullPageSpinner />
   if (isEdit && !existing.data) return <p className="p-6 text-body text-muted-foreground">—</p>
-  return <SubmissionForm existing={existing.data ?? null} />
+  return <SubmissionForm existing={existing.data ?? null} binderId={link.data ?? null} />
 }
 
-function SubmissionForm({ existing }: { existing: SubmissionRow | null }) {
+function SubmissionForm({ existing, binderId }: { existing: SubmissionRow | null; binderId: string | null }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const qc = useQueryClient()
@@ -171,7 +185,7 @@ function SubmissionForm({ existing }: { existing: SubmissionRow | null }) {
   const defaults = useMemo<FormValues>(
     () =>
       existing
-        ? rowToForm(existing)
+        ? { ...rowToForm(existing), binder_id: binderId ?? '' }
         : {
             ...rowToForm({} as SubmissionRow),
             received_at: isoDate(),
@@ -179,7 +193,7 @@ function SubmissionForm({ existing }: { existing: SubmissionRow | null }) {
             underwriter_id: profile?.id ?? '',
             payment_terms_days: '60', // docs/decisions.md: premium due inception + 60 days
           },
-    [existing, profile?.id],
+    [existing, binderId, profile?.id],
   )
 
   const {
@@ -200,6 +214,7 @@ function SubmissionForm({ existing }: { existing: SubmissionRow | null }) {
   }, [v.broker_id, v.mga_id, setValue])
 
   const mgas = counterparties.data?.filter((c) => c.type === 'mga' && (c.active || c.id === v.mga_id)) ?? []
+  const binders = useAllBinders(v.business_type === 'binder' && Boolean(v.mga_id), v.mga_id || undefined)
   const brokers = counterparties.data?.filter((c) => c.type === 'broker' && (c.active || c.id === v.broker_id)) ?? []
   const sources = counterparties.data?.filter((c) => c.active || c.id === v.source_party_id) ?? []
   const underwriters = users.data?.filter((u) => (u.role === 'underwriter' || u.role === 'admin') && u.active) ?? []
@@ -345,6 +360,16 @@ function SubmissionForm({ existing }: { existing: SubmissionRow | null }) {
                   )}
                 />
               </Field>
+              {v.business_type === 'binder' && (
+                <Field label={t('binder.binder')} htmlFor="binder_id" hint={v.mga_id ? t('binder.pickHint') : t('binder.pickMgaFirst')}>
+                  <NativeSelect {...reg('binder_id')} disabled={!v.mga_id}>
+                    <option value="">{t('binder.notLinked')}</option>
+                    {(binders.data ?? []).filter((b) => b.mga_id === v.mga_id).map((b) => (
+                      <option key={b.id} value={b.id!}>{b.binder_ref} · {formatDateShort(b.period_from)} – {formatDateShort(b.period_to)} · {t(`binder.status.${b.status}`)}</option>
+                    ))}
+                  </NativeSelect>
+                </Field>
+              )}
               <Field label={t('fields.underwriter')} htmlFor="underwriter_id">
                 <NativeSelect {...reg('underwriter_id')}>
                   <option value="">—</option>

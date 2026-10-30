@@ -35,7 +35,8 @@ export function useCanActOnFollowUp() {
     if (!role) return false
     if (f.assigned_to && f.assigned_to === profile?.id) return true
     if (f.assigned_role && f.assigned_role === role) return true // a team follow-up: anyone in the team
-    if (f.entity_type === 'submission' || f.entity_type === 'bordereau') return role === 'admin' || role === 'underwriter'
+    if (f.entity_type === 'submission' || f.entity_type === 'binder') return role === 'admin' || role === 'underwriter'
+    if (f.entity_type === 'bordereau') return role === 'admin' || role === 'underwriter' || role === 'finance' || role === 'claims'
     if (f.entity_type === 'premium') return role === 'admin' || role === 'finance'
     if (f.entity_type === 'claim') return role === 'admin' || role === 'claims'
     return false
@@ -385,7 +386,7 @@ export function FollowUpItem({
           </div>
           {showEntity && f.entity_ref && (
             <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-caption">
-              <Link to={f.entity_type === 'claim' ? `/claims/${f.entity_id}` : `/submissions/${f.submission_id ?? f.entity_id}`} className="font-medium text-link hover:underline num">
+              <Link to={f.entity_type === 'claim' ? `/claims/${f.entity_id}` : f.entity_type === 'binder' ? `/binders/${f.entity_id}` : `/submissions/${f.submission_id ?? f.entity_id}`} className="font-medium text-link hover:underline num">
                 {f.entity_ref}
               </Link>
               <span className="truncate">{f.entity_label}</span>
