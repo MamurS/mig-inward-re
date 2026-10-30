@@ -1358,6 +1358,7 @@ export type Database = {
           received_at: string | null
           ref_no: string | null
           risk_description: string | null
+          search_text: string | null
           share_pct: number | null
           signed_share_pct: number | null
           source_party_id: string | null
@@ -1669,6 +1670,7 @@ export type Database = {
       run_daily_follow_ups_now: { Args: never; Returns: Json }
       run_daily_premium_follow_ups: { Args: never; Returns: Json }
       run_daily_premium_follow_ups_now: { Args: never; Returns: Json }
+      search_norm: { Args: { t: string }; Returns: string }
       setting_bool: {
         Args: { p_default: boolean; p_key: string }
         Returns: boolean

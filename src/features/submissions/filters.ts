@@ -1,24 +1,11 @@
-import type { SubmissionStatus } from '@/lib/status'
-import { STATUSES } from '@/lib/status'
+import { quoteValue, type SearchContext } from '@/features/search/query'
 
-/** Register filters, stored in the URL so dashboard tiles and links can pre-filter the register. */
-export type SubmissionFilters = {
-  q: string
-  status: SubmissionStatus[]
-  mga: string
-  broker: string
-  lob: string
-  uw: string
-  ccy: string
-  from: string // received from (YYYY-MM-DD)
-  to: string
-  boundFrom: string // bound date from
-  boundTo: string
-  overdue: boolean // follow-up overdue
-  expired: boolean // offer validity passed
-  sort: SortKey
-  dir: 'asc' | 'desc'
-}
+/**
+ * The register's URL state: the search bar's text (`q`) and the sort. Every
+ * filter is part of `q` (src/features/search/query.ts), so a search can be
+ * bookmarked or sent to a colleague, and Back / Forward step through searches.
+ */
+export type RegisterState = { q: string; sort: SortKey; dir: 'asc' | 'desc' }
 
 export const SORT_KEYS = [
   'ref_no', 'received_at', 'insured_name', 'mga_name', 'broker_name', 'lob_name', 'status', 'currency',
@@ -26,48 +13,58 @@ export const SORT_KEYS = [
 ] as const
 export type SortKey = (typeof SORT_KEYS)[number]
 
-export const EMPTY_FILTERS: SubmissionFilters = {
-  q: '', status: [], mga: '', broker: '', lob: '', uw: '', ccy: '', from: '', to: '', boundFrom: '', boundTo: '',
-  overdue: false, expired: false, sort: 'received_at', dir: 'desc',
-}
-
-export function parseFilters(p: URLSearchParams): SubmissionFilters {
+export function parseRegister(p: URLSearchParams): RegisterState {
   const sort = p.get('sort') as SortKey | null
   return {
     q: p.get('q') ?? '',
-    status: (p.get('status') ?? '').split(',').filter((s): s is SubmissionStatus => STATUSES.includes(s as SubmissionStatus)),
-    mga: p.get('mga') ?? '',
-    broker: p.get('broker') ?? '',
-    lob: p.get('lob') ?? '',
-    uw: p.get('uw') ?? '',
-    ccy: p.get('ccy') ?? '',
-    from: p.get('from') ?? '',
-    to: p.get('to') ?? '',
-    boundFrom: p.get('boundFrom') ?? '',
-    boundTo: p.get('boundTo') ?? '',
-    overdue: p.get('overdue') === '1',
-    expired: p.get('expired') === '1',
     sort: sort && SORT_KEYS.includes(sort) ? sort : 'received_at',
     dir: p.get('dir') === 'asc' ? 'asc' : 'desc',
   }
 }
 
-export function filtersToParams(f: SubmissionFilters): URLSearchParams {
+export function registerParams(s: RegisterState): URLSearchParams {
   const p = new URLSearchParams()
-  if (f.q) p.set('q', f.q)
-  if (f.status.length) p.set('status', f.status.join(','))
-  for (const k of ['mga', 'broker', 'lob', 'uw', 'ccy', 'from', 'to', 'boundFrom', 'boundTo'] as const) if (f[k]) p.set(k, f[k])
-  if (f.overdue) p.set('overdue', '1')
-  if (f.expired) p.set('expired', '1')
-  if (f.sort !== 'received_at') p.set('sort', f.sort)
-  if (f.dir !== 'desc') p.set('dir', f.dir)
+  if (s.q) p.set('q', s.q)
+  if (s.sort !== 'received_at') p.set('sort', s.sort)
+  if (s.dir !== 'desc') p.set('dir', s.dir)
   return p
 }
 
-export function activeFilterCount(f: SubmissionFilters) {
-  return (
-    (f.q ? 1 : 0) + (f.status.length ? 1 : 0) +
-    (['mga', 'broker', 'lob', 'uw', 'ccy', 'from', 'to', 'boundFrom', 'boundTo'] as const).filter((k) => f[k]).length +
-    (f.overdue ? 1 : 0) + (f.expired ? 1 : 0)
-  )
+/** The link to the register for a query (dashboard tiles, counterparty pages). */
+export function registerLink(q: string, sort?: { sort: SortKey; dir: 'asc' | 'desc' }): string {
+  const p = registerParams({ q, sort: sort?.sort ?? 'received_at', dir: sort?.dir ?? 'desc' })
+  const s = p.toString()
+  return s ? `/submissions?${s}` : '/submissions'
+}
+
+const LEGACY = ['status', 'mga', 'broker', 'lob', 'uw', 'ccy', 'from', 'to', 'boundFrom', 'boundTo', 'overdue', 'expired'] as const
+
+export const hasLegacyFilters = (p: URLSearchParams) => LEGACY.some((k) => p.has(k))
+
+/** Old bookmarks (?status=…&mga=<id>&overdue=1) → the same search written in the query language. */
+export function legacyToQuery(p: URLSearchParams, ctx: SearchContext): string {
+  const parts: string[] = []
+  const name = (list: { id: string; name: string }[], id: string | null) => list.find((x) => x.id === id)?.name
+  if (p.get('q')) parts.push(p.get('q')!)
+  const status = (p.get('status') ?? '').split(',').filter(Boolean)
+  if (status.length) parts.push(`status:${status.join('|')}`)
+  const mga = name(ctx.counterparties, p.get('mga'))
+  if (mga) parts.push(`mga:${quoteValue(mga)}`)
+  const broker = p.get('broker') === 'none' ? 'none' : name(ctx.counterparties, p.get('broker'))
+  if (broker) parts.push(`broker:${quoteValue(broker)}`)
+  const lob = ctx.lobs.find((l) => l.id === p.get('lob'))
+  if (lob) parts.push(`lob:${quoteValue(lob.name)}`)
+  const uw = name(ctx.users, p.get('uw'))
+  if (uw) parts.push(`uw:${quoteValue(uw)}`)
+  if (p.get('ccy')) parts.push(`ccy:${p.get('ccy')}`)
+  const range = (field: string, from: string | null, to: string | null) => {
+    if (from && to) parts.push(`${field}:${from}..${to}`)
+    else if (from) parts.push(`${field}>=${from}`)
+    else if (to) parts.push(`${field}<=${to}`)
+  }
+  range('received', p.get('from'), p.get('to'))
+  range('bound', p.get('boundFrom'), p.get('boundTo'))
+  if (p.get('overdue') === '1') parts.push('overdue')
+  if (p.get('expired') === '1') parts.push('expired')
+  return parts.join(', ')
 }

@@ -2,7 +2,8 @@
  * A small in-memory stand-in for the Supabase REST / auth API, so the browser
  * checks and screenshots run the real app with no database (and never touch
  * production). It understands the PostgREST subset the app uses: eq, neq, in,
- * is, gt/gte/lt/lte, ilike, not.is, or=(…), order, limit / offset, exact counts,
+ * is, gt/gte/lt/lte, ilike, not.<op>, or=(…) with nested and(…) / or(…) / not.and(…)
+ * and quoted values (the search bar's filters), order, limit / offset, exact counts,
  * single-object responses, the fx_rate_to_usd RPC, and simple writes.
  */
 import type { BrowserContext, Route } from '@playwright/test'
@@ -30,15 +31,17 @@ function authUser(role: FixtureRole) {
   }
 }
 
-/** Splits `a,b(c,d),e` on top-level commas. */
+/** Splits `a,b(c,d),e` on top-level commas (not inside quotes). */
 function splitTop(s: string): string[] {
   const out: string[] = []
   let depth = 0
   let cur = ''
+  let inQ = false
   for (const ch of s) {
-    if (ch === '(') depth++
-    if (ch === ')') depth--
-    if (ch === ',' && depth === 0) {
+    if (ch === '"') inQ = !inQ
+    if (!inQ && ch === '(') depth++
+    if (!inQ && ch === ')') depth--
+    if (ch === ',' && depth === 0 && !inQ) {
       out.push(cur)
       cur = ''
     } else cur += ch
@@ -54,10 +57,15 @@ function cmp(a: unknown, b: string): number {
 
 /** One `column=op.value` condition. */
 function test(row: Row, col: string, expr: string): boolean {
-  if (expr.startsWith('not.')) return !test(row, col, expr.slice(4))
+  if (expr.startsWith('not.')) {
+    // SQL: NOT on a NULL value is still NULL (the row is not returned)
+    const v = row[col]
+    if ((v === null || v === undefined) && !expr.startsWith('not.is.')) return false
+    return !test(row, col, expr.slice(4))
+  }
   const dot = expr.indexOf('.')
   const op = expr.slice(0, dot)
-  const raw = expr.slice(dot + 1)
+  const raw = expr.slice(dot + 1).replace(/^"(.*)"$/s, '$1')
   const v = row[col]
   switch (op) {
     case 'eq':
@@ -87,21 +95,27 @@ function test(row: Row, col: string, expr: string): boolean {
 
 const RESERVED = new Set(['select', 'order', 'limit', 'offset', 'or', 'and', 'on_conflict', 'columns'])
 
+/** One node of a PostgREST logic tree: and(…), or(…), not.and(…), not.or(…) or col.[not.]op.value. */
+function evalNode(row: Row, node: string): boolean {
+  const m = /^(not\.)?(and|or)\((.*)\)$/s.exec(node)
+  if (m) {
+    const kids = splitTop(m[3])
+    const v = m[2] === 'and' ? kids.every((k) => evalNode(row, k)) : kids.some((k) => evalNode(row, k))
+    return m[1] ? !v : v
+  }
+  const i = node.indexOf('.')
+  return test(row, node.slice(0, i), node.slice(i + 1))
+}
+
 function filterRows(rows: Row[], params: URLSearchParams): Row[] {
   let out = rows
   for (const [key, value] of params) {
     if (RESERVED.has(key)) continue
     out = out.filter((r) => test(r, key, value))
   }
-  const or = params.get('or')
-  if (or) {
-    const parts = splitTop(or.replace(/^\(|\)$/g, ''))
-    out = out.filter((r) =>
-      parts.some((p) => {
-        const i = p.indexOf('.')
-        return test(r, p.slice(0, i), p.slice(i + 1))
-      }),
-    )
+  for (const or of params.getAll('or')) {
+    const parts = splitTop(or.replace(/^\(/, '').replace(/\)$/, ''))
+    out = out.filter((r) => parts.some((p) => evalNode(r, p)))
   }
   return out
 }

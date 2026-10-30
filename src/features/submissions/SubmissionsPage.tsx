@@ -1,29 +1,27 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { Eye, FileSpreadsheet, SlidersHorizontal, FilterX, Loader2, Pencil, Plus, Search, AlertTriangle, Clock } from 'lucide-react'
+import { Eye, FileSpreadsheet, FilterX, Loader2, Pencil, Plus, AlertTriangle, Clock } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/PageHeader'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { NativeSelect } from '@/components/ui/native-select'
 import { Card } from '@/components/ui/card'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { highlight } from '@/components/data/highlight'
 import { EmptyState } from '@/components/EmptyState'
 import { Amount } from '@/components/Amount'
-import { Badge } from '@/components/ui/badge'
-import { usePref } from '@/lib/prefs'
 import { StatusBadge } from '@/components/StatusBadge'
 import { useAuth } from '@/auth/AuthProvider'
 import { can } from '@/lib/roles'
-import { STATUSES, STATUS_SOLID, STATUS_STYLES } from '@/lib/status'
 import { formatAmount, formatDate, formatPct } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { errorMessage } from '@/lib/errors'
-import { useCounterparties, useCurrencies, useLinesOfBusiness, useLocalName, useUsers, userName } from '@/hooks/useReference'
-import { activeFilterCount, EMPTY_FILTERS, filtersToParams, parseFilters, type SortKey, type SubmissionFilters } from './filters'
-import { MAX_ROWS, useSubmissionsList, type SubmissionRow } from './api'
+import { hasLegacyFilters, legacyToQuery, parseRegister, registerParams, type RegisterState, type SortKey } from './filters'
+import { useParsedQuery } from '@/features/search/useSearch'
+import { textWords } from '@/features/search/query'
+import { SearchChips } from '@/features/search/SearchChips'
+import { FOCUS_SEARCH } from '@/features/search/SearchBar'
+import { MAX_ROWS, useSubmissionsList, type RegisterQuery, type SubmissionRow } from './api'
 import { ExportButton, exportSubmissionsXlsx } from './ExportButton'
 import { SubmissionQuickView } from './SubmissionQuickView'
 
@@ -32,46 +30,29 @@ export function SubmissionsPage() {
   const { role } = useAuth()
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
-  const filters = useMemo(() => parseFilters(params), [params])
-  const [search, setSearch] = useState(filters.q)
+  const state = useMemo(() => parseRegister(params), [params])
+  const { ctx, parsed, filter } = useParsedQuery(state.q)
 
-  // Merge into the browser's current URL, not this render's copy: React Router applies URL updates in a
-  // transition, so a debounced search could otherwise resurrect a filter that was just removed.
-  const setFilters = (patch: Partial<SubmissionFilters>) =>
-    setParams(filtersToParams({ ...parseFilters(new URLSearchParams(window.location.search)), ...patch }), { replace: true })
+  // Merge into the browser's current URL, not this render's copy (the search bar writes it too).
+  const setState = (patch: Partial<RegisterState>, push = false) =>
+    setParams(registerParams({ ...parseRegister(new URLSearchParams(window.location.search)), ...patch }), { replace: !push })
 
-  // Debounced search box → URL
+  // Old bookmarks (?status=…&mga=…&overdue=1) become the same search in the query language
   useEffect(() => {
-    if (search === filters.q) return
-    const h = setTimeout(() => setFilters({ q: search }), 300)
-    return () => clearTimeout(h)
+    if (ctx && hasLegacyFilters(params)) setState({ q: legacyToQuery(params, ctx) })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search])
-  useEffect(() => setSearch(filters.q), [filters.q])
+  }, [ctx, params])
 
-  const { data, isLoading, isFetching, error } = useSubmissionsList(filters)
-  const counterparties = useCounterparties()
-  const lobs = useLinesOfBusiness()
-  const currencies = useCurrencies()
-  const users = useUsers()
-  const localName = useLocalName()
-
-  const mgas = counterparties.data?.filter((c) => c.type === 'mga') ?? []
-  const brokers = counterparties.data?.filter((c) => c.type === 'broker') ?? []
-  const underwriters = users.data?.filter((u) => u.role === 'underwriter' || u.role === 'admin') ?? []
+  const query: RegisterQuery = useMemo(() => ({ filter, sort: state.sort, dir: state.dir }), [filter, state.sort, state.dir])
+  const { data, isLoading, isFetching, error } = useSubmissionsList(query, parsed !== null && !hasLegacyFilters(params))
+  const words = useMemo(() => (parsed ? textWords(parsed) : []), [parsed])
 
   const rows = data?.rows ?? []
   const totalUsd = rows.reduce((s, r) => s + (r.our_gross_premium_usd ?? 0), 0)
-  const filterCount = activeFilterCount(filters)
+  const searching = state.q.trim().length > 0
 
   const [peek, setPeek] = useState<SubmissionRow | null>(null)
-  const [moreOpen, setMoreOpen] = usePref('register.moreFilters', false)
-  const moreCount = [filters.mga, filters.broker, filters.lob, filters.uw, filters.ccy, filters.from, filters.to].filter(Boolean).length
-  const showMore = moreOpen || moreCount > 0
-  const clearFilters = () => {
-    setSearch('')
-    setParams(filtersToParams({ ...EMPTY_FILTERS, sort: filters.sort, dir: filters.dir }), { replace: true })
-  }
+  const clearSearch = () => setState({ q: '' }, true)
 
   const columns: Column<SubmissionRow>[] = [
     {
@@ -126,13 +107,8 @@ export function SubmissionsPage() {
     },
   ]
 
-  const toggleStatus = (s: (typeof STATUSES)[number]) => {
-    const current = parseFilters(new URLSearchParams(window.location.search)).status
-    setFilters({ status: current.includes(s) ? current.filter((x) => x !== s) : [...current, s] })
-  }
-
   const sortBy = (key: SortKey) =>
-    setFilters(filters.sort === key ? { dir: filters.dir === 'asc' ? 'desc' : 'asc' } : { sort: key, dir: key === 'received_at' ? 'desc' : 'asc' })
+    setState(state.sort === key ? { dir: state.dir === 'asc' ? 'desc' : 'asc' } : { sort: key, dir: key === 'received_at' ? 'desc' : 'asc' })
 
   return (
     <>
@@ -141,7 +117,7 @@ export function SubmissionsPage() {
         subtitle={t('pages.submissions.subtitle')}
         actions={
           <>
-            <ExportButton filters={filters} disabled={!rows.length} />
+            <ExportButton query={query} disabled={!rows.length} />
             {can.editSubmissions(role) && (
               <Button asChild>
                 <Link to="/submissions/new">
@@ -154,91 +130,20 @@ export function SubmissionsPage() {
         }
       />
 
-      {/* Filters */}
-      <Card className="mb-4 gap-3 py-4">
-        <div className="flex flex-wrap items-center gap-2 px-4">
-          <div className="relative w-full sm:w-72">
-            <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('sub.searchPlaceholder')} className="pl-8" />
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {STATUSES.map((s) => {
-              const on = filters.status.includes(s)
-              return (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => toggleStatus(s)}
-                  aria-pressed={on}
-                  className={cn(
-                    'inline-flex h-8 items-center gap-2 rounded-md border px-3 text-caption font-medium transition-colors',
-                    on ? STATUS_STYLES[s] : 'bg-background text-foreground hover:bg-muted',
-                  )}
-                >
-                  <span className="size-2 rounded-full" style={{ background: STATUS_SOLID[s] }} />
-                  {t(`status.${s}`)}
-                </button>
-              )
-            })}
-          </div>
-          <Button variant="ghost" size="sm" className="ml-auto" aria-expanded={showMore} onClick={() => setMoreOpen(!showMore)}>
-            <SlidersHorizontal />
-            {t('ui.moreFilters')}
-            {moreCount > 0 && <Badge tone="brand" className="num">{moreCount}</Badge>}
-          </Button>
-        </div>
-        {showMore && (
-          <div className="grid grid-cols-2 gap-2 px-4 md:grid-cols-4 xl:grid-cols-7">
-            <NativeSelect value={filters.mga} onChange={(e) => setFilters({ mga: e.target.value })} aria-label={t('fields.mga')}>
-              <option value="">{t('sub.allMgas')}</option>
-              {mgas.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </NativeSelect>
-            <NativeSelect value={filters.broker} onChange={(e) => setFilters({ broker: e.target.value })} aria-label={t('fields.broker')}>
-              <option value="">{t('sub.allBrokers')}</option>
-              <option value="none">{t('sub.directNoBroker')}</option>
-              {brokers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </NativeSelect>
-            <NativeSelect value={filters.lob} onChange={(e) => setFilters({ lob: e.target.value })} aria-label={t('fields.lob')}>
-              <option value="">{t('sub.allLobs')}</option>
-              {lobs.data?.map((l) => <option key={l.id} value={l.id}>{localName(l)}</option>)}
-            </NativeSelect>
-            <NativeSelect value={filters.uw} onChange={(e) => setFilters({ uw: e.target.value })} aria-label={t('fields.underwriter')}>
-              <option value="">{t('sub.allUnderwriters')}</option>
-              {underwriters.map((u) => <option key={u.id} value={u.id}>{userName(u)}</option>)}
-            </NativeSelect>
-            <NativeSelect value={filters.ccy} onChange={(e) => setFilters({ ccy: e.target.value })} aria-label={t('fields.currency')}>
-              <option value="">{t('sub.allCurrencies')}</option>
-              {currencies.data?.map((c) => <option key={c.code} value={c.code}>{c.code}</option>)}
-            </NativeSelect>
-            <Input type="date" value={filters.from} onChange={(e) => setFilters({ from: e.target.value })} aria-label={t('sub.receivedFrom')} title={t('sub.receivedFrom')} />
-            <Input type="date" value={filters.to} onChange={(e) => setFilters({ to: e.target.value })} aria-label={t('sub.receivedTo')} title={t('sub.receivedTo')} />
-          </div>
-        )}
-        <div className="flex flex-wrap items-center justify-between gap-2 px-4 text-caption text-muted-foreground">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-            <label className="flex items-center gap-2 whitespace-nowrap text-foreground">
-              <input type="checkbox" checked={filters.overdue} onChange={(e) => setFilters({ overdue: e.target.checked })} />
-              {t('sub.overdueOnly')}
-            </label>
-            <label className="flex items-center gap-2 whitespace-nowrap text-foreground">
-              <input type="checkbox" checked={filters.expired} onChange={(e) => setFilters({ expired: e.target.checked })} />
-              {t('sub.expiredOnly')}
-            </label>
-            {(filters.boundFrom || filters.boundTo) && (
-              <span className="rounded bg-muted px-2 py-0.5">
-                {t('sub.boundBetween', { from: filters.boundFrom ? formatDate(filters.boundFrom) : '…', to: filters.boundTo ? formatDate(filters.boundTo) : '…' })}
-              </span>
-            )}
-            {(data?.count ?? 0) > MAX_ROWS && <span className="text-warning-600">{t('sub.tooMany', { max: MAX_ROWS })}</span>}
-          </div>
-          {filterCount > 0 && (
-            <Button variant="ghost" size="sm" onClick={clearFilters}>
-              <FilterX />
-              {t('sub.clearFilters')}
-            </Button>
-          )}
-        </div>
-      </Card>
+      {/* How the search bar's query was understood, and how many rows it finds */}
+      {parsed && (
+        <SearchChips
+          query={parsed}
+          onChange={(q) => setState({ q }, true)}
+          count={
+            <span className="inline-flex items-center gap-2">
+              {isLoading ? t('common.loading') : t('search.count', { count: data?.count ?? 0 })}
+              {isFetching && !isLoading && <Loader2 className="size-3.5 animate-spin" />}
+              {(data?.count ?? 0) > MAX_ROWS && <span className="text-warning-600">{t('sub.tooMany', { max: MAX_ROWS })}</span>}
+            </span>
+          }
+        />
+      )}
 
       {/* Table */}
       <Card className="gap-0 py-0">
@@ -251,8 +156,8 @@ export function SubmissionsPage() {
             rows={rows}
             getRowId={(r) => r.id!}
             loading={isLoading}
-            hl={(text) => highlight(text, filters.q)}
-            sort={{ key: filters.sort, dir: filters.dir }}
+            hl={(text) => highlight(text, words)}
+            sort={{ key: state.sort, dir: state.dir }}
             onSort={(k) => sortBy(k as SortKey)}
             onRowClick={(r) => navigate(`/submissions/${r.id}`)}
             rowActions={(r) => (
@@ -289,15 +194,20 @@ export function SubmissionsPage() {
               <EmptyState
                 pictogram="search"
                 title={t('sub.noResults')}
-                action={filterCount > 0 ? <Button variant="outline" size="sm" onClick={clearFilters}><FilterX />{t('sub.clearFilters')}</Button> : undefined}
+                action={
+                  searching ? (
+                    <div className="flex flex-wrap justify-center gap-2">
+                      <Button variant="outline" size="sm" onClick={clearSearch}><FilterX />{t('search.clearSearch')}</Button>
+                      <Button variant="ghost" size="sm" onClick={() => window.dispatchEvent(new Event(FOCUS_SEARCH))}>{t('search.editSearch')}</Button>
+                    </div>
+                  ) : undefined
+                }
               >
-                {filterCount > 0 ? t('ui.emptyFiltered') : undefined}
+                {searching ? t('ui.emptyFiltered') : undefined}
               </EmptyState>
             }
             toolbar={
               <>
-                <span className="num">{t('sub.resultCount', { count: data?.count ?? 0 })}</span>
-                {isFetching && !isLoading && <Loader2 className="size-3.5 animate-spin" />}
                 {rows.length > 0 && (
                   <span className="ml-auto">
                     {t('sub.totalOurGrossUsd')}: <Amount value={totalUsd} human className="font-semibold text-foreground" />

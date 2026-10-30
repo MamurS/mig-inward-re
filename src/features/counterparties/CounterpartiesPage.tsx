@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
+import { registerLink } from '@/features/submissions/filters'
+import { quoteValue } from '@/features/search/query'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowUpRight, Eye, FileStack, Mail, Phone, Search } from 'lucide-react'
 import { PageHeader } from '@/components/PageHeader'
@@ -33,8 +35,8 @@ function contactsOf(j: Json): { name: string; role: string; email: string; phone
   })
 }
 
-export const registerLinkFor = (p: Pick<Party, 'id' | 'type'>) =>
-  p.type === 'mga' ? `/submissions?mga=${p.id}` : p.type === 'broker' ? `/submissions?broker=${p.id}` : '/submissions'
+export const registerLinkFor = (p: Pick<Party, 'id' | 'type' | 'name'>) =>
+  p.type === 'mga' || p.type === 'broker' ? registerLink(`${p.type}:${quoteValue(p.name)}`) : '/submissions'
 
 type Stat = { mga_id: string; broker_id: string | null; status: string; our_gross_premium_usd: number | null }
 

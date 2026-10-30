@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
+import { registerLink } from '@/features/submissions/filters'
+import { quoteValue } from '@/features/search/query'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Clock, FileStack, Loader2, Mail, Pencil, Phone, Plus, Save, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -130,7 +132,7 @@ export function CounterpartyDetailPage() {
   if (!party.data || !form) return <p className="p-6 text-body text-muted-foreground">{t('cp.notFound')}</p>
 
   const p = party.data
-  const registerLink = p.type === 'mga' ? `/submissions?mga=${p.id}` : p.type === 'broker' ? `/submissions?broker=${p.id}` : '/submissions'
+  const listLink = p.type === 'mga' || p.type === 'broker' ? registerLink(`${p.type}:${quoteValue(p.name)}`) : '/submissions'
   const setContact = (i: number, patch: Partial<Contact>) =>
     setForm((f) => f && { ...f, contacts: f.contacts.map((c, j) => (j === i ? { ...c, ...patch } : c)) })
 
@@ -203,7 +205,7 @@ export function CounterpartyDetailPage() {
           <>
             <SavedCheck show={savedShown} />
             <Button variant="outline" asChild>
-              <Link to={registerLink}><FileStack />{t('cp.openInRegister')}</Link>
+              <Link to={listLink}><FileStack />{t('cp.openInRegister')}</Link>
             </Button>
             {editable && (
               <Button onClick={() => setEditing(true)}>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { Menu, Search, X } from 'lucide-react'
+import { Menu, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/auth/AuthProvider'
 import { Button } from '@/components/ui/button'
@@ -10,7 +10,7 @@ import { LanguageSwitcher } from './LanguageSwitcher'
 import { UserMenu } from './UserMenu'
 import { useMyOverdueCount } from '@/features/followups/FollowUps'
 import { AppearanceSync } from './AppearanceDialog'
-import { CommandPalette, OPEN_PALETTE, isMac } from '@/components/CommandPalette'
+import { SearchBar } from '@/features/search/SearchBar'
 
 export function AppLayout() {
   const { t, i18n } = useTranslation()
@@ -91,15 +91,7 @@ export function AppLayout() {
           <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setMobileOpen((o) => !o)}>
             {mobileOpen ? <X /> : <Menu />}
           </Button>
-          <button
-            type="button"
-            onClick={() => window.dispatchEvent(new Event(OPEN_PALETTE))}
-            className="flex h-10 w-full max-w-sm items-center gap-2 rounded-control border bg-background px-3 text-body text-muted-foreground transition-colors hover:border-input hover:text-foreground"
-          >
-            <Search className="size-4" />
-            <span className="flex-1 truncate text-left">{t('ui.palette.button')}</span>
-            <kbd className="hidden rounded-sm border bg-background px-2 text-caption sm:inline">{isMac() ? '⌘K' : 'Ctrl K'}</kbd>
-          </button>
+          <SearchBar />
           <div className="flex-1" />
           <LanguageSwitcher />
           <UserMenu />
@@ -107,7 +99,6 @@ export function AppLayout() {
         <main className="mx-auto w-full max-w-[1600px] flex-1 p-4 md:p-6 lg:p-8">
           <Outlet />
         </main>
-        <CommandPalette />
         <AppearanceSync />
       </div>
     </div>

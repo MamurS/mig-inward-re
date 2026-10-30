@@ -6,6 +6,7 @@ import { Bar, BarChart, CartesianGrid, Cell, LabelList, ResponsiveContainer, Too
 import { AlertTriangle, AlarmClock, CircleCheckBig, FileSearch, Hourglass, Inbox } from 'lucide-react'
 import { PageHeader } from '@/components/PageHeader'
 import { KpiCard } from '@/components/KpiCard'
+import { registerLink } from '@/features/submissions/filters'
 import { Skeleton } from '@/components/Skeleton'
 import { Amount, formatHuman } from '@/components/Amount'
 import { AgingBadge } from '@/components/AgingBadge'
@@ -206,11 +207,11 @@ export function DashboardPage() {
           delta={m.receivedDelta}
           deltaLabel={t('ui.kpi.vsLastMonth')}
           series={m.receivedTrend}
-          to={`/submissions?from=${m.monthStart}`}
+          to={registerLink('thismonth')}
         />
-        <KpiCard icon={FileSearch} label={t('dash.tiles.underReview')} value={m.underReview} sub={t('dash.tiles.notReviewed', { count: m.notReviewed })} to="/submissions?status=under_review" />
-        <KpiCard icon={Hourglass} label={t('dash.tiles.awaiting')} value={m.awaiting} sub={t('ui.kpi.offeredOrNoResponse')} to="/submissions?status=offered,no_response&sort=next_follow_up_at&dir=asc" />
-        <KpiCard icon={AlarmClock} label={t('dash.tiles.overdue')} value={m.overdue} sub={t('ui.kpi.followUpsPastDue')} to="/submissions?overdue=1" alert={m.overdue > 0} />
+        <KpiCard icon={FileSearch} label={t('dash.tiles.underReview')} value={m.underReview} sub={t('dash.tiles.notReviewed', { count: m.notReviewed })} to={registerLink('status:under_review')} />
+        <KpiCard icon={Hourglass} label={t('dash.tiles.awaiting')} value={m.awaiting} sub={t('ui.kpi.offeredOrNoResponse')} to={registerLink('status:offered|no_response', { sort: 'next_follow_up_at', dir: 'asc' })} />
+        <KpiCard icon={AlarmClock} label={t('dash.tiles.overdue')} value={m.overdue} sub={t('ui.kpi.followUpsPastDue')} to={registerLink('overdue')} alert={m.overdue > 0} />
         <KpiCard
           label={t('dash.tiles.boundYtd', { year: thisYear })}
           icon={CircleCheckBig}
@@ -219,7 +220,7 @@ export function DashboardPage() {
           deltaLabel={t('ui.kpi.vsLastYear')}
           sub={<><Amount value={m.boundYtdUsd} currency="USD" human /> {t('dash.tiles.ourGross')}</>}
           series={m.boundTrend}
-          to={`/submissions?status=bound&boundFrom=${m.yearStart}`}
+          to={registerLink(`status:bound, bound>=${m.yearStart}`)}
         />
       </div>
 
@@ -228,7 +229,7 @@ export function DashboardPage() {
         <Card className="gap-0 py-0 xl:col-span-2">
           <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 py-4">
             <CardTitle>{t('dash.oldestOffers')}</CardTitle>
-            <Link to="/submissions?status=offered,no_response&sort=received_at&dir=asc" className="text-body text-link hover:underline">{t('dash.openInRegister')}</Link>
+            <Link to={registerLink('status:offered|no_response', { sort: 'received_at', dir: 'asc' })} className="text-body text-link hover:underline">{t('dash.openInRegister')}</Link>
           </CardHeader>
           {m.oldestOffers.length === 0 ? (
             <EmptyState pictogram="done" title={t('dash.noOpenOffers')} compact />

@@ -4,6 +4,7 @@
  * figure computed by the app's own money maths (src/lib/decimal.ts), so the
  * screens look exactly as they would against the database — without one.
  */
+import { norm } from '../../src/features/search/normalize'
 import { calcFigures } from '../../src/lib/decimal'
 
 type Row = Record<string, unknown>
@@ -204,6 +205,13 @@ SPECS.slice()
       follow_up_overdue: next !== null && next < new Date(now).toISOString(),
       days_since_offered: ['offered', 'no_response'].includes(status) && offeredAt ? Math.floor((now - new Date(offeredAt).getTime()) / DAY) : null,
     }
+    // search_text, as public.search_norm(concat_ws(' ', …)) builds it in the view
+    const ctry = countries.find((c) => c.code === country)
+    const l = lines_of_business.find((x) => x.code === lob)
+    row.search_text = norm(
+      [row.ref_no, insured, risk, mga, broker, broker ?? mga, country, ctry?.name, ctry?.name_ru, ctry?.name_uz, lob, l?.name, l?.name_ru, l?.name_uz, null]
+        .filter((x) => x !== null && x !== undefined).join(' '),
+    )
     submissions.push(row)
   })
 

@@ -243,8 +243,9 @@ data-1 `#468de4` (3.39 : 1 on white) · data-2 `#c37c00` (3.39 : 1 on white) · 
   and row actions stay visible (sticky right column on the Premium tab).
 - **Page header.** Quiet breadcrumbs, the title (headline), a subtitle, the
   actions on the right.
-- **Shadows** — two only: `shadow-card` (hairline lift at rest) and
-  `shadow-pop` (menus, side panels, dialogs).
+- **Shadows** — `shadow-card` (hairline lift at rest), `shadow-pop` (menus,
+  side panels, dialogs), and the search bar's pair: `shadow-search` at rest,
+  `shadow-search-active` on hover, focus and with its suggestions.
 - **Scrim** behind overlays: `bg-scrim/50`.
 
 ## Motion
@@ -255,6 +256,41 @@ IBM Carbon tokens: durations `fast-01` 70 ms, `fast-02` 110 ms, `moderate-01`
 `productive-*` and `expressive-*` (`--ease-*`). The default transition is
 150 ms productive-standard. Under `prefers-reduced-motion: reduce`, all
 animation and transition durations collapse to ~0.
+
+## Search
+
+One search bar, in the top bar — search and filtering in one place (no
+separate register search box, status pills or checkboxes). Google-like: a
+white pill (`rounded-full`, 44 px, hairline border at rest that gives way to
+`shadow-search-active` on hover / focus), search icon left, × to clear,
+`Ctrl K` hint; suggestions open in a panel that continues the pill (same
+width, rounded bottom) and floats over the page, so nothing moves.
+
+**Language** (`src/features/search/query.ts`, one pure parser; unit tests in
+`query.test.ts`): `,` AND · `;` OR between groups · `|` several values ·
+`-` exclude · `"…"` exact phrase · `field:value` with `status mga broker lob
+country ccy uw type ref` · `premium share si` with `> < >= <= ..` (k / m / bn)
+· `received inception expiry bound` dates (`2026-10`, `01.10.2026`, `a..b`,
+`30d`) · keywords `overdue expired noresponse mine today thisweek thismonth`.
+Field names, keywords and status words in EN, RU and UZ; case, diacritics
+and apostrophes ignored (`normalize.ts` = `public.search_norm()`). A word that
+is exactly a status, MGA, line, country or currency filters by it (weak
+synonyms like «new» only when alone in their part); anything not understood
+is searched as text and its chip says so — never an error.
+
+**In the database.** `postgrest.ts` turns the query into one PostgREST logic
+tree on `submissions_v`; free text matches `submissions_v.search_text`. The
+register and the Excel export run the same query.
+
+**Behaviour.** Chips under the page header read the query back (one per part,
+«OR» between groups, × removes that part from the text) with the result count.
+On the register the table filters live (200 ms); elsewhere Enter opens the
+register with the query; a direct hit (ref no. / insured) opens the record.
+`?q=` holds the query (bookmarks, Back / Forward; old `?status=…` links are
+rewritten once). Dashboard and counterparty links fill the bar with the
+equivalent query (`overdue`, `status:offered|no_response`, `mga:"…"`).
+Suggestions: recent searches (per user, with ×), `field:value` matches, direct
+hits, pages; ↑ ↓ Enter Tab Esc; a syntax tip with a help popover.
 
 ## Interaction rules
 
@@ -366,5 +402,6 @@ jokes, no codes.
 | type, spacing, colour scale | `npm test` (`scale.test.ts`) | no off-scale sizes, half steps, hex colours or stray weights |
 | contrast | `npm test` (`contrast.test.ts`) | palette pairing rule, every status/ageing pair, and every colour class pair in `src` ≥ 4.5 : 1 text / 3 : 1 icons |
 | layout stability | `npx playwright test layout-stability` | 7 screens × EN/RU/UZ: no landmark moves on load, hover, focus or menu open |
+| search | `npm test` (`query.test.ts`), `npx playwright test search` | the parser on every example in EN/RU/UZ and messy input; typing, chips, OR, URL / Back, Ctrl K, keyboard suggestions, export = results, the bar in 4 themes × 2 text sizes |
 | components | `npx playwright test components` | density / columns remembered, sticky header, frozen column, highlight, bulk bar, quick views, ⌘K, blur validation, sticky footer, side panels |
 | screenshots | `SHOTS=<dir> npx playwright test screenshots` | before/after captures, offline mock data |

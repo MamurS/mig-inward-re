@@ -697,5 +697,76 @@
       "normal": "Oddiy",
       "large": "Yirik"
     }
+  },
+  "search": {
+    "label": "Arizalarni qidirish va saralash",
+    "placeholder": "Qidiruv yoki filtr: sugʻurtalanuvchi, MGA, holat, valyuta…",
+    "clear": "Qidiruvni tozalash",
+    "suggestions": "Takliflar",
+    "enterToSearch": "Qidirish uchun Enter bosing",
+    "removeRecent": "Soʻnggi qidiruvlardan olib tashlash",
+    "tip": "Maslahat: , — VA, ; — YOKI, - — chiqarib tashlash.",
+    "helpLink": "Sintaksis boʻyicha yordam",
+    "group": {
+      "recent": "Soʻnggi qidiruvlar",
+      "filter": "Filtr",
+      "record": "Arizani ochish",
+      "page": "Oʻtish"
+    },
+    "kind": {
+      "status": "Holat",
+      "mga": "MGA",
+      "broker": "Broker",
+      "lob": "Sugʻurta turi",
+      "ccy": "Valyuta",
+      "country": "Mamlakat",
+      "uw": "Anderrayter",
+      "page": "Boʻlim",
+      "action": "Amal"
+    },
+    "understood": "Soʻrovingiz qanday tushunildi",
+    "or": "yoki",
+    "not": "{{label}} emas",
+    "asText": "matn sifatida qidirildi",
+    "asTextHint": "«{{raw}}» filtr sifatida tanilmadi, shuning uchun matn sifatida qidirildi",
+    "removePart": "«{{label}}»ni qidiruvdan olib tashlash",
+    "clearSearch": "Qidiruvni tozalash",
+    "editSearch": "Soʻrovni oʻzgartirish",
+    "f": {
+      "premium": "Bizning mukofot (USD)",
+      "si": "Sugʻurta summasi (USD)"
+    },
+    "flag": {
+      "overdue": "Eslatma muddati oʻtgan",
+      "expired": "Taklif muddati tugagan",
+      "mine": "Mening arizalarim"
+    },
+    "kw": {
+      "today": "Bugun qabul qilingan",
+      "thisweek": "Shu hafta qabul qilingan",
+      "thismonth": "Shu oy qabul qilingan"
+    },
+    "help": {
+      "title": "Qanday qidirish kerak",
+      "intro": "Soʻzlarni yozing — hamma joydan qidiriladi, yoki filtrlarni qoʻshing. Sinab koʻrish uchun misolni bosing.",
+      "ex": {
+        "text": "Hamma joyda matn: raqam, sugʻurtalanuvchi, risk, MGA, broker, mamlakat, tur, izohlar. Soʻzning bir qismi yetarli.",
+        "phrase": "Aniq ibora",
+        "and": ", — VA: barcha qismlar mos kelishi kerak",
+        "or": "; — guruhlar orasida YOKI",
+        "pipe": "filtr ichida | — qiymatlardan istalgani",
+        "exclude": "- chiqarib tashlaydi (holat, filtr yoki soʻz)",
+        "fields": "Filtrlar: status, mga, broker, lob, country, ccy, uw, type, ref (yoki holat:, valyuta:, mamlakat: …)",
+        "numbers": "Sonlar: bizning mukofot USD da, ulush %, si (sugʻurta summasi, USD); k, m, bn",
+        "dates": "Sanalar: received, inception, expiry, bound; oraliq .. bilan",
+        "within": "Keyingi (yoki oxirgi) N kun ichida",
+        "keywords": "Kalit soʻzlar: overdue / kechikkan, expired / eskirgan, noresponse, mine / mening, today / bugun, thisweek, thismonth"
+      },
+      "fields": "Holat, MGA, tur yoki valyutaga aynan mos soʻz (tasdiqlandi, USD) filtrga aylanadi; qolgani matn sifatida qidiriladi.",
+      "languages": "Filtr nomlari va soʻzlar ingliz, rus va oʻzbek tillarida tushuniladi: статус:связан, holat:tasdiqlandi, валюта:usd, просрочено, bugun."
+    },
+    "count_one": "{{count}} ta ariza",
+    "count_other": "{{count}} ta ariza",
+    "startTyping": "Nom, raqam yoki filtr yozing, masalan holat:tasdiqlandi"
   }
 }

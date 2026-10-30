@@ -268,10 +268,13 @@ export const SPACING_STEPS = [0.5, 1, 2, 3, 4, 5, 6, 8, 10, 12, 14, 16, 20] as c
 /** Controls (inputs, buttons) 10 px, cards 12 px. */
 export const RADII = { sm: '0.25rem', md: '0.375rem', lg: '0.5rem', control: '0.625rem', xl: '0.75rem', '2xl': '1rem' } as const
 
-/** Fewer shadows: a hairline lift at rest, a soft one for overlays. */
+/** Fewer shadows: a hairline lift at rest, a soft one for overlays, and the
+ * search bar's pair (soft at rest, deeper on hover / focus and with its panel). */
 export const SHADOWS = {
   card: '0 1px 2px 0 rgb(40 34 26 / 0.03)',
   pop: '0 10px 28px -8px rgb(24 20 14 / 0.18), 0 3px 8px -4px rgb(24 20 14 / 0.10)',
+  search: '0 1px 3px 0 rgb(32 33 36 / 0.10), 0 1px 2px -1px rgb(32 33 36 / 0.06)',
+  'search-active': '0 2px 10px 0 rgb(32 33 36 / 0.16), 0 1px 3px 0 rgb(32 33 36 / 0.10)',
 } as const
 
 /** Motion (IBM Carbon): productive for task work, expressive for rare moments. */
