@@ -5,10 +5,10 @@ import { useQuery } from '@tanstack/react-query'
 import { Bar, BarChart, CartesianGrid, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { AlertTriangle, AlarmClock, CircleCheckBig, FileSearch, Hourglass, Inbox } from 'lucide-react'
 import { PageHeader } from '@/components/PageHeader'
-import { KpiCard } from '@/components/KpiCard'
+import { KPI_GRID_5, KPI_SPAN_5, KpiCard } from '@/components/KpiCard'
 import { registerLink } from '@/features/submissions/filters'
 import { Skeleton } from '@/components/Skeleton'
-import { Amount, formatHuman } from '@/components/Amount'
+import { Amount } from '@/components/Amount'
 import { AgingBadge } from '@/components/AgingBadge'
 import { EmptyState } from '@/components/EmptyState'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -17,7 +17,7 @@ import { NativeSelect } from '@/components/ui/native-select'
 import { StatusBadge } from '@/components/StatusBadge'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/auth/AuthProvider'
-import { formatAmount, formatDate, formatLongDate, formatMonthShort, isoDate, locale } from '@/lib/format'
+import { formatAmount, formatDate, formatHuman, formatLongDate, formatMonthShort, isoDate, locale } from '@/lib/format'
 import { errorMessage } from '@/lib/errors'
 import { STATUS_SOLID, type SubmissionStatus } from '@/lib/status'
 import { PremiumDashboard } from '@/features/premium/PremiumDashboard'
@@ -171,8 +171,8 @@ export function DashboardPage() {
     return (
       <>
         <PageHeader title={t('pages.dashboard.title')} subtitle={greeting} />
-        <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
-          {[0, 1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-36 rounded-xl" />)}
+        <div className={`mb-4 ${KPI_GRID_5}`}>
+          {KPI_SPAN_5.map((span, i) => <Skeleton key={i} className={`h-36 rounded-xl ${span}`} />)}
         </div>
         <div className="grid gap-4 xl:grid-cols-2">
           <Skeleton className="h-72 rounded-xl" />
@@ -204,8 +204,9 @@ export function DashboardPage() {
       />
 
       {/* KPIs — each opens the register with the matching filter */}
-      <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+      <div className={`mb-4 ${KPI_GRID_5}`}>
         <KpiCard
+          className={KPI_SPAN_5[0]}
           label={t('dash.tiles.receivedMonth')}
           icon={Inbox}
           value={m.receivedThisMonth}
@@ -214,10 +215,11 @@ export function DashboardPage() {
           series={m.receivedTrend}
           to={registerLink('thismonth')}
         />
-        <KpiCard icon={FileSearch} label={t('dash.tiles.underReview')} value={m.underReview} sub={t('dash.tiles.notReviewed', { count: m.notReviewed })} to={registerLink('status:under_review')} />
-        <KpiCard icon={Hourglass} label={t('dash.tiles.awaiting')} value={m.awaiting} sub={t('ui.kpi.offeredOrNoResponse')} to={registerLink('status:offered|no_response', { sort: 'next_follow_up_at', dir: 'asc' })} />
-        <KpiCard icon={AlarmClock} label={t('dash.tiles.overdue')} value={m.overdue} sub={t('ui.kpi.followUpsPastDue')} to={registerLink('overdue')} alert={m.overdue > 0} />
+        <KpiCard className={KPI_SPAN_5[1]} icon={FileSearch} label={t('dash.tiles.underReview')} value={m.underReview} sub={t('dash.tiles.notReviewed', { count: m.notReviewed })} to={registerLink('status:under_review')} />
+        <KpiCard className={KPI_SPAN_5[2]} icon={Hourglass} label={t('dash.tiles.awaiting')} value={m.awaiting} sub={t('ui.kpi.offeredOrNoResponse')} to={registerLink('status:offered|no_response', { sort: 'next_follow_up_at', dir: 'asc' })} />
+        <KpiCard className={KPI_SPAN_5[3]} icon={AlarmClock} label={t('dash.tiles.overdue')} value={m.overdue} sub={t('ui.kpi.followUpsPastDue')} to={registerLink('overdue')} alert={m.overdue > 0} />
         <KpiCard
+          className={KPI_SPAN_5[4]}
           label={t('dash.tiles.boundYtd', { year: thisYear })}
           icon={CircleCheckBig}
           value={m.boundYtd}

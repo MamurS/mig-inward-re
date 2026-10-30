@@ -3,7 +3,7 @@ import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { Banknote, CircleDollarSign, Flame, FolderOpen, Scale, Wallet } from 'lucide-react'
-import { KpiCard } from '@/components/KpiCard'
+import { KPI_GRID_6, KpiCard } from '@/components/KpiCard'
 import { Amount } from '@/components/Amount'
 import { EmptyState } from '@/components/EmptyState'
 import { Skeleton } from '@/components/Skeleton'
@@ -36,7 +36,7 @@ export function ClaimsDashboard() {
   const [by, setBy] = useState<'mga' | 'lob' | 'year'>('mga')
 
   if (claims.isLoading || payments.isLoading)
-    return <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-3 2xl:grid-cols-6">{[0, 1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-32 rounded-xl" />)}</div>
+    return <div className={`mb-4 ${KPI_GRID_6}`}>{[0, 1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-32 rounded-xl" />)}</div>
   if (claims.error) return <p className="mb-4 text-body text-destructive">{errorMessage(claims.error)}</p>
 
   const rows = claims.data ?? []
@@ -55,7 +55,7 @@ export function ClaimsDashboard() {
   return (
     <section aria-labelledby="dash-claims" className="mb-4 grid gap-4" data-claims-dashboard>
       <h2 id="dash-claims" className="text-title font-semibold">{t('claim.dashTitle')}</h2>
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 2xl:grid-cols-6">
+      <div className={KPI_GRID_6}>
         <KpiCard icon={FolderOpen} label={t('claim.openClaims')} value={open.length} to={cl(OPEN)} />
         <KpiCard icon={Wallet} label={t('claim.outstandingReserves')} value={<Amount value={outstandingUsd} human />} sub="USD" to={cl(OPEN)} />
         <KpiCard icon={Banknote} label={t('claim.paidYear', { year })} value={<Amount value={paidYtd} human />} sub="USD" to={cl('paid>0')} />

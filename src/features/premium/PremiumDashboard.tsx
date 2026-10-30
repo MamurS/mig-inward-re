@@ -1,7 +1,7 @@
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { AlarmClock, Banknote, CalendarRange, Undo2, Wallet } from 'lucide-react'
-import { KpiCard } from '@/components/KpiCard'
+import { KPI_GRID_5, KPI_SPAN_5, KpiCard } from '@/components/KpiCard'
 import { Amount } from '@/components/Amount'
 import { AgingBadge } from '@/components/AgingBadge'
 import { EmptyState } from '@/components/EmptyState'
@@ -36,8 +36,8 @@ export function PremiumDashboard() {
 
   if (overview.isLoading)
     return (
-      <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
-        {[0, 1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-32 rounded-xl" />)}
+      <div className={`mb-4 ${KPI_GRID_5}`}>
+        {KPI_SPAN_5.map((span, i) => <Skeleton key={i} className={`h-32 rounded-xl ${span}`} />)}
       </div>
     )
   if (overview.error) return <p className="mb-4 text-body text-destructive">{errorMessage(overview.error)}</p>
@@ -49,9 +49,10 @@ export function PremiumDashboard() {
   return (
     <section aria-labelledby="dash-premium" className="mb-4 grid gap-4" data-premium-dashboard>
       <h2 id="dash-premium" className="text-title font-semibold">{t('dash.premium.title')}</h2>
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 2xl:grid-cols-5">
-        <KpiCard icon={Wallet} label={t('dash.premium.outstanding')} value={<Amount value={s.outstandingUsd} human />} sub={<>USD · {t('dash.premium.notDue', { amount: formatAmount(s.notDueUsd) })}</>} to={rcv('')} />
+      <div className={KPI_GRID_5}>
+        <KpiCard className={KPI_SPAN_5[0]} icon={Wallet} label={t('dash.premium.outstanding')} value={<Amount value={s.outstandingUsd} human />} sub={<>USD · {t('dash.premium.notDue', { amount: formatAmount(s.notDueUsd) })}</>} to={rcv('')} />
         <KpiCard
+          className={KPI_SPAN_5[1]}
           icon={AlarmClock}
           label={t('dash.premium.overdue')}
           value={<Amount value={s.overdueUsd} human />}
@@ -59,9 +60,10 @@ export function PremiumDashboard() {
           to={rcv('overdue')}
           alert={s.overdueUsd > 0}
         />
-        <KpiCard icon={Banknote} label={t('dash.premium.receivedMonth')} value={<Amount value={s.receivedMonthUsd} human />} sub="USD" to={rcp('received:thismonth')} />
-        <KpiCard icon={CalendarRange} label={t('dash.premium.receivedYear', { year })} value={<Amount value={s.receivedYearUsd} human />} sub="USD" to={rcp(`received>=${year}-01-01`)} />
+        <KpiCard className={KPI_SPAN_5[2]} icon={Banknote} label={t('dash.premium.receivedMonth')} value={<Amount value={s.receivedMonthUsd} human />} sub="USD" to={rcp('received:thismonth')} />
+        <KpiCard className={KPI_SPAN_5[3]} icon={CalendarRange} label={t('dash.premium.receivedYear', { year })} value={<Amount value={s.receivedYearUsd} human />} sub="USD" to={rcp(`received>=${year}-01-01`)} />
         <KpiCard
+          className={KPI_SPAN_5[4]}
           icon={Undo2}
           label={t('rcv.payableTile')}
           value={<Amount value={s.payableUsd} human />}

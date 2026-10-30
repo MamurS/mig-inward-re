@@ -9,12 +9,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/Skeleton'
-import { Amount, formatHuman } from '@/components/Amount'
+import { Amount } from '@/components/Amount'
 import { EmptyState } from '@/components/EmptyState'
 import { useAuth } from '@/auth/AuthProvider'
 import { can } from '@/lib/roles'
 import { CLAIM_DOC_TYPES, CLAIM_NEXT } from '@/lib/status'
-import { formatAmount, formatDate, formatDateTime, formatPct } from '@/lib/format'
+import { formatAmount, formatDate, formatDateTime, formatHuman, formatPct } from '@/lib/format'
 import { errorMessage } from '@/lib/errors'
 import { useUsers, userName } from '@/hooks/useReference'
 import { useAuditLog, useEntityDocuments, useEntityFollowUps } from '@/features/submissions/api'
@@ -151,7 +151,7 @@ export function ClaimDetailPage() {
                   <LineChart data={chart} margin={{ top: 4, right: 12, left: 4, bottom: 0 }}>
                     <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="var(--color-slate-200)" />
                     <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: 'var(--color-slate-600)' }} />
-                    <YAxis tickFormatter={(v) => formatHuman(v as number)} tickLine={false} axisLine={false} width={48} tick={{ fontSize: 12, fill: 'var(--color-slate-600)' }} />
+                    <YAxis tickFormatter={(v) => formatHuman(v as number)} tickLine={false} axisLine={false} width={80} tick={{ fontSize: 12, fill: 'var(--color-slate-600)' }} />
                     <Tooltip formatter={(v, n) => [`${formatAmount(v as number)} ${ccy}`, n === 'outstanding' ? t('claim.outstanding') : t('claim.paid')]} />
                     <Line type="stepAfter" dataKey="outstanding" stroke="var(--color-brand-600)" strokeWidth={2} dot={false} isAnimationActive={false} />
                     <Line type="stepAfter" dataKey="paid" stroke="var(--color-success-600)" strokeWidth={2} strokeDasharray="4 3" dot={false} isAnimationActive={false} />

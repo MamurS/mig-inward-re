@@ -19,10 +19,21 @@ export function formatMoney(value: number | string | null | undefined, currency?
   return s === '—' || !currency ? s : `${s} ${currency}`
 }
 
-/** Compact USD for tiles / charts: 1.2M */
-export function formatCompactUsd(value: number | null | undefined): string {
-  if (value === null || value === undefined) return '—'
-  return new Intl.NumberFormat(locale(), { style: 'currency', currency: 'USD', notation: 'compact', maximumFractionDigits: 1 }).format(value)
+/**
+ * Human scale for tiles, charts and summaries: 12 000 → «12,00 тыс.»,
+ * 1 250 000 → «1,25 млн» («12.00K», «1.25M» in English). Scaled figures always
+ * carry two decimals, so neighbours line up («12,00 тыс.» next to «83,01 тыс.»);
+ * figures under a thousand are already human and keep up to two decimals.
+ */
+export function compactNumber(value: number, loc: string): string {
+  // 999.996 rounds up to «1,00 тыс.»: it is scaled too
+  const scaled = Math.abs(value) >= 999.995
+  return new Intl.NumberFormat(loc, { notation: 'compact', minimumFractionDigits: scaled ? 2 : 0, maximumFractionDigits: 2 }).format(value)
+}
+
+/** {@link compactNumber} in the interface language. */
+export function formatHuman(value: number): string {
+  return compactNumber(value, locale())
 }
 
 /** Percent stored as 12.5 → "12.5 %" (up to 6 decimals, trailing zeros dropped). */
