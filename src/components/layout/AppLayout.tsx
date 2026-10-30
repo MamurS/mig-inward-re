@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { FlaskConical, Menu, X } from 'lucide-react'
@@ -72,7 +72,8 @@ export function AppLayout() {
   )
 
   return (
-    <div className="flex min-h-screen flex-col">
+    // --app-top: the height of what stays pinned at the top (demo banner + header), for sticky panels below it
+    <div className="flex min-h-screen flex-col" style={{ '--app-top': demo.on ? '6.5rem' : '4rem' } as CSSProperties}>
       {/* Demo mode: a banner across the top, always in view, so demo figures are never taken for real ones */}
       {demo.on && (
         <div role="alert" data-demo-banner className="sticky top-0 z-40 flex h-10 shrink-0 items-center justify-center gap-3 bg-warning-600 px-4 text-small text-white">

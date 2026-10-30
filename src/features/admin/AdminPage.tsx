@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { PageHeader } from '@/components/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DateInput } from '@/components/ui/date-input'
 import { NativeSelect } from '@/components/ui/native-select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -168,7 +169,7 @@ function UsersTab() {
                 <TableCell className="text-body">{u.email}</TableCell>
                 <TableCell>
                   <div className="w-40">
-                    <NativeSelect value={e.role} onChange={(ev) => setEdits({ ...edits, [u.id]: { ...e, role: ev.target.value as AppRole } })} className="h-8" aria-label={`${t('admin.users.role')} · ${u.email}`}>
+                    <NativeSelect value={e.role} onChange={(ev) => setEdits({ ...edits, [u.id]: { ...e, role: ev.target.value as AppRole } })} className="min-h-8 py-1" aria-label={`${t('admin.users.role')} · ${u.email}`}>
                       <option value="">{t('admin.users.noRole')}</option>
                       {ALL_ROLES.map((r) => <option key={r} value={r}>{t(`roles.${r}`)}</option>)}
                     </NativeSelect>
@@ -555,7 +556,7 @@ function FxTab() {
             </div>
           </Field>
           <Field label={t('admin.fx.date')}>
-            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-40" />
+            <DateInput value={date} onChange={setDate} className="w-40" />
           </Field>
           <Field label={t('admin.fx.rate', { ccy: ccy || '…' })}>
             <Input inputMode="decimal" value={rate} onChange={(e) => setRate(e.target.value)} className="w-48 text-right" placeholder="0.0000785" />

@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DateInput } from '@/components/ui/date-input'
 import { Textarea } from '@/components/ui/textarea'
 import { Field } from '@/components/Field'
 import { supabase } from '@/lib/supabase'
@@ -86,7 +87,7 @@ export function AdjustmentDialog({
         </DialogHeader>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label={kind === 'return' ? t('prem.payBy') : t('prem.dueDate')} required>
-            <Input type="date" value={due} onChange={(e) => setDue(e.target.value)} />
+            <DateInput value={due} onChange={setDue} />
           </Field>
           <Field label={t('prem.grossAmount', { ccy: s.currency })} required hint={t('prem.positiveHint')}>
             <Input inputMode="decimal" className="text-right num" value={gross} onChange={(e) => setGross(e.target.value)} />
@@ -220,7 +221,7 @@ export function SettleReturnDialog({ installment: i, onClose }: { installment: I
               <DialogDescription>{t('prem.settleExplain', { amount: formatAmount(i.payable_amount), ccy: i.currency })}</DialogDescription>
             </DialogHeader>
             <Field label={t('prem.paidToMgaOn')} required>
-              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+              <DateInput value={date} onChange={setDate} />
             </Field>
             {error && <p role="alert" className="rounded-md bg-danger-100 p-3 text-body text-danger-700">{error}</p>}
             <DialogFooter>

@@ -698,7 +698,14 @@
     "overdueFollowUps": "Muddati oʻtgan eslatmalar: {{count}}",
     "noSubmissionsYet": "Ulardan hali ariza kelmagan",
     "moreFilters": "Qoʻshimcha filtrlar",
-    "resetColumns": "Standart holatga qaytarish"
+    "resetColumns": "Standart holatga qaytarish",
+    "date": {
+      "pattern": "kk.oo.yyyy",
+      "openCalendar": "Sanani tanlash",
+      "prevMonth": "Oldingi oy",
+      "nextMonth": "Keyingi oy",
+      "today": "Bugun"
+    }
   },
   "prem": {
     "tab": "Mukofot",

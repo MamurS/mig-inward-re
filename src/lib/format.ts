@@ -99,6 +99,56 @@ export function formatBytes(bytes: number | null | undefined): string {
   return `${n.toFixed(i ? 1 : 0)} ${units[i]}`
 }
 
+/*
+ * The app's date field (src/components/ui/date-input.tsx) shows and takes dates
+ * the way the UI language writes them: 31.12.2027 in RU / UZ, 31/12/2027 in EN.
+ * The stored value stays ISO (YYYY-MM-DD).
+ */
+const dateSep = () => (locale().startsWith('en') ? '/' : '.')
+
+/** ISO → «31.12.2027» / «31/12/2027»; '' when empty or not a date. */
+export function formatDateInput(iso: string | null | undefined): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso ?? '')
+  return m ? [m[3], m[2], m[1]].join(dateSep()) : ''
+}
+
+/**
+ * What a person typed → ISO, or null when it is not a real date. Day first in
+ * every language (31.12.2027, 31/12/2027, 31-12-2027, two-digit years as 20xx);
+ * ISO (2027-12-31) is taken as well.
+ */
+export function parseDateInput(text: string): string | null {
+  const s = text.trim()
+  let y: number, mo: number, d: number
+  const iso = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(s)
+  const dmy = /^(\d{1,2})[./\-\s](\d{1,2})[./\-\s](\d{4}|\d{2})$/.exec(s)
+  if (iso) [y, mo, d] = [Number(iso[1]), Number(iso[2]), Number(iso[3])]
+  else if (dmy) [d, mo, y] = [Number(dmy[1]), Number(dmy[2]), dmy[3].length === 2 ? 2000 + Number(dmy[3]) : Number(dmy[3])]
+  else return null
+  if (y < 1900 || y > 2200 || mo < 1 || mo > 12 || d < 1) return null
+  const dt = new Date(y, mo - 1, d)
+  if (dt.getMonth() !== mo - 1 || dt.getDate() !== d) return null
+  return isoDate(dt)
+}
+
+/** «October 2026», «Октябрь 2026», «Oktabr 2026» — a calendar's heading. */
+export function formatMonthYear(year: number, monthIndex: number): string {
+  if (isUz()) return `${UZ_MONTHS[monthIndex].charAt(0).toUpperCase()}${UZ_MONTHS[monthIndex].slice(1)} ${year}`
+  const s = new Intl.DateTimeFormat(locale(), { month: 'long' }).format(new Date(year, monthIndex, 1))
+  return `${s.charAt(0).toUpperCase()}${s.slice(1)} ${year}`
+}
+
+/** Short weekday names, Monday first: «Mo» … «Su», «Пн» … «Вс», «Du» … «Ya». */
+export function weekdaysShort(): string[] {
+  if (isUz()) return ['Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh', 'Ya']
+  const f = new Intl.DateTimeFormat(locale(), { weekday: 'short' })
+  // 2024-01-01 was a Monday
+  return Array.from({ length: 7 }, (_, i) => {
+    const s = f.format(new Date(2024, 0, 1 + i)).replace('.', '')
+    return s.charAt(0).toUpperCase() + s.slice(1, 2)
+  })
+}
+
 /** YYYY-MM-DD for <input type="date"> in local time */
 export function isoDate(d: Date = new Date()): string {
   const p = (n: number) => String(n).padStart(2, '0')

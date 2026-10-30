@@ -702,7 +702,14 @@
     "overdueFollowUps": "Просроченных напоминаний: {{count}}",
     "noSubmissionsYet": "От них ещё не было заявок",
     "moreFilters": "Ещё фильтры",
-    "resetColumns": "Сбросить по умолчанию"
+    "resetColumns": "Сбросить по умолчанию",
+    "date": {
+      "pattern": "дд.мм.гггг",
+      "openCalendar": "Выбрать дату",
+      "prevMonth": "Предыдущий месяц",
+      "nextMonth": "Следующий месяц",
+      "today": "Сегодня"
+    }
   },
   "prem": {
     "tab": "Премия",

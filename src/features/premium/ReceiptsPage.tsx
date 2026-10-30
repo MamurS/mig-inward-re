@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/PageHeader'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DateInput } from '@/components/ui/date-input'
 import { Textarea } from '@/components/ui/textarea'
 import { NativeSelect } from '@/components/ui/native-select'
 import { Badge } from '@/components/ui/badge'
@@ -217,7 +218,7 @@ function NewReceiptDialog({ open, onClose }: { open: boolean; onClose: () => voi
         </DialogHeader>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label={t('rcp.receivedDate')} required>
-            <Input type="date" value={form.received_date} onChange={(e) => setForm({ ...form, received_date: e.target.value })} />
+            <DateInput value={form.received_date} onChange={(v) => setForm({ ...form, received_date: v })} />
           </Field>
           <Field label={t('rcp.payer')} required>
             <NativeSelect value={form.payer_id} onChange={(e) => setForm({ ...form, payer_id: e.target.value })}>

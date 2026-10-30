@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DateInput } from '@/components/ui/date-input'
 import { Textarea } from '@/components/ui/textarea'
 import { NativeSelect } from '@/components/ui/native-select'
 import { Field } from '@/components/Field'
@@ -162,10 +163,10 @@ export function BinderDialog({ open, onClose, binder, lobs, onSaved }: { open: b
             </NativeSelect>
           </Field>
           <Field label={t('binder.periodFrom')} required error={err('period_from')}>
-            <Input type="date" value={form.period_from} onChange={set('period_from')} />
+            <DateInput value={form.period_from} onChange={(v) => setForm((f) => ({ ...f, period_from: v }))} />
           </Field>
           <Field label={t('binder.periodTo')} required error={err('period_to')}>
-            <Input type="date" value={form.period_to} onChange={set('period_to')} />
+            <DateInput value={form.period_to} onChange={(v) => setForm((f) => ({ ...f, period_to: v }))} />
           </Field>
           <Field label={t('fields.currency')} required>
             <NativeSelect value={form.currency} onChange={set('currency')}>

@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DateInput } from '@/components/ui/date-input'
 import { Badge } from '@/components/ui/badge'
 import { Field } from '@/components/Field'
 import { SegmentedControl } from '@/components/SegmentedControl'
@@ -133,7 +134,7 @@ export function ScheduleEditor({
         {mode === 'single' && (
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label={t('prem.dueDate')} required>
-              <Input type="date" value={single.due_date} onChange={(e) => setSingle({ ...single, due_date: e.target.value })} />
+              <DateInput value={single.due_date} onChange={(v) => setSingle({ ...single, due_date: v })} />
             </Field>
             <Field label={t('prem.grossAmount', { ccy: s.currency })} required>
               <Input inputMode="decimal" className="text-right num" value={single.gross_amount} onChange={(e) => setSingle({ ...single, gross_amount: e.target.value })} />
@@ -147,7 +148,7 @@ export function ScheduleEditor({
               <Input type="number" min={2} max={24} className="num" value={count} onChange={(e) => setCount(e.target.value)} />
             </Field>
             <Field label={t('prem.firstDue')} required>
-              <Input type="date" value={firstDue} onChange={(e) => setFirstDue(e.target.value)} />
+              <DateInput value={firstDue} onChange={setFirstDue} />
             </Field>
             <Field label={t('prem.every')} className="sm:col-span-2">
               <SegmentedControl
@@ -166,7 +167,7 @@ export function ScheduleEditor({
             {custom.map((r, i) => (
               <div key={i} className="grid grid-cols-[2rem_minmax(0,1fr)_minmax(0,1fr)_2.25rem] items-center gap-2">
                 <span className="text-caption text-muted-foreground num">#{i + 1}</span>
-                <Input type="date" aria-label={t('prem.dueDate')} value={r.due_date} onChange={(e) => setCustomRow(i, { due_date: e.target.value })} />
+                <DateInput aria-label={t('prem.dueDate')} value={r.due_date} onChange={(v) => setCustomRow(i, { due_date: v })} />
                 <Input inputMode="decimal" aria-label={t('prem.grossAmount', { ccy: s.currency })} className="text-right num" value={r.gross_amount} onChange={(e) => setCustomRow(i, { gross_amount: e.target.value })} />
                 <Button variant="ghost" size="icon" aria-label={t('common.remove')} disabled={custom.length <= 1} onClick={() => setCustom(custom.filter((_, j) => j !== i))}>
                   <Trash2 />

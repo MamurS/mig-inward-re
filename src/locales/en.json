@@ -698,7 +698,14 @@
     "overdueFollowUps": "Overdue follow-ups: {{count}}",
     "noSubmissionsYet": "No submissions from them yet",
     "moreFilters": "More filters",
-    "resetColumns": "Reset to default"
+    "resetColumns": "Reset to default",
+    "date": {
+      "pattern": "dd/mm/yyyy",
+      "openCalendar": "Choose a date",
+      "prevMonth": "Previous month",
+      "nextMonth": "Next month",
+      "today": "Today"
+    }
   },
   "prem": {
     "tab": "Premium",

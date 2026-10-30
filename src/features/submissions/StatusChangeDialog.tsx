@@ -5,6 +5,7 @@ import { AlertTriangle, Loader2, Paperclip } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DateInput } from '@/components/ui/date-input'
 import { Textarea } from '@/components/ui/textarea'
 import { NativeSelect } from '@/components/ui/native-select'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -134,7 +135,7 @@ export function StatusChangeDialog({ submission, target, documents, onClose, onD
                 <Input inputMode="decimal" value={written} onChange={(e) => setWritten(e.target.value)} className="text-right" autoFocus />
               </Field>
               <Field label={t('fields.offerValidUntil')} required>
-                <Input type="date" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} />
+                <DateInput value={validUntil} onChange={setValidUntil} />
               </Field>
               <p className="text-caption text-muted-foreground sm:col-span-2">{t('statusDlg.offerFollowUpNote')}</p>
             </div>

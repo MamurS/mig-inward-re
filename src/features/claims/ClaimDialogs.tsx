@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DateInput } from '@/components/ui/date-input'
 import { Textarea } from '@/components/ui/textarea'
 import { NativeSelect } from '@/components/ui/native-select'
 import { Field } from '@/components/Field'
@@ -132,7 +133,7 @@ export function ReserveDialog({ claim, open, onClose }: { claim: ClaimRow; open:
             <Input id="reserve-amount" inputMode="decimal" className="text-right tabular-nums" value={amount} onChange={(e) => setAmount(e.target.value)} />
           </Field>
           <Field label={t('claim.movementDate')} required htmlFor="reserve-date">
-            <Input id="reserve-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+            <DateInput id="reserve-date" value={date} onChange={setDate} />
           </Field>
           <Field label={t('claim.reason')} required className="sm:col-span-2" htmlFor="reserve-reason">
             <Input id="reserve-reason" value={reason} onChange={(e) => setReason(e.target.value)} />
@@ -177,7 +178,7 @@ export function RecoveryDialog({ claim, open, onClose }: { claim: ClaimRow; open
             <Input id="recovery-amount" inputMode="decimal" className="text-right tabular-nums" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
           </Field>
           <Field label={t('claim.recoveryDate')} required htmlFor="recovery-date">
-            <Input id="recovery-date" type="date" value={form.recovery_date} onChange={(e) => setForm({ ...form, recovery_date: e.target.value })} />
+            <DateInput id="recovery-date" value={form.recovery_date} onChange={(v) => setForm({ ...form, recovery_date: v })} />
           </Field>
           <Field label={t('fields.notes')} className="sm:col-span-2" htmlFor="recovery-notes">
             <Input id="recovery-notes" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
@@ -247,7 +248,7 @@ export function PaymentDialog({ claim, open, onClose }: { claim: ClaimRow; open:
             <Input id="payment-amount" inputMode="decimal" className="text-right tabular-nums" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
           </Field>
           <Field label={t('claim.paymentDate')} required htmlFor="payment-date">
-            <Input id="payment-date" type="date" value={form.payment_date} onChange={(e) => setForm({ ...form, payment_date: e.target.value })} />
+            <DateInput id="payment-date" value={form.payment_date} onChange={(v) => setForm({ ...form, payment_date: v })} />
           </Field>
           {!offset && (
             <>

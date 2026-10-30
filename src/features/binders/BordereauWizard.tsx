@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DateInput } from '@/components/ui/date-input'
 import { Textarea } from '@/components/ui/textarea'
 import { NativeSelect } from '@/components/ui/native-select'
 import { Badge } from '@/components/ui/badge'
@@ -283,7 +284,7 @@ export function BordereauWizard({ open, onClose, binder, lobs, periods, initialK
               </NativeSelect>
             </Field>
             <Field label={t('bdx.receivedDate')} required>
-              <Input type="date" value={received} max={isoDate()} onChange={(e) => setReceived(e.target.value)} />
+              <DateInput value={received} max={isoDate()} onChange={setReceived} />
             </Field>
             <Field label={t('bdx.file')} required hint={t('bdx.fileHint')}>
               <Input type="file" accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(e) => void onFile(e.target.files?.[0] ?? null)} data-bdx-file />

@@ -6,6 +6,7 @@ import { CalendarClock, CheckCircle2, Circle, Clock, Eye, Loader2, Plus } from '
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DateInput } from '@/components/ui/date-input'
 import { Textarea } from '@/components/ui/textarea'
 import { NativeSelect } from '@/components/ui/native-select'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -149,7 +150,7 @@ export function CloseFollowUpDialog({ followUp, onClose }: { followUp: FollowUp 
           </label>
           {scheduleNext && (
             <Field label={t('fu.nextDue')}>
-              <Input type="date" value={nextDate} onChange={(e) => setNextDate(e.target.value)} min={isoDate()} />
+              <DateInput value={nextDate} onChange={setNextDate} min={isoDate()} />
             </Field>
           )}
           {error && <p className="rounded-md bg-destructive/10 p-3 text-body text-destructive">{error}</p>}
@@ -211,7 +212,7 @@ export function RescheduleFollowUpDialog({ followUp, onClose }: { followUp: Foll
         </DialogHeader>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label={t('fu.due')} required>
-            <Input type="date" value={due} onChange={(e) => setDue(e.target.value)} />
+            <DateInput value={due} onChange={setDue} />
           </Field>
           <Field label={t('fu.assignedTo')}>
             <NativeSelect value={assignee} onChange={(e) => setAssignee(e.target.value)}>
@@ -307,7 +308,7 @@ export function AddFollowUpButton({
               <SegmentedControl ariaLabel={t('fu.type')} value={type} onChange={setType} options={types.map((x) => ({ value: x, label: t(`fuType.${x}`) }))} />
             </Field>
             <Field label={t('fu.due')} required>
-              <Input type="date" value={due} onChange={(e) => setDue(e.target.value)} />
+              <DateInput value={due} onChange={setDue} />
             </Field>
             <Field label={t('fu.titleField')} className="sm:col-span-2">
               <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t('fu.titlePlaceholder')} />

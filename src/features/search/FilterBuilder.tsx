@@ -4,6 +4,7 @@ import { Popover as P } from 'radix-ui'
 import { Check, ChevronDown, ListFilter } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DateInput } from '@/components/ui/date-input'
 import { cn } from '@/lib/utils'
 import { compact } from './normalize'
 import { fieldOf, type ListField, type Option, type ParsedQuery, type SearchContext } from './query'
@@ -100,22 +101,37 @@ export function FilterBuilder({
         <fieldset key={id} className="grid content-start gap-2">
           <legend className="mb-2 text-small font-medium text-foreground">{fieldLabel(item.field)}</legend>
           <div className="grid grid-cols-2 gap-2">
-            <Input
-              type={dates ? 'date' : 'text'}
-              inputMode={dates ? undefined : 'decimal'}
-              aria-label={`${fieldLabel(item.field)} — ${t(dates ? 'search.builder.from' : 'search.builder.min')}`}
-              placeholder={dates ? undefined : t('search.builder.min')}
-              value={r.from}
-              onChange={(e) => setRange(item.field, { from: e.target.value })}
-            />
-            <Input
-              type={dates ? 'date' : 'text'}
-              inputMode={dates ? undefined : 'decimal'}
-              aria-label={`${fieldLabel(item.field)} — ${t(dates ? 'search.builder.to' : 'search.builder.max')}`}
-              placeholder={dates ? undefined : t('search.builder.max')}
-              value={r.to}
-              onChange={(e) => setRange(item.field, { to: e.target.value })}
-            />
+            {dates ? (
+              <>
+                <DateInput
+                  aria-label={`${fieldLabel(item.field)} — ${t('search.builder.from')}`}
+                  value={r.from}
+                  onChange={(v) => setRange(item.field, { from: v })}
+                />
+                <DateInput
+                  aria-label={`${fieldLabel(item.field)} — ${t('search.builder.to')}`}
+                  value={r.to}
+                  onChange={(v) => setRange(item.field, { to: v })}
+                />
+              </>
+            ) : (
+              <>
+                <Input
+                  inputMode="decimal"
+                  aria-label={`${fieldLabel(item.field)} — ${t('search.builder.min')}`}
+                  placeholder={t('search.builder.min')}
+                  value={r.from}
+                  onChange={(e) => setRange(item.field, { from: e.target.value })}
+                />
+                <Input
+                  inputMode="decimal"
+                  aria-label={`${fieldLabel(item.field)} — ${t('search.builder.max')}`}
+                  placeholder={t('search.builder.max')}
+                  value={r.to}
+                  onChange={(e) => setRange(item.field, { to: e.target.value })}
+                />
+              </>
+            )}
           </div>
         </fieldset>
       )

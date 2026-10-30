@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
-import { Controller, useForm, useWatch, type UseFormRegisterReturn } from 'react-hook-form'
+import { Controller, useForm, useWatch, type Control, type UseFormRegisterReturn } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useTranslation } from 'react-i18next'
@@ -10,6 +10,7 @@ import { toast } from 'sonner'
 import { PageHeader } from '@/components/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DateInput } from '@/components/ui/date-input'
 import { Textarea } from '@/components/ui/textarea'
 import { NativeSelect } from '@/components/ui/native-select'
 import { SegmentedControl } from '@/components/SegmentedControl'
@@ -218,7 +219,9 @@ function SubmissionForm({ existing, binderId }: { existing: SubmissionRow | null
   } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: defaults, mode: 'onTouched' })
 
   const v = useWatch({ control })
-  const sourceTouched = useRef(Boolean(existing))
+  // «Received from» follows the broker (or the MGA) until the user picks it themselves
+  const sourceTouched = useRef(false)
+  const sourceAuto = useRef(existing ? existing.broker_id || existing.mga_id || '' : '')
 
   // AI-assisted entry: fields filled from a document stay marked (ring + banner) until the user changes them; nothing is saved until Save
   const aiAvailable = useAiAvailable()
@@ -247,11 +250,15 @@ function SubmissionForm({ existing, binderId }: { existing: SubmissionRow | null
     }
   }, [v, aiFilled, getValues])
 
-  // Default "received from" = broker if there is one, otherwise the MGA (until the user picks it)
+  // Default "received from" = broker if there is one, otherwise the MGA. A value the user picked
+  // (now, or saved earlier and different from that default) is never overwritten.
   useEffect(() => {
-    if (sourceTouched.current) return
-    setValue('source_party_id', v.broker_id || v.mga_id || '', { shouldDirty: true })
-  }, [v.broker_id, v.mga_id, setValue])
+    const next = v.broker_id || v.mga_id || ''
+    const current = getValues('source_party_id')
+    if (sourceTouched.current || (current && current !== sourceAuto.current)) return
+    sourceAuto.current = next
+    if (current !== next) setValue('source_party_id', next, { shouldDirty: true, shouldValidate: Boolean(next) })
+  }, [v.broker_id, v.mga_id, setValue, getValues])
 
   const mgas = counterparties.data?.filter((c) => c.type === 'mga' && (c.active || c.id === v.mga_id)) ?? []
   const binders = useAllBinders(v.business_type === 'binder' && Boolean(v.mga_id), v.mga_id || undefined)
@@ -368,7 +375,7 @@ function SubmissionForm({ existing, binderId }: { existing: SubmissionRow | null
             <CardHeader><CardTitle>{t('sub.section.source')}</CardTitle></CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <Field label={t('fields.receivedAt')} htmlFor="received_at" error={err('received_at')} required>
-                <Input type="date" {...reg('received_at')} />
+                <DateField control={control} name="received_at" invalid={Boolean(errors.received_at)} />
               </Field>
               <Field label={t('fields.mga')} htmlFor="mga_id" error={err('mga_id')} required>
                 <div className="flex gap-2">
@@ -396,7 +403,8 @@ function SubmissionForm({ existing, binderId }: { existing: SubmissionRow | null
                 <NativeSelect
                   {...reg('source_party_id')}
                   onChange={(e) => {
-                    sourceTouched.current = true
+                    // choosing the default itself keeps it following the broker / MGA
+                    sourceTouched.current = e.target.value !== sourceAuto.current
                     void register('source_party_id').onChange(e)
                   }}
                 >
@@ -461,10 +469,10 @@ function SubmissionForm({ existing, binderId }: { existing: SubmissionRow | null
                 </NativeSelect>
               </Field>
               <Field label={t('fields.periodFrom')} htmlFor="period_from" error={err('period_from')}>
-                <Input type="date" {...reg('period_from')} />
+                <DateField control={control} name="period_from" invalid={Boolean(errors.period_from)} />
               </Field>
               <Field label={t('fields.periodTo')} htmlFor="period_to" error={err('period_to')}>
-                <Input type="date" {...reg('period_to')} />
+                <DateField control={control} name="period_to" invalid={Boolean(errors.period_to)} />
               </Field>
               <Field label={t('fields.riskDescription')} htmlFor="risk_description" className="sm:col-span-2 lg:col-span-3">
                 <Textarea rows={3} {...reg('risk_description')} />
@@ -514,13 +522,13 @@ function SubmissionForm({ existing, binderId }: { existing: SubmissionRow | null
                 <Input value={existing?.signed_share_pct === null || existing?.signed_share_pct === undefined ? '' : formatPct(existing.signed_share_pct)} disabled placeholder={t('sub.signedSetOnBind')} />
               </Field>
               <Field label={t('fields.offerValidUntil')} htmlFor="offer_valid_until">
-                <Input type="date" {...reg('offer_valid_until')} />
+                <DateField control={control} name="offer_valid_until" invalid={Boolean(errors.offer_valid_until)} />
               </Field>
               <Field label={t('fields.paymentTermsDays')} htmlFor="payment_terms_days" error={err('payment_terms_days')}>
                 <Input inputMode="numeric" className="text-right tabular-nums" {...reg('payment_terms_days')} />
               </Field>
               <Field label={t('fields.ppwDate')} htmlFor="ppw_date" hint={t('sub.ppwHint')}>
-                <Input type="date" {...reg('ppw_date')} />
+                <DateField control={control} name="ppw_date" invalid={Boolean(errors.ppw_date)} />
               </Field>
               <Field label={t('fields.notes')} htmlFor="notes" className="sm:col-span-2 lg:col-span-3">
                 <Textarea rows={3} {...reg('notes')} />
@@ -530,7 +538,8 @@ function SubmissionForm({ existing, binderId }: { existing: SubmissionRow | null
         </div>
 
         {/* Live figures */}
-        <div className="xl:sticky xl:top-20 xl:self-start">
+        {/* Stays in view while the form scrolls: just under the pinned header (and demo banner), above the sticky footer */}
+        <div className="xl:sticky xl:top-[calc(var(--app-top,4rem)+1rem)] xl:max-h-[calc(100vh-var(--app-top,4rem)-6rem)] xl:self-start xl:overflow-y-auto" data-share-panel>
           <Card>
             <CardHeader>
               <CardTitle>{t('sub.liveFigures')}</CardTitle>
@@ -574,6 +583,19 @@ function SubmissionForm({ existing, binderId }: { existing: SubmissionRow | null
         </Button>
       </div>
     </form>
+  )
+}
+
+/** A date of the form: the app's date field through react-hook-form (the value stays ISO). */
+function DateField({ control, name, invalid }: { control: Control<FormValues>; name: 'received_at' | 'period_from' | 'period_to' | 'offer_valid_until' | 'ppw_date'; invalid: boolean }) {
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <DateInput id={name} name={field.name} ref={field.ref} value={field.value} onChange={field.onChange} onBlur={field.onBlur} aria-invalid={invalid || undefined} />
+      )}
+    />
   )
 }
 

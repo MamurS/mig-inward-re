@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DateInput } from '@/components/ui/date-input'
 import { Textarea } from '@/components/ui/textarea'
 import { NativeSelect } from '@/components/ui/native-select'
 import { Field } from '@/components/Field'
@@ -188,10 +189,10 @@ export function NewClaimDialog({ open, onClose, submissionId }: { open: boolean;
         {risk && (
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label={t('claim.dateOfLoss')} required htmlFor="claim-dol">
-              <Input id="claim-dol" type="date" value={form.date_of_loss} onChange={set('date_of_loss')} />
+              <DateInput id="claim-dol" value={form.date_of_loss} onChange={(v) => setForm({ ...form, date_of_loss: v })} />
             </Field>
             <Field label={t('claim.notifiedDate')} required htmlFor="claim-notified">
-              <Input id="claim-notified" type="date" value={form.notified_date} onChange={set('notified_date')} />
+              <DateInput id="claim-notified" value={form.notified_date} onChange={(v) => setForm({ ...form, notified_date: v })} />
             </Field>
             <Field label={t('fields.currency')} required htmlFor="claim-ccy">
               <NativeSelect id="claim-ccy" value={form.currency} onChange={set('currency')}>
