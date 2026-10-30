@@ -172,8 +172,10 @@ test('Russian and Uzbek words', async ({ page }) => {
 test('export contains exactly the rows the query shows', async ({ page }) => {
   await installMock(page.context(), 'underwriter', 'en')
   await register(page, 'status:offered|no_response; premium>50k')
+  // wait until the count above the list and the rows agree (the query has landed)
+  const countText = page.getByText(/^\d+ submissions?$/)
+  await expect.poll(async () => Number(/\d+/.exec((await countText.textContent()) ?? '')?.[0] ?? -1) === (await rows(page).count())).toBe(true)
   const shown = await rows(page).count()
-  await expect(page.getByText(new RegExp(`^${shown} submissions?$`))).toBeVisible()
   const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Export to Excel' }).click()])
   const zip = unzipSync(new Uint8Array(readFileSync((await download.path())!)))
   const sheet = strFromU8(zip['xl/worksheets/sheet1.xml'])
