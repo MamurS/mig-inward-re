@@ -29,7 +29,7 @@ async function register(page: Page, role: 'claims' | 'finance' | 'management' | 
 test('the register: real claims only, its search words, export = shown', async ({ page }) => {
   await register(page)
   await expect(page.locator('main h1')).toHaveText('Claims')
-  await expect(rows(page)).toHaveCount(4)
+  await expect(rows(page)).toHaveCount(5)
   await expect(page.locator('main tbody')).not.toContainText('DEMO')
   await search(page, 'large')
   await expect(rows(page)).toHaveCount(1)
@@ -42,7 +42,7 @@ test('the register: real claims only, its search words, export = shown', async (
   await expect(rows(page)).toHaveCount(1)
   await search(page, 'fire')
   await expect(rows(page)).toHaveCount(1)
-  await search(page, 'outstanding>100k')
+  await search(page, 'outstanding>10k')
   await expect(rows(page)).toHaveCount(2)
   const shown = await rows(page).count()
   const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Export to Excel' }).click()])
@@ -84,20 +84,20 @@ test('a claim: reserve movements, status rules, large-loss and cash-call marks',
   const header = page.locator('[data-claim-header]')
   await expect(header).toContainText('Large loss')
   await expect(header).toContainText(/Cash call due/)
-  await expect(header).toContainText('250,000.00') // 400k reserved − 150k cash call
+  await expect(header).toContainText('25,000.00') // 60k reserved − 35k cash call
   await page.getByRole('button', { name: 'Reserve movement' }).click()
   const dlg = page.getByRole('dialog', { name: 'Reserve movement' })
   await dlg.getByRole('radio', { name: 'Decrease' }).click()
-  await dlg.getByLabel('Amount, USD').fill('50000')
-  await expect(dlg).toContainText('Outstanding after: 200,000.00 USD')
+  await dlg.getByLabel('Amount, USD').fill('5000')
+  await expect(dlg).toContainText('Outstanding after: 20,000.00 USD')
   await dlg.getByLabel('Reason').fill('Repair quote revised')
   await dlg.getByRole('button', { name: 'Save movement' }).click()
   await expect(page.getByText('Reserve movement saved')).toBeVisible()
-  await expect(header).toContainText('200,000.00')
+  await expect(header).toContainText('20,000.00')
   // closing with money outstanding needs a comment
   await page.getByRole('button', { name: 'Close the claim' }).click()
   const close = page.getByRole('dialog', { name: 'Close the claim' })
-  await expect(close).toContainText('Outstanding is 200,000.00 USD')
+  await expect(close).toContainText('Outstanding is 20,000.00 USD')
   await expect(close.getByRole('button', { name: 'Close the claim' })).toBeDisabled()
   await close.getByLabel('Closing comment').fill('Remaining reserve released on settlement')
   await close.getByRole('button', { name: 'Close the claim' }).click()
@@ -131,7 +131,7 @@ test('the risk’s Claims tab and the counterparty card', async ({ page }) => {
   await page.getByRole('tab', { name: 'Claims' }).click()
   const tab = page.locator('[data-claims-tab]')
   await expect(tab).toContainText(/CLM-\d{4}-\d{4}/)
-  await expect(tab).toContainText('110,000.00') // outstanding
+  await expect(tab).toContainText('7,000.00') // outstanding: 18k reserved − 11k paid
   await expect(tab.getByRole('button', { name: 'New claim' })).toHaveCount(0) // underwriters read only
   await page.goto('/counterparties/20000000-0000-4000-8000-000000000001')
   const card = page.locator('[data-counterparty-claims]')
@@ -146,7 +146,7 @@ test('dashboard: claims figures open the register; loss ratios labelled both way
   const section = page.locator('[data-claims-dashboard]')
   await section.waitFor()
   const open = section.locator('[data-slot="card"]').filter({ hasText: 'Open claims' }).first()
-  await expect(open.locator('.text-display')).toHaveText('3')
+  await expect(open.locator('.text-display')).toHaveText('4')
   // large losses and cash calls are in «Needs attention», above the claims section
   const attention = page.locator('[data-attention]')
   await expect(attention.locator('[data-large-losses]')).toContainText('Emirates Aviation Services Hull')
@@ -164,7 +164,7 @@ test('dashboard: claims figures open the register; loss ratios labelled both way
   await expect(table.locator('thead')).toContainText('Underwriting year')
   await open.click()
   await expect(page).toHaveURL(/\/claims\?q=status/)
-  await expect(rows(page)).toHaveCount(3)
+  await expect(rows(page)).toHaveCount(4)
 })
 
 test('who may do what; demo claims only in Demo mode; Russian and Uzbek', async ({ page }) => {
