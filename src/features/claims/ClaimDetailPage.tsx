@@ -14,6 +14,7 @@ import { EmptyState } from '@/components/EmptyState'
 import { useAuth } from '@/auth/AuthProvider'
 import { can } from '@/lib/roles'
 import { CLAIM_DOC_TYPES, CLAIM_NEXT } from '@/lib/status'
+import { chartFontSize } from '@/lib/appearance'
 import { formatAmount, formatDate, formatDateTime, formatHuman, formatPct } from '@/lib/format'
 import { errorMessage } from '@/lib/errors'
 import { useUsers, userName } from '@/hooks/useReference'
@@ -150,8 +151,8 @@ export function ClaimDetailPage() {
                 <ResponsiveContainer width="100%" height={180}>
                   <LineChart data={chart} margin={{ top: 4, right: 12, left: 4, bottom: 0 }}>
                     <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="var(--color-slate-200)" />
-                    <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: 'var(--color-slate-600)' }} />
-                    <YAxis tickFormatter={(v) => formatHuman(v as number)} tickLine={false} axisLine={false} width={80} tick={{ fontSize: 12, fill: 'var(--color-slate-600)' }} />
+                    <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fontSize: chartFontSize(), fill: 'var(--color-slate-600)' }} />
+                    <YAxis tickFormatter={(v) => formatHuman(v as number)} tickLine={false} axisLine={false} width={80} tick={{ fontSize: chartFontSize(), fill: 'var(--color-slate-600)' }} />
                     <Tooltip formatter={(v, n) => [`${formatAmount(v as number)} ${ccy}`, n === 'outstanding' ? t('claim.outstanding') : t('claim.paid')]} />
                     <Line type="stepAfter" dataKey="outstanding" stroke="var(--color-brand-600)" strokeWidth={2} dot={false} isAnimationActive={false} />
                     <Line type="stepAfter" dataKey="paid" stroke="var(--color-success-600)" strokeWidth={2} strokeDasharray="4 3" dot={false} isAnimationActive={false} />

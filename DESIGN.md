@@ -71,8 +71,9 @@ on the profile (`profiles.ui_theme`, `ui_text_size`):
   text and borders (slate).
 - **Pastels are backgrounds only** (canvas, sidebar, `brand-50/100` tints);
   text on them uses steps ≥ 5 apart.
-- **Text size.** Normal / Large; Large moves every `text-*` one step up
-  (`:root[data-text-size='large']`). Only type changes — never layout tokens.
+- **Text size.** Normal / Large; Large moves every `text-*` one clear step up
+  (≈ +12 %, `:root[data-text-size='large']`; chart labels follow via
+  `chartFontSize()`). Only type changes — never layout tokens.
 - **Applying.** `src/lib/appearance.ts` sets `data-theme` / `data-text-size`
   on `<html>`; the last choice is cached in `localStorage` (`mig.appearance`)
   and an inline script in `index.html` applies it before the first paint, so
@@ -217,7 +218,7 @@ data-1 `#468de4` (3.39 : 1 on white) · data-2 `#c37c00` (3.39 : 1 on white) · 
 - **Scale** (px / line height, Normal): caption 12/18 · small 13/20 ·
   table 14/21 · body 15/22.5 (forms too) · lead 16/24 · title 18/26 (section
   titles) · headline 28/36 (page titles) · display 34/40 (KPI figures).
-  Large text moves each one step up (caption 13 … display 36). 12 px is the
+  Large text moves each one clear step up: 14 · 15 · 16 · 17 · 18 · 20 · 32 · 38. 12 px is the
   minimum anywhere. Classes
   `text-caption … text-display`; Tailwind's default sizes and `text-[Npx]`
   are forbidden (the scale test fails).

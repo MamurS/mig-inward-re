@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { NativeSelect } from '@/components/ui/native-select'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/auth/AuthProvider'
+import { chartFontSize } from '@/lib/appearance'
 import { formatAmount, formatDate, formatHuman, formatLongDate, formatMonthShort, formatNumber, isoDate } from '@/lib/format'
 import { errorMessage } from '@/lib/errors'
 import { STATUS_MARK, type SubmissionStatus } from '@/lib/status'
@@ -53,7 +54,8 @@ const COLUMNS =
 
 const BAR = 'var(--color-brand-500)'
 /** Axis text: slate-600 reads at 6.5 : 1 on white. */
-const TICK = { fontSize: 12, fill: 'var(--color-slate-600)' }
+/** Axis labels: the caption size (one step up with Large text). */
+const tick = () => ({ fontSize: chartFontSize(), fill: 'var(--color-slate-600)' })
 
 function useDashboardRows() {
   return useQuery({
@@ -320,8 +322,8 @@ export function DashboardPage() {
                   {/* the axis is as wide as its longest label (the top tick can be a digit longer than the tallest bar); room above the top one */}
                   <BarChart data={m.byMonth} margin={{ top: 12, right: 4, left: 4 }}>
                     <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="var(--color-slate-200)" />
-                    <XAxis dataKey="name" tickLine={false} axisLine={false} tick={TICK} interval={0} />
-                    <YAxis tickFormatter={(v) => formatHuman(v as number)} tickLine={false} axisLine={false} tick={TICK} width={axisWidth(Math.max(...m.byMonth.map((x) => x.value)))} />
+                    <XAxis dataKey="name" tickLine={false} axisLine={false} tick={tick()} interval={0} />
+                    <YAxis tickFormatter={(v) => formatHuman(v as number)} tickLine={false} axisLine={false} tick={tick()} width={axisWidth(Math.max(...m.byMonth.map((x) => x.value)))} />
                     <Tooltip formatter={(v) => [formatAmount(v as number), t('dash.ourGrossUsd')]} cursor={{ fill: 'var(--color-slate-50)' }} />
                     <Bar dataKey="value" fill={BAR} radius={[3, 3, 0, 0]} isAnimationActive={false} />
                   </BarChart>
@@ -337,11 +339,11 @@ export function DashboardPage() {
               <ResponsiveContainer width="100%" height={240}>
                 <BarChart data={m.funnel} layout="vertical" margin={{ left: 8, right: 40 }}>
                   <XAxis type="number" hide allowDecimals={false} />
-                  <YAxis type="category" dataKey="name" width={120} tickLine={false} axisLine={false} tick={TICK} />
+                  <YAxis type="category" dataKey="name" width={120} tickLine={false} axisLine={false} tick={tick()} />
                   <Tooltip formatter={(v) => [v as number, t('dash.count')]} cursor={{ fill: 'transparent' }} />
                   <Bar dataKey="value" radius={[0, 4, 4, 0]} isAnimationActive={false}>
                     {m.funnel.map((f) => <Cell key={f.status} fill={STATUS_MARK[f.status].fill} stroke={STATUS_MARK[f.status].edge} strokeWidth={1} />)}
-                    <LabelList dataKey="value" position="right" fontSize={12} fill="var(--color-slate-700)" />
+                    <LabelList dataKey="value" position="right" fontSize={chartFontSize()} fill="var(--color-slate-700)" />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
@@ -392,10 +394,10 @@ export function DashboardPage() {
   )
 }
 
-/** A y-axis width that fits the longest compact tick label (12 px figures), the top tick included. */
+/** A y-axis width that fits the longest compact tick label (caption-size figures), the top tick included. */
 function axisWidth(max: number) {
   const longest = Math.max(formatHuman(max).length, formatHuman(max * 1.25).length) + 1
-  return Math.max(40, Math.ceil(longest * 7) + 4)
+  return Math.max(40, Math.ceil(longest * chartFontSize() * 0.58) + 4)
 }
 
 function RankChart({ data, empty }: { data: { name: string; value: number }[]; empty: string }) {
@@ -406,10 +408,10 @@ function RankChart({ data, empty }: { data: { name: string; value: number }[]; e
     <ResponsiveContainer width="100%" height={Math.max(120, top.length * 36 + 20)}>
       <BarChart data={top} layout="vertical" margin={{ left: 8, right: 64 }}>
         <XAxis type="number" hide />
-        <YAxis type="category" dataKey="name" width={200} tickLine={false} axisLine={false} tick={TICK} tickFormatter={(v: string) => (v.length > 30 ? `${v.slice(0, 29)}…` : v)} />
+        <YAxis type="category" dataKey="name" width={200} tickLine={false} axisLine={false} tick={tick()} tickFormatter={(v: string) => (v.length > 30 ? `${v.slice(0, 29)}…` : v)} />
         <Tooltip formatter={(v) => [formatAmount(v as number), t('dash.ourGrossUsd')]} cursor={{ fill: 'var(--color-slate-50)' }} />
         <Bar dataKey="value" fill={BAR} radius={[0, 4, 4, 0]} isAnimationActive={false}>
-          <LabelList dataKey="value" position="right" fontSize={12} fill="var(--color-slate-700)" formatter={(v) => formatHuman(v as number)} />
+          <LabelList dataKey="value" position="right" fontSize={chartFontSize()} fill="var(--color-slate-700)" formatter={(v) => formatHuman(v as number)} />
         </Bar>
       </BarChart>
     </ResponsiveContainer>

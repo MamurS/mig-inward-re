@@ -80,8 +80,39 @@ test('text size: the frame (sidebar, top bar) does not move; Large paints large 
   expect(Math.abs(first!.y - loaded!.y)).toBeLessThanOrEqual(0.5)
   expect(Math.abs(first!.height - loaded!.height)).toBeLessThanOrEqual(0.5)
   const fontSize = await page.locator('main tbody td').first().evaluate((el) => getComputedStyle(el).fontSize)
-  expect(fontSize).toBe('15px') // table 14 px + one step
+  expect(fontSize).toBe('16px') // table 14 px + one step
   await context.close()
+})
+
+test('Large text is one visible step larger everywhere: KPI figure, table cell, sidebar link, page title, badge, form control', async ({ browser }) => {
+  const sizes = async (textSize: 'normal' | 'large') => {
+    const context = await browser.newContext({ viewport: { width: 1440, height: 900 } })
+    await installMock(context, 'management', 'en', { textSize })
+    const page = await context.newPage()
+    const px = (sel: string) => page.locator(sel).first().evaluate((el) => parseFloat(getComputedStyle(el).fontSize))
+    await page.goto('/dashboard')
+    await page.locator('[data-kpi-value]').first().waitFor()
+    const kpi = await px('[data-kpi-value]')
+    await page.goto('/submissions')
+    await page.locator('main tbody tr').first().waitFor()
+    const out = {
+      kpi,
+      cell: await px('main tbody td'),
+      sidebar: await px('aside nav a span'),
+      title: await px('main h1'),
+      header: await px('main thead th'),
+      badge: await px('main [data-slot="badge"]'),
+      search: await px('header input'),
+    }
+    await context.close()
+    return out
+  }
+  const normal = await sizes('normal')
+  const large = await sizes('large')
+  for (const key of Object.keys(normal) as (keyof typeof normal)[]) {
+    // at least one clear step: ≥ 7 % and ≥ 1.5 px
+    expect(large[key], `${key}: ${normal[key]} px → ${large[key]} px`).toBeGreaterThanOrEqual(Math.max(normal[key] * 1.07, normal[key] + 1.5))
+  }
 })
 
 const SCREENS: { name: string; path: string; role: FixtureRole; ready: string }[] = [

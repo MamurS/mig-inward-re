@@ -245,16 +245,20 @@ export const TYPE_SCALE = {
 
 export type TextSize = 'normal' | 'large'
 
-/** «Large» text (Appearance): every size one step up — 13 · 14 · 15 · 16 · 17 · 20 · 30 · 36. */
+/**
+ * «Large» text (Appearance): every size one clear step up (≈ +12 %, at least
+ * 2 px from 14 px on) — 14 · 15 · 16 · 17 · 18 · 20 · 32 · 38. A single pixel
+ * was too little to see; spacing stays as it is, so nothing else moves.
+ */
 export const TYPE_SCALE_LARGE: Record<keyof typeof TYPE_SCALE, readonly [string, string]> = {
-  caption: ['0.8125rem', '1.25rem'],
-  small: ['0.875rem', '1.3125rem'],
-  table: ['0.9375rem', '1.40625rem'],
-  body: ['1rem', '1.5rem'],
-  lead: ['1.0625rem', '1.625rem'],
+  caption: ['0.875rem', '1.25rem'],
+  small: ['0.9375rem', '1.375rem'],
+  table: ['1rem', '1.5rem'],
+  body: ['1.0625rem', '1.5625rem'],
+  lead: ['1.125rem', '1.6875rem'],
   title: ['1.25rem', '1.75rem'],
-  headline: ['1.875rem', '2.375rem'],
-  display: ['2.25rem', '2.625rem'],
+  headline: ['2rem', '2.5rem'],
+  display: ['2.375rem', '2.75rem'],
 }
 
 export const FONTS = {

@@ -8,6 +8,7 @@ import { EmptyState } from '@/components/EmptyState'
 import { Skeleton } from '@/components/Skeleton'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { SegmentedControl } from '@/components/SegmentedControl'
+import { chartFontSize } from '@/lib/appearance'
 import { formatAmount, formatDate, isoDate } from '@/lib/format'
 import { errorMessage } from '@/lib/errors'
 import { CLAIMS_PAGE, pageLink } from '@/features/search/pages'
@@ -82,7 +83,7 @@ export function ClaimsDashboard() {
                 <ResponsiveContainer width="100%" height={chartData.length * 64 + 56}>
                   <BarChart data={chartData} layout="vertical" margin={{ left: 8, right: 32, top: 4 }} barGap={2} barCategoryGap={20}>
                     <CartesianGrid horizontal={false} strokeDasharray="3 3" stroke="var(--color-slate-200)" />
-                    <XAxis type="number" unit=" %" tick={{ fontSize: 12, fill: 'var(--color-slate-600)' }} tickLine={false} axisLine={false} />
+                    <XAxis type="number" unit=" %" tick={{ fontSize: chartFontSize(), fill: 'var(--color-slate-600)' }} tickLine={false} axisLine={false} />
                     <YAxis type="category" dataKey="name" width={1} tickLine={false} axisLine={false} tick={NameAbove} interval={0} />
                     <Tooltip formatter={(v, n) => [`${v} %`, n === 'written' ? t('claim.lrWritten') : t('claim.lrEarned')]} cursor={{ fill: 'var(--color-slate-50)' }} />
                     <Legend formatter={(v) => (v === 'written' ? t('claim.lrWritten') : t('claim.lrEarned'))} />
@@ -137,7 +138,7 @@ export function ClaimsDashboard() {
 /** A category tick drawn above its pair of bars (2 × 12 px around the tick), from the plot's left edge — even when both bars are 0. */
 function NameAbove({ x, y, payload }: { x?: number | string; y?: number | string; payload?: { value?: unknown } }) {
   return (
-    <text x={Number(x)} y={Number(y) - 19} fontSize={12} fill="var(--color-slate-700)" textAnchor="start">
+    <text x={Number(x)} y={Number(y) - 19} fontSize={chartFontSize()} fill="var(--color-slate-700)" textAnchor="start">
       {String(payload?.value ?? '')}
     </text>
   )

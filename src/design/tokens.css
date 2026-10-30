@@ -267,22 +267,22 @@
 
 /* Appearance — text size «Large»: every size one step up (spacing unchanged). */
 :root[data-text-size='large'] {
-  --text-caption: 0.8125rem;
+  --text-caption: 0.875rem;
   --text-caption--line-height: 1.25rem;
-  --text-small: 0.875rem;
-  --text-small--line-height: 1.3125rem;
-  --text-table: 0.9375rem;
-  --text-table--line-height: 1.40625rem;
-  --text-body: 1rem;
-  --text-body--line-height: 1.5rem;
-  --text-lead: 1.0625rem;
-  --text-lead--line-height: 1.625rem;
+  --text-small: 0.9375rem;
+  --text-small--line-height: 1.375rem;
+  --text-table: 1rem;
+  --text-table--line-height: 1.5rem;
+  --text-body: 1.0625rem;
+  --text-body--line-height: 1.5625rem;
+  --text-lead: 1.125rem;
+  --text-lead--line-height: 1.6875rem;
   --text-title: 1.25rem;
   --text-title--line-height: 1.75rem;
-  --text-headline: 1.875rem;
-  --text-headline--line-height: 2.375rem;
-  --text-display: 2.25rem;
-  --text-display--line-height: 2.625rem;
+  --text-headline: 2rem;
+  --text-headline--line-height: 2.5rem;
+  --text-display: 2.375rem;
+  --text-display--line-height: 2.75rem;
 }
 
 /* Appearance — theme «blue»: sky-blue tint, blue accent. Accent and tints only. */
