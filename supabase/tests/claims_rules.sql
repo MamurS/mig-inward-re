@@ -1,5 +1,5 @@
 -- Phase 3 — claims rules, roles and demo isolation. One DO block that always
--- ends in an exception: nothing it does is kept. Needs one admin profile.
+-- ends in an exception: nothing it does is kept. Needs no real account: every identity is a test user created inside the rolled-back transaction.
 -- Usage: paste into the SQL editor and run; the error text reads
 -- «ROLLBACK OK: …» with each check, or «FAIL …» naming the broken one.
 do $t$
@@ -7,7 +7,10 @@ declare
   adm uuid; cl uuid := gen_random_uuid(); fin uuid := gen_random_uuid(); uw uuid := gen_random_uuid(); uw2 uuid := gen_random_uuid(); mg uuid := gen_random_uuid();
   mga uuid; sub uuid; sub_eur uuid; c1 uuid; c2 uuid; n int; v numeric; ok text := ''; inst uuid; inst_eur uuid; p public.claim_payments;
 begin
-  select id into adm from public.profiles where role = 'admin' order by created_at limit 1;
+  -- a test admin of our own (never a real account): created here, gone with the rollback
+  adm := gen_random_uuid();
+  insert into auth.users (id, email, aud, role) values (adm, 'at-admin@example.com', 'authenticated', 'authenticated');
+  update public.profiles set role = 'admin', active = true, ui_demo_mode = false where id = adm;
   insert into auth.users (id, email, aud, role) values
     (cl, 'ct-claims@example.com', 'authenticated', 'authenticated'), (fin, 'ct-fin@example.com', 'authenticated', 'authenticated'),
     (uw, 'ct-uw@example.com', 'authenticated', 'authenticated'), (uw2, 'ct-uw2@example.com', 'authenticated', 'authenticated'),

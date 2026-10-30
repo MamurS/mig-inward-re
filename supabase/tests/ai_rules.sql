@@ -1,13 +1,16 @@
 -- Phase D — AI-assisted entry: who may use it, who reads the usage log, the
 -- cache stays with admins, demo isolation. One DO block that always ends in an
--- exception: nothing it does is kept. Needs one admin profile.
+-- exception: nothing it does is kept. Needs no real account: every identity is a test user created inside the rolled-back transaction.
 -- Usage: paste into the SQL editor and run; the error text reads
 -- «ROLLBACK OK: …» with each check, or «FAIL …» naming the broken one.
 do $t$
 declare
   adm uuid; uw uuid := gen_random_uuid(); uw2 uuid := gen_random_uuid(); mg uuid := gen_random_uuid(); n int; ok text := '';
 begin
-  select id into adm from public.profiles where role = 'admin' order by created_at limit 1;
+  -- a test admin of our own (never a real account): created here, gone with the rollback
+  adm := gen_random_uuid();
+  insert into auth.users (id, email, aud, role) values (adm, 'at-admin@example.com', 'authenticated', 'authenticated');
+  update public.profiles set role = 'admin', active = true, ui_demo_mode = false where id = adm;
   insert into auth.users (id, email, aud, role) values
     (uw, 'at-uw@example.com', 'authenticated', 'authenticated'), (uw2, 'at-uw2@example.com', 'authenticated', 'authenticated'),
     (mg, 'at-mgmt@example.com', 'authenticated', 'authenticated');
