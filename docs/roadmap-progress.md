@@ -15,7 +15,7 @@ cannot fix, or an action only the owner can do.
 
 | part | scope | branch / PR | state |
 |---|---|---|---|
-| A | Phase 2 premium: steps 5 (dashboard, counterparty) and 6 (self-review), merge | `claude/mga-inward-reinsurance-phase-0-1-otvuzf` / MamurS/mig-inward-re#4 | in progress |
+| A | Phase 2 premium: steps 5 (dashboard, counterparty) and 6 (self-review), merge | `claude/mga-inward-reinsurance-phase-0-1-otvuzf` / MamurS/mig-inward-re#4 | ✅ merged |
 | B | Phase 3 claims (spec) | — | — |
 | C | Binders and bordereaux | — | — |
 | D | AI-assisted data entry (pluggable provider) | — | — |
@@ -31,4 +31,5 @@ Steps 1–4, demo data and the Density removal: `docs/receivables-progress.md`.
 - [x] `premium_default_terms_days` = 60 (migration `20261030092035_premium_default_terms`), Admin › Settings grouped (Follow-ups, Premium).
 - [x] Ref overflow fix + `e2e/layout-overlap.spec.ts`; wider search bar.
 - [x] e2e `premium-dashboard.spec.ts`.
-- [ ] Step 6 self-review (DB checks: role access, schedule vs net premium, allocations vs receipts, FX, overdue days, demo isolation of every dashboard figure); full suite; merge PR #4.
+- [x] Step 6 self-review: `supabase/tests/premium_review.sql` (sums, FX, overdue days, roles, demo isolation of every dashboard figure) — all pass; details in `docs/receivables-progress.md`.
+- [x] Full suite green (build, vitest 77/77, Playwright 147/147); PR #4 merged.

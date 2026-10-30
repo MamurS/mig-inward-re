@@ -10,8 +10,8 @@ Approved plan: 6 steps, stop for review after each. Target Supabase project:
 | 2 | schedule on bind + Premium tab on submission detail | ✅ |
 | 3 | receipts register + new receipt with allocation | ✅ |
 | 4 | receivables register, ageing, follow-ups on the agenda | ✅ (+ demo data) |
-| 5 | dashboard and counterparty additions | — |
-| 6 | self-review | — |
+| 5 | dashboard and counterparty additions | ✅ |
+| 6 | self-review | ✅ |
 
 ## Step 1 — what exists in the database
 
@@ -146,6 +146,25 @@ Screens:
   - `e2e/receipts.spec.ts` (7): register and search; record with auto-allocate (due dates in order, RCP-2026-0003, Premium tab link back); cross-currency preview, rate both ways, inverted warning, Use stored, cap and Max; panel remove and allocate the rest; export = shown; management read-only, no page for underwriters; RU/UZ;
   - receipts scope unit tests;
   - Receipts added to the Large-text fit check.
+
+## Step 5 — dashboard and counterparty additions
+
+- **Dashboard › Premium** (admin, management, finance — finance now sees the dashboard): premium outstanding (USD, with what is not yet due), overdue premium (USD, count), received this month, received this year, payable to MGAs (apart); overdue by age (0-30 / 31-60 / 61-90 / 90+, each opens its bucket); top MGAs by overdue; most overdue items with exact days. Every figure opens the filtered Receivables / Receipts register, and the register shows the same total (checked in `e2e/premium-dashboard.spec.ts`). Items with no FX rate are left out of USD totals and counted under the tiles.
+- **Counterparty page › Premium** (MGAs and brokers, every role): outstanding, overdue, payable to them, received this year, by bucket; links open the registers filtered to them.
+- **Settings:** `premium_default_terms_days` = 60 (migration `20261030092035_premium_default_terms`): due = PPW date, else inception + the submission's terms, else + 60 days; Admin › Settings now grouped (Follow-ups on offers, Premium: default terms, grace days).
+- Shared figures: `src/features/premium/summary.ts` (`ageing`, `premiumSummary`, `usePremiumOverview`) — one set of rules for the dashboard, the counterparty card and the register.
+
+## Step 6 — self-review
+
+`supabase/tests/premium_review.sql` (rolled back, on the demo data), all pass:
+
+1. **Sums** — every demo schedule equals our net premium (`premium_schedule_check_v.difference = 0`); no installment paid over its net; no receipt over-allocated, unallocated = amount − allocated; every status agrees with its payments.
+2. **FX** — every allocation's installment amount = amount × rate, rounded to cents; no cross-currency allocation without a rate; the demo USD → EUR one is covered.
+3. **Overdue days** — days overdue = Tashkent today − due date for everything still owed; buckets match the days; paid and return items never overdue; the demo data covers all four buckets.
+4. **Roles** — an underwriter regenerates the schedule of his own submission, not someone else's, and cannot record a receipt; management changes nothing; finance cannot allocate more than the receipt.
+5. **Demo isolation of every dashboard figure** — out of Demo mode, outstanding / overdue / payable / receipts / overdue-premium follow-ups equal the real-only sums and list no demo row; in Demo mode, the demo-only sums.
+
+Also re-checked: the security advisor (only the documented definer functions and leaked-password protection, an Auth setting for the owner), the full unit and e2e suites.
 
 ## Step 4 — receivables register, ageing, finance follow-ups
 
