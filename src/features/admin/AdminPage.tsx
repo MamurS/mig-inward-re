@@ -602,7 +602,31 @@ function FxTab() {
 // ---------------------------------------------------------------------------
 // Settings
 // ---------------------------------------------------------------------------
-const SETTING_KEYS = ['follow_up_first_days', 'follow_up_repeat_days', 'auto_no_response_enabled', 'auto_no_response_days'] as const
+/**
+ * Settings, grouped by module. A number setting has a range and a label /
+ * hint under admin.settings.<key> and <key>Hint; a switch (bool) can turn
+ * the numbers after it on and off (`enables`).
+ */
+type SettingDef = { key: string; kind: 'days' | 'number' | 'bool'; min?: number; max?: number; enables?: string[] }
+export const SETTING_GROUPS: { id: string; settings: SettingDef[] }[] = [
+  {
+    id: 'followUps',
+    settings: [
+      { key: 'follow_up_first_days', kind: 'days', min: 1, max: 365 },
+      { key: 'follow_up_repeat_days', kind: 'days', min: 1, max: 365 },
+      { key: 'auto_no_response_enabled', kind: 'bool', enables: ['auto_no_response_days'] },
+      { key: 'auto_no_response_days', kind: 'days', min: 1, max: 365 },
+    ],
+  },
+  {
+    id: 'premium',
+    settings: [
+      { key: 'premium_default_terms_days', kind: 'days', min: 0, max: 365 },
+      { key: 'premium_grace_days', kind: 'days', min: 0, max: 365 },
+    ],
+  },
+]
+const ALL_SETTINGS = SETTING_GROUPS.flatMap((g) => g.settings)
 
 function SettingsTab() {
   const { t } = useTranslation()
@@ -620,19 +644,22 @@ function SettingsTab() {
   const [savedShown, flashSaved] = useFlash()
 
   useEffect(() => {
-    if (settings.data) setVals(Object.fromEntries(settings.data.map((s) => [s.key, s.value as string | boolean])))
+    if (settings.data) setVals(Object.fromEntries(settings.data.map((s) => [s.key, typeof s.value === 'boolean' ? s.value : String(s.value)])))
   }, [settings.data])
 
+  const disabledBy = (key: string) => ALL_SETTINGS.find((s) => s.enables?.includes(key) && !vals[s.key])
+
   async function save() {
-    for (const k of ['follow_up_first_days', 'follow_up_repeat_days', 'auto_no_response_days']) {
-      const n = Number(vals[k])
-      if (!Number.isInteger(n) || n < 1 || n > 365) {
-        toast.error(t('admin.settings.invalidDays'))
+    for (const d of ALL_SETTINGS) {
+      if (d.kind === 'bool' || disabledBy(d.key)) continue
+      const n = Number(vals[d.key])
+      if (!Number.isFinite(n) || (d.kind === 'days' && !Number.isInteger(n)) || n < (d.min ?? 0) || n > (d.max ?? Infinity)) {
+        toast.error(t('admin.settings.invalid', { label: t(`admin.settings.${d.key}`), min: d.min ?? 0, max: d.max ?? '∞' }))
         return
       }
     }
     setBusy(true)
-    const rows = SETTING_KEYS.map((k) => ({ key: k, value: k === 'auto_no_response_enabled' ? Boolean(vals[k]) : Number(vals[k]) }))
+    const rows = ALL_SETTINGS.filter((d) => vals[d.key] !== undefined).map((d) => ({ key: d.key, value: d.kind === 'bool' ? Boolean(vals[d.key]) : Number(vals[d.key]) }))
     const { error } = await supabase.from('settings').upsert(rows)
     setBusy(false)
     if (error) return toast.error(errorMessage(error))
@@ -641,31 +668,43 @@ function SettingsTab() {
   }
 
   return (
-    <Card className="max-w-2xl">
-      <CardHeader><CardTitle>{t('admin.tabs.settings')}</CardTitle></CardHeader>
-      <CardContent className="grid gap-4">
-        <Field label={t('admin.settings.firstDays')} hint={t('admin.settings.firstDaysHint')}>
-          <Input type="number" min={1} max={365} className="w-32" value={String(vals.follow_up_first_days ?? '')} onChange={(e) => setVals({ ...vals, follow_up_first_days: e.target.value })} />
-        </Field>
-        <Field label={t('admin.settings.repeatDays')} hint={t('admin.settings.repeatDaysHint')}>
-          <Input type="number" min={1} max={365} className="w-32" value={String(vals.follow_up_repeat_days ?? '')} onChange={(e) => setVals({ ...vals, follow_up_repeat_days: e.target.value })} />
-        </Field>
-        <label className="flex items-center gap-2 text-body">
-          <input type="checkbox" checked={Boolean(vals.auto_no_response_enabled)} onChange={(e) => setVals({ ...vals, auto_no_response_enabled: e.target.checked })} />
-          {t('admin.settings.autoEnabled')}
-        </label>
-        <Field label={t('admin.settings.autoDays')} hint={t('admin.settings.autoDaysHint')}>
-          <Input type="number" min={1} max={365} className="w-32" value={String(vals.auto_no_response_days ?? '')} onChange={(e) => setVals({ ...vals, auto_no_response_days: e.target.value })} disabled={!vals.auto_no_response_enabled} />
-        </Field>
-        <div className="flex items-center gap-3">
-          <Button onClick={() => void save()} disabled={busy}>
-            {busy ? <Loader2 className="animate-spin" /> : <Save />}
-            {t('ui.form.saveSettings')}
-          </Button>
-          <SavedCheck show={savedShown} />
-        </div>
-      </CardContent>
-    </Card>
+    <div className="grid max-w-2xl gap-4">
+      {SETTING_GROUPS.map((g) => (
+        <Card key={g.id} data-settings-group={g.id}>
+          <CardHeader><CardTitle>{t(`admin.settings.groups.${g.id}`)}</CardTitle></CardHeader>
+          <CardContent className="grid gap-4">
+            {g.settings.map((d) =>
+              d.kind === 'bool' ? (
+                <label key={d.key} className="flex items-center gap-2 text-body">
+                  <input type="checkbox" checked={Boolean(vals[d.key])} onChange={(e) => setVals({ ...vals, [d.key]: e.target.checked })} />
+                  {t(`admin.settings.${d.key}`)}
+                </label>
+              ) : (
+                <Field key={d.key} label={t(`admin.settings.${d.key}`)} hint={t(`admin.settings.${d.key}Hint`)} htmlFor={`setting-${d.key}`}>
+                  <Input
+                    id={`setting-${d.key}`}
+                    type="number"
+                    min={d.min}
+                    max={d.max}
+                    className="w-40 text-right tabular-nums"
+                    value={String(vals[d.key] ?? '')}
+                    onChange={(e) => setVals({ ...vals, [d.key]: e.target.value })}
+                    disabled={Boolean(disabledBy(d.key))}
+                  />
+                </Field>
+              ),
+            )}
+          </CardContent>
+        </Card>
+      ))}
+      <div className="flex items-center gap-3">
+        <Button onClick={() => void save()} disabled={busy}>
+          {busy ? <Loader2 className="animate-spin" /> : <Save />}
+          {t('ui.form.saveSettings')}
+        </Button>
+        <SavedCheck show={savedShown} />
+      </div>
+    </div>
   )
 }
 

@@ -510,14 +510,22 @@
       "confirmDelete": "{{date}} sanadagi {{ccy}} kursi oʻchirilsinmi?"
     },
     "settings": {
-      "firstDays": "Taklifdan keyingi birinchi eslatma (kun)",
-      "firstDaysHint": "Taklif berilganda avtomatik yaratiladi.",
-      "repeatDays": "Eslatmalarni har (kun) takrorlash",
-      "repeatDaysHint": "Kundalik vazifa ochiq takliflar uchun keyingi eslatmani yaratadi.",
-      "autoEnabled": "Eski takliflarni avtomatik \"Javob yoʻq\" holatiga oʻtkazish",
-      "autoDays": "…dan keyin (taklifdan beri kun)",
-      "autoDaysHint": "Kech javobni baribir kiritish mumkin: \"Javob yoʻq\" → Bound / NTU.",
-      "invalidDays": "Kunlar 1 dan 365 gacha butun son boʻlishi kerak."
+      "groups": {
+        "followUps": "Takliflar bo'yicha eslatmalar",
+        "premium": "Mukofotlar"
+      },
+      "follow_up_first_days": "Taklifdan keyingi birinchi eslatma (kun)",
+      "follow_up_first_daysHint": "Ariza «Taklif» holatiga o'tganda avtomatik yaratiladi.",
+      "follow_up_repeat_days": "Eslatmalarni har (kun) takrorlash",
+      "follow_up_repeat_daysHint": "Kunlik vazifalar ochiq takliflar va to'lanmagan mukofotlar uchun keyingi eslatmani yaratadi.",
+      "auto_no_response_enabled": "Eski takliflarni avtomatik «Javob yo'q» ga o'tkazish",
+      "auto_no_response_days": "…dan keyin (taklifdan beri kun)",
+      "auto_no_response_daysHint": "Kech javobni baribir yozish mumkin: «Javob yo'q» → Tasdiqlandi / Qabul qilinmadi.",
+      "premium_default_terms_days": "Standart to'lov muddati (boshlanishdan kun)",
+      "premium_default_terms_daysHint": "Arizada PPW sanasi va o'z to'lov muddati bo'lmasa.",
+      "premium_grace_days": "Birinchi kechikish eslatmasigacha imtiyoz (kun)",
+      "premium_grace_daysHint": "0 = muddatdan keyingi kun.",
+      "invalid": "{{label}}: {{min}} dan {{max}} gacha son kiriting."
     },
     "jobs": {
       "title": "Kundalik eslatma vazifasi",

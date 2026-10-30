@@ -177,7 +177,7 @@ function SubmissionForm({ existing }: { existing: SubmissionRow | null }) {
             received_at: isoDate(),
             currency: 'USD',
             underwriter_id: profile?.id ?? '',
-            payment_terms_days: '90',
+            payment_terms_days: '60', // docs/decisions.md: premium due inception + 60 days
           },
     [existing, profile?.id],
   )

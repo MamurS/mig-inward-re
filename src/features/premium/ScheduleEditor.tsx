@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useNumberSetting } from '@/hooks/useSettings'
 import { AlertTriangle, Loader2, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -39,7 +40,8 @@ export function ScheduleEditor({
   const { t } = useTranslation()
   const invalidate = useInvalidatePremium()
   const expected = s.our_gross_premium === null ? '0.00' : sumMoney([s.our_gross_premium])
-  const firstDefault = defaultDueDate({ ppw_date: s.ppw_date, period_from: s.period_from, bound_at: s.bound_at, payment_terms_days: s.payment_terms_days })
+  const defaultTerms = useNumberSetting('premium_default_terms_days', 60)
+  const firstDefault = defaultDueDate({ ppw_date: s.ppw_date, period_from: s.period_from, bound_at: s.bound_at, payment_terms_days: s.payment_terms_days }, defaultTerms)
 
   const [mode, setMode] = useState<Mode>('single')
   const [count, setCount] = useState('4')

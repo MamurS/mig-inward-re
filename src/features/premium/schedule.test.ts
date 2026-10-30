@@ -25,6 +25,9 @@ describe('premium schedule maths (mirrors generate_premium_schedule)', () => {
   it('dates: default due date and month steps that clamp to month end', () => {
     expect(defaultDueDate({ ppw_date: null, period_from: '2026-01-01', bound_at: null, payment_terms_days: 30 })).toBe('2026-01-31')
     expect(defaultDueDate({ ppw_date: '2026-03-15', period_from: '2026-01-01', bound_at: null, payment_terms_days: 30 })).toBe('2026-03-15')
+    // no terms on the submission: the premium_default_terms_days setting (60 unless changed)
+    expect(defaultDueDate({ ppw_date: null, period_from: '2026-01-01', bound_at: null, payment_terms_days: null })).toBe('2026-03-02')
+    expect(defaultDueDate({ ppw_date: null, period_from: '2026-01-01', bound_at: null, payment_terms_days: null }, 45)).toBe('2026-02-15')
     expect(addMonthsIso('2026-01-31', 1)).toBe('2026-02-28')
     expect(equalSchedule('900', 3, '2026-01-31', 3).map((r) => r.due_date)).toEqual(['2026-01-31', '2026-04-30', '2026-07-31'])
   })

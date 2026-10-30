@@ -510,14 +510,22 @@
       "confirmDelete": "Delete the {{ccy}} rate of {{date}}?"
     },
     "settings": {
-      "firstDays": "First follow-up after an offer (days)",
-      "firstDaysHint": "Created automatically when a submission is offered.",
-      "repeatDays": "Repeat follow-ups every (days)",
-      "repeatDaysHint": "The daily job creates the next reminder for open offers without one.",
-      "autoEnabled": "Automatically move old offers to \"No response\"",
-      "autoDays": "…after (days since the offer)",
-      "autoDaysHint": "A late answer can still be recorded: \"No response\" → Bound / NTU.",
-      "invalidDays": "Days must be whole numbers from 1 to 365."
+      "groups": {
+        "followUps": "Follow-ups on offers",
+        "premium": "Premium"
+      },
+      "follow_up_first_days": "First follow-up after an offer (days)",
+      "follow_up_first_daysHint": "Created automatically when a submission is offered.",
+      "follow_up_repeat_days": "Repeat follow-ups every (days)",
+      "follow_up_repeat_daysHint": "The daily jobs create the next reminder for open offers and unpaid premium.",
+      "auto_no_response_enabled": "Automatically move old offers to \"No response\"",
+      "auto_no_response_days": "…after (days since the offer)",
+      "auto_no_response_daysHint": "A late answer can still be recorded: \"No response\" → Bound / NTU.",
+      "premium_default_terms_days": "Default payment terms (days after inception)",
+      "premium_default_terms_daysHint": "Used when a submission has no PPW date and no payment terms of its own.",
+      "premium_grace_days": "Grace before the first overdue-premium follow-up (days)",
+      "premium_grace_daysHint": "0 = the day after the due date.",
+      "invalid": "{{label}}: enter a number from {{min}} to {{max}}."
     },
     "jobs": {
       "title": "Daily follow-up job",

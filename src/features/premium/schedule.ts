@@ -71,16 +71,18 @@ export function addMonthsIso(iso: string, months: number): string {
   return target.toISOString().slice(0, 10)
 }
 
-/** The database's default first due date: PPW date, else inception (else bound date) + payment terms. */
-export function defaultDueDate(s: {
-  ppw_date: string | null
-  period_from: string | null
-  bound_at: string | null
-  payment_terms_days: number | null
-}): string {
+/**
+ * The database's default first due date: PPW date, else inception (else bound
+ * date) + payment terms — or, with none on the submission, the
+ * `premium_default_terms_days` setting (60).
+ */
+export function defaultDueDate(
+  s: { ppw_date: string | null; period_from: string | null; bound_at: string | null; payment_terms_days: number | null },
+  defaultTermsDays = 60,
+): string {
   if (s.ppw_date) return s.ppw_date
   const start = s.period_from ?? (s.bound_at ? s.bound_at.slice(0, 10) : new Date().toISOString().slice(0, 10))
-  return addDaysIso(start, s.payment_terms_days ?? 0)
+  return addDaysIso(start, s.payment_terms_days ?? defaultTermsDays)
 }
 
 export type ScheduleRow = { due_date: string; gross_amount: string }
