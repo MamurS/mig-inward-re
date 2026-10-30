@@ -296,13 +296,19 @@
       "source": "Source",
       "risk": "Risk",
       "financials": "Financials (100%)",
-      "terms": "Terms"
+      "terms": "Terms",
+      "sourceRisk": "Source and risk",
+      "financialsTerms": "Financials (100 %) and terms"
     },
     "tabs": {
       "timeline": "Status timeline",
       "documents": "Documents",
       "changes": "Change log"
-    }
+    },
+    "premiumShortcut": "Premium",
+    "premiumShortcutHint": "Go to the Premium tab",
+    "shareBar": "Signed share {{signed}} of written share {{written}}",
+    "shareBarOf": "of {{pct}} written"
   },
   "statusDlg": {
     "reason": "Reason",
@@ -497,7 +503,7 @@
   },
   "admin": {
     "tabs": {
-      "users": "Users & roles",
+      "users": "Users and roles",
       "reference": "Reference data",
       "fx": "FX rates",
       "settings": "Settings",
@@ -1632,5 +1638,25 @@
       "tokens": "tokens in {{input}}, out {{output}}",
       "noUsage": "No AI requests yet"
     }
+  },
+  "sysText": {
+    "requestUpdate": "Request update on offer",
+    "offerExpired": "Offer validity has passed",
+    "premiumOverdue": "Premium overdue",
+    "reviewReserve": "Review the reserve",
+    "largeLoss": "Large loss",
+    "registered": "Submission registered",
+    "offsetNote": "Claim payment offset against premium",
+    "closedPaid": "Closed automatically: installment paid",
+    "closedWrittenOff": "Closed automatically: installment written off",
+    "cashCallPaid": "Cash call paid",
+    "cashCallPaidOn": "Cash call paid on {{date}}",
+    "closedStatus": "Closed automatically: status changed to «{{status}}»",
+    "autoNoResponse_one": "Set automatically: no answer {{count}} day after the offer",
+    "autoNoResponse_other": "Set automatically: no answer {{count}} days after the offer",
+    "capacityUsed": "Capacity {{pct}} used",
+    "bordereauMissing": "Bordereau missing: {{kind}}, {{period}}",
+    "firmOrder": "Firm order received from the MGA",
+    "quoteSent": "Quote sent"
   }
 }

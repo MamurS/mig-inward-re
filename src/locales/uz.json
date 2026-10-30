@@ -296,13 +296,19 @@
       "source": "Manba",
       "risk": "Xavf",
       "financials": "Moliya (100%)",
-      "terms": "Shartlar"
+      "terms": "Shartlar",
+      "sourceRisk": "Manba va xavf",
+      "financialsTerms": "Moliya (100 %) va shartlar"
     },
     "tabs": {
       "timeline": "Holatlar tarixi",
       "documents": "Hujjatlar",
       "changes": "Oʻzgarishlar jurnali"
-    }
+    },
+    "premiumShortcut": "Mukofot",
+    "premiumShortcutHint": "«Mukofot» yorligʻiga oʻtish",
+    "shareBar": "Tasdiqlangan ulush {{signed}}, taklif qilingan {{written}} dan",
+    "shareBarOf": "taklif qilingan {{pct}} dan"
   },
   "statusDlg": {
     "reason": "Sabab",
@@ -1632,5 +1638,25 @@
       "tokens": "tokenlar: kirish {{input}}, chiqish {{output}}",
       "noUsage": "Hali SI so‘rovlari yo‘q"
     }
+  },
+  "sysText": {
+    "requestUpdate": "Taklif boʻyicha javob soʻrash",
+    "offerExpired": "Taklifning amal qilish muddati oʻtdi",
+    "premiumOverdue": "Mukofot muddati oʻtgan",
+    "reviewReserve": "Zaxirani qayta koʻrib chiqish",
+    "largeLoss": "Yirik zarar",
+    "registered": "Ariza roʻyxatga olindi",
+    "offsetNote": "Zarar toʻlovi mukofot hisobiga oʻtkazildi",
+    "closedPaid": "Avtomatik yopildi: badal toʻlandi",
+    "closedWrittenOff": "Avtomatik yopildi: badal hisobdan chiqarildi",
+    "cashCallPaid": "Cash call toʻlandi",
+    "cashCallPaidOn": "Cash call {{date}} da toʻlandi",
+    "closedStatus": "Avtomatik yopildi: holat «{{status}}» ga oʻzgardi",
+    "autoNoResponse_one": "Avtomatik oʻrnatildi: taklifdan keyin {{count}} kun javob yoʻq",
+    "autoNoResponse_other": "Avtomatik oʻrnatildi: taklifdan keyin {{count}} kun javob yoʻq",
+    "capacityUsed": "Sigʻimning {{pct}} ishlatildi",
+    "bordereauMissing": "Bordero yoʻq: {{kind}}, {{period}}",
+    "firmOrder": "MGA dan qatʼiy buyurtma olindi",
+    "quoteSent": "Kotirovka yuborildi"
   }
 }

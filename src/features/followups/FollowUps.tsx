@@ -19,6 +19,7 @@ import { useAuth } from '@/auth/AuthProvider'
 import { supabase } from '@/lib/supabase'
 import { addDays, formatDate, isoDate } from '@/lib/format'
 import { errorMessage } from '@/lib/errors'
+import { systemText } from '@/lib/systemText'
 import { cn } from '@/lib/utils'
 import type { Enums, Tables } from '@/lib/database.types'
 import type { AppRole } from '@/lib/roles'
@@ -135,7 +136,7 @@ export function CloseFollowUpDialog({ followUp, onClose }: { followUp: FollowUp 
           <DialogTitle>{t('fu.closeTitle')}</DialogTitle>
           <DialogDescription>
             {followUp.entity_ref ? `${followUp.entity_ref} · ` : ''}
-            {followUp.title || t(`fuType.${followUp.type}`)}
+            {followUp.title ? systemText(followUp.title, t) : t(`fuType.${followUp.type}`)}
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4">
@@ -206,7 +207,7 @@ export function RescheduleFollowUpDialog({ followUp, onClose }: { followUp: Foll
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t('fu.rescheduleTitle')}</DialogTitle>
-          <DialogDescription>{followUp.title || t(`fuType.${followUp.type}`)}</DialogDescription>
+          <DialogDescription>{followUp.title ? systemText(followUp.title, t) : t(`fuType.${followUp.type}`)}</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label={t('fu.due')} required>
@@ -380,7 +381,7 @@ export function FollowUpItem({
         )}
         <div className="grid min-w-0 flex-1 gap-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span className="font-medium">{f.title || t(`fuType.${f.type}`)}</span>
+            <span className="font-medium">{f.title ? systemText(f.title, t) : t(`fuType.${f.type}`)}</span>
             <Badge>{t(`fuType.${f.type}`)}</Badge>
             {overdue && daysOverdue > 0 && <AgingBadge days={daysOverdue} />}
           </div>
@@ -402,7 +403,7 @@ export function FollowUpItem({
           {f.done_at && (
             <div className="text-caption text-muted-foreground">
               {t('fu.doneOn', { date: formatDate(f.done_at) })}
-              {f.done_by_name ? ` (${f.done_by_name})` : ''}: {f.outcome}
+              {f.done_by_name ? ` (${f.done_by_name})` : ''}: {systemText(f.outcome, t)}
             </div>
           )}
         </div>

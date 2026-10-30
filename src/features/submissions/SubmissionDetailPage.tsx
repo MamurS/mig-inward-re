@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { AlertTriangle, ArrowRight, Clock, FileText, Pencil } from 'lucide-react'
+import { AlertTriangle, ArrowRight, Banknote, Clock, FileText, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/PageHeader'
 import { Button } from '@/components/ui/button'
@@ -20,6 +20,7 @@ import { NEXT_STATUSES, type SubmissionStatus } from '@/lib/status'
 import { formatDate, formatDateTime, formatMoney, formatPct } from '@/lib/format'
 import { openDocument } from '@/lib/documents'
 import { errorMessage } from '@/lib/errors'
+import { systemText } from '@/lib/systemText'
 import { useCounterparties, useCountries, useLinesOfBusiness, useLocalName, useUsers, userName } from '@/hooks/useReference'
 import { DocumentsPanel } from '@/features/documents/DocumentsPanel'
 import { ClaimsTab } from '@/features/claims/ClaimsTab'
@@ -50,6 +51,7 @@ export function SubmissionDetailPage() {
   const [rescheduling, setRescheduling] = useState<FollowUp | null>(null)
   const [tab, setTab] = useState<string | null>(null)
   const [scheduleStep, setScheduleStep] = useState(false)
+  const tabsRef = useRef<HTMLDivElement>(null)
 
   if (sub.isLoading)
     return (
@@ -76,6 +78,11 @@ export function SubmissionDetailPage() {
   // Bound submissions open on Premium unless the user picked another tab
   const activeTab = tab === null ? (showPremium ? 'premium' : 'timeline') : (tab === 'premium' || tab === 'claims') && !showPremium ? 'timeline' : tab
   // The first time each status was reached (history is newest first)
+  const goToPremium = () => {
+    setTab('premium')
+    // after the tab has rendered
+    requestAnimationFrame(() => tabsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+  }
   const reachedAt: Partial<Record<SubmissionStatus, string>> = { received: s.received_at ?? undefined }
   for (const h of [...(history.data ?? [])].reverse()) reachedAt[h.to_status] ??= h.changed_at
 
@@ -90,7 +97,7 @@ export function SubmissionDetailPage() {
     if (field === 'business_type') return t(`businessType.${str}`)
     if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return formatDate(str)
     if (/^\d{4}-\d{2}-\d{2}T/.test(str)) return formatDateTime(str)
-    return str
+    return systemText(str, t)
   }
 
   return (
@@ -125,6 +132,13 @@ export function SubmissionDetailPage() {
             )}
             {s.decision_reason && <span className="text-body text-muted-foreground">“{s.decision_reason}”</span>}
             <div className="flex-1" />
+            {/* The tabs sit below the fold on a bound submission: one click to its premium */}
+            {showPremium && (
+              <Button size="sm" variant="outline" onClick={goToPremium} title={t('sub.premiumShortcutHint')} data-testid="premium-shortcut">
+                <Banknote />
+                {t('sub.premiumShortcut')}
+              </Button>
+            )}
             {editable && next.map((n) => (
               <Button key={n} size="sm" variant={n === 'declined' || n === 'ntu' ? 'outline' : 'default'} onClick={() => setTarget(n)}>
                 {t(`statusAction.${n}`)}
@@ -139,11 +153,15 @@ export function SubmissionDetailPage() {
             <InfoItem label={t('fields.ourNetPremium')}>
               <Amount value={s.our_net_premium} currency={s.currency} className="text-lead font-semibold" />
             </InfoItem>
-            <InfoItem label={t('fields.ourGrossUsd')}>
-              <Amount value={s.our_gross_premium_usd} currency="USD" human className="text-lead font-semibold" />
-            </InfoItem>
+            {/* The USD equivalent only for other currencies: for USD it would repeat the gross premium */}
+            {s.currency !== 'USD' && (
+              <InfoItem label={t('fields.ourGrossUsd')}>
+                <Amount value={s.our_gross_premium_usd} currency="USD" human className="text-lead font-semibold" />
+              </InfoItem>
+            )}
             <InfoItem label={s.status === 'bound' ? t('fields.signedSharePct') : t('fields.writtenSharePct')}>
               <span className="text-lead font-semibold num">{formatPct(s.share_pct)}</span>
+              {s.status === 'bound' && <ShareBar written={s.written_share_pct} signed={s.signed_share_pct} />}
             </InfoItem>
             <InfoItem label={t('fields.nextFollowUp')}>
               {s.next_follow_up_at ? (
@@ -162,7 +180,7 @@ export function SubmissionDetailPage() {
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="grid min-w-0 gap-4">
           <Card>
-            <CardHeader><CardTitle>{t('sub.section.source')} & {t('sub.section.risk')}</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{t('sub.section.sourceRisk')}</CardTitle></CardHeader>
             <CardContent>
               <dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
                 <InfoItem label={t('fields.receivedAt')}>{formatDate(s.received_at)}</InfoItem>
@@ -181,7 +199,7 @@ export function SubmissionDetailPage() {
           </Card>
 
           <Card>
-            <CardHeader><CardTitle>{t('sub.section.financials')} & {t('sub.section.terms')}</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{t('sub.section.financialsTerms')}</CardTitle></CardHeader>
             <CardContent>
               <dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
                 <InfoItem label={t('fields.sumInsured100')}>{formatMoney(s.sum_insured_100, s.currency)}</InfoItem>
@@ -240,7 +258,7 @@ export function SubmissionDetailPage() {
       </div>
 
       {/* Full width: the Premium tab's table needs the whole content width */}
-      <Card className="mt-4">
+      <Card className="mt-4 scroll-mt-4" ref={tabsRef}>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setTab}>
             <TabsList>
@@ -283,7 +301,7 @@ export function SubmissionDetailPage() {
                           {h.signed_share_pct !== null && ` · ${t('fields.signedSharePct')}: ${formatPct(h.signed_share_pct)}`}
                         </p>
                       )}
-                      {h.comment && <p className="mt-1 text-body">{h.comment}</p>}
+                      {h.comment && <p className="mt-1 text-body">{systemText(h.comment, t)}</p>}
                       {doc && (
                         <button type="button" className="mt-1 inline-flex items-center gap-1 text-caption text-primary hover:underline" onClick={() => openDocument(doc).catch((e) => toast.error(errorMessage(e)))}>
                           <FileText className="size-3.5" />
@@ -354,5 +372,31 @@ export function SubmissionDetailPage() {
       <CloseFollowUpDialog followUp={closing} onClose={() => setClosing(null)} />
       <RescheduleFollowUpDialog followUp={rescheduling} onClose={() => setRescheduling(null)} />
     </>
+  )
+}
+
+/**
+ * Written vs signed share as one compact bar: the written share is the full
+ * track, the signed share the filled part. The figures stay as text beside it.
+ */
+function ShareBar({ written, signed }: { written: number | string | null; signed: number | string | null }) {
+  const { t } = useTranslation()
+  const w = Number(written)
+  const sg = Number(signed)
+  if (written === null || signed === null || !(w > 0)) return null
+  const fill = Math.max(0, Math.min(100, (sg / w) * 100))
+  return (
+    <div className="mt-2 grid gap-1" data-testid="share-bar">
+      <div
+        role="img"
+        aria-label={t('sub.shareBar', { signed: formatPct(signed), written: formatPct(written) })}
+        className="h-1.5 w-full max-w-40 overflow-hidden rounded-full bg-muted ring-1 ring-border ring-inset"
+      >
+        <div className="h-full rounded-full bg-primary" style={{ width: `${fill}%` }} />
+      </div>
+      <span className="text-caption text-muted-foreground num">
+        {t('sub.shareBarOf', { pct: formatPct(written) })}
+      </span>
+    </div>
   )
 }

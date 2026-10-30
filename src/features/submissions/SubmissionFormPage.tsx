@@ -610,13 +610,16 @@ export function FiguresTable({
         <Row label={`− ${t('fields.brokerage')}`} value={formatAmount(figures.brokerage)} />
         <Row label={`${t('fields.ourNetPremium')} (${currency})`} value={formatAmount(figures.ourNet)} strong />
       </div>
-      <div>
-        <Row label={t('fields.ourGrossUsd')} value={formatAmount(figures.ourGrossUsd)} />
-        <Row label={t('fields.ourNetUsd')} value={formatAmount(figures.ourNetUsd)} />
-        <p className="pt-1 text-caption text-muted-foreground">
-          {currency === 'USD' ? '' : fxLoading ? t('common.loading') : fxRate ? t('sub.fxUsed', { rate: fxRate, currency }) : t('sub.noFx', { currency })}
-        </p>
-      </div>
+      {/* USD equivalents only when they say something new: a USD submission would repeat the lines above */}
+      {currency !== 'USD' && (
+        <div>
+          <Row label={t('fields.ourGrossUsd')} value={formatAmount(figures.ourGrossUsd)} />
+          <Row label={t('fields.ourNetUsd')} value={formatAmount(figures.ourNetUsd)} />
+          <p className="pt-1 text-caption text-muted-foreground">
+            {fxLoading ? t('common.loading') : fxRate ? t('sub.fxUsed', { rate: fxRate, currency }) : t('sub.noFx', { currency })}
+          </p>
+        </div>
+      )}
     </div>
   )
 }

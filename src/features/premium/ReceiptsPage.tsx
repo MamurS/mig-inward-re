@@ -21,6 +21,7 @@ import { Amount } from '@/components/Amount'
 import { useAuth } from '@/auth/AuthProvider'
 import { can } from '@/lib/roles'
 import { errorMessage } from '@/lib/errors'
+import { systemText } from '@/lib/systemText'
 import { fitWidth, formatAmount, formatDate, isoDate } from '@/lib/format'
 import { cleanDecimal, isDecimal } from '@/lib/decimal'
 import { useCounterparties, useCurrencies } from '@/hooks/useReference'
@@ -346,7 +347,7 @@ function ReceiptPanel({ receipt, onClose }: { receipt: ReceiptRow | null; onClos
               <div><dt className="text-caption text-muted-foreground">{t('rcp.unallocated')}</dt><dd className={left > 0 ? 'font-semibold text-warning-700 num' : 'font-semibold num'}>{formatAmount(left)} {r.currency}</dd></div>
               <div><dt className="text-caption text-muted-foreground">{t('rcp.amountUsd')}</dt><dd className="font-semibold num">{formatAmount(r.amount_usd)}</dd></div>
             </dl>
-            {r.notes && <p className="text-body whitespace-pre-line text-muted-foreground">{r.notes}</p>}
+            {r.notes && <p className="text-body whitespace-pre-line text-muted-foreground">{systemText(r.notes, t)}</p>}
 
             <div className="overflow-x-auto rounded-lg border">
               <table className="w-full text-table">
@@ -439,7 +440,7 @@ async function exportReceiptsXlsx(rows: ReceiptRow[], t: TFunction) {
     money(r.unallocated_amount),
     money(r.amount_usd),
     { type: String, value: r.bank_reference ?? '' },
-    { type: String, value: r.notes ?? '' },
+    { type: String, value: systemText(r.notes, t) },
   ])
   await writeXlsxFile([head, ...body] as never, {
     sheet: t('pages.receipts.title').slice(0, 31),
