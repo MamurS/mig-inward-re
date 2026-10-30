@@ -493,7 +493,8 @@
       "fx": "FX rates",
       "settings": "Settings",
       "jobs": "Scheduled jobs",
-      "demo": "Demo data"
+      "demo": "Demo data",
+      "ai": "AI"
     },
     "saved": "Saved",
     "add": "Add",
@@ -948,6 +949,14 @@
         "mga": "One MGA",
         "notes": "A bare status, MGA or currency filters by it; late and missing look at the bordereaux owed.",
         "languages": "Words work in English, Russian and Uzbek: статус:действует, просрочен."
+      },
+      "ai_usage": {
+        "status": "Requests that failed or were declined",
+        "kind": "Bordereau column suggestions only",
+        "date": "The last 7 days",
+        "text": "Text anywhere: user, file name, model, error",
+        "notes": "A bare status or kind filters by it.",
+        "languages": "Words work in English, Russian and Uzbek: статус:ошибка."
       }
     },
     "count_one": "{{count}} submission",
@@ -1003,6 +1012,11 @@
         "placeholder": "Search or filter: binder, MGA, status, missing, capacity…",
         "label": "Search or filter binders",
         "words": "binder ref., MGA, notes…"
+      },
+      "ai_usage": {
+        "placeholder": "Search or filter: user, status, file…",
+        "label": "Search or filter AI requests",
+        "words": "user, file, error…"
       }
     },
     "filters": "Filters",
@@ -1514,6 +1528,100 @@
       "noAmounts": "No paid or outstanding amount",
       "duplicateEarlier": "Already imported with an earlier bordereau",
       "duplicateInFile": "Same as row {{line}}"
+    }
+  },
+  "ai": {
+    "fillButton": "Fill from document",
+    "fillTitle": "Fill from a document",
+    "fillHint": "The AI reads the slip, quote request or e-mail and suggests the fields. You choose what to take; nothing is saved until you click Save.",
+    "source": "Read from",
+    "fromFile": "A file",
+    "fromText": "Pasted text",
+    "document": "Document",
+    "documentHint": "PDF, image or text, up to 8 MB",
+    "pasteText": "Text of the e-mail or slip",
+    "pasteHint": "Paste the whole message: the more context, the better the reading",
+    "privacy": "The document is sent to the AI provider set by the admin, only to read these fields; the answer is kept so the same file is never sent twice.",
+    "read": "Read with AI",
+    "reading": "Reading…",
+    "readBy": "Read by {{model}}",
+    "fromCache": "Read before: the saved answer",
+    "pickHint": "tick the values to fill in",
+    "notes": "To check",
+    "nothingFound": "No fields could be read from this document.",
+    "duplicates": "Already in the register? Similar submissions:",
+    "dupReason": {
+      "name": "similar insured",
+      "mga": "same MGA",
+      "period": "close inception"
+    },
+    "use": "Use {{field}}",
+    "confidence": "AI {{pct}} %",
+    "level": {
+      "high": "High confidence",
+      "medium": "Medium confidence: check it",
+      "low": "Low confidence: likely a guess"
+    },
+    "problem": {
+      "noMatch": "«{{name}}» is not in Counterparties: add it, then pick it",
+      "unsureMatch": "Not sure which one: {{names}}",
+      "unknownLob": "Line «{{value}}» is not in the reference data",
+      "unknownCountry": "Country «{{value}}» is not in the reference data",
+      "unknownCurrency": "Currency «{{value}}» is not in the reference data",
+      "badDate": "«{{value}}» is not a date",
+      "badNumber": "«{{value}}» is not a valid number here"
+    },
+    "another": "Read another",
+    "applyN_one": "Fill {{count}} field",
+    "applyN_other": "Fill {{count}} fields",
+    "applied_one": "{{count}} field filled: check it and save",
+    "applied_other": "{{count}} fields filled: check them and save",
+    "bannerTitle_one": "{{count}} field filled by AI",
+    "bannerTitle_other": "{{count}} fields filled by AI",
+    "bannerHint": "Marked fields are suggestions: check each one (hover for the text it came from). The mark goes when you change a field. Nothing is saved until you click Save.",
+    "bannerDismiss": "Hide marks",
+    "tooBig": "The file is over 8 MB",
+    "notConfigured": "The AI provider is not set up yet: ask the admin to add the key",
+    "disabled": "AI-assisted entry is switched off for your role",
+    "limit": "Your daily AI limit is reached; try again tomorrow",
+    "refused": "The AI declined to read this document",
+    "suggestMapping": "Suggest with AI",
+    "mappingApplied_one": "AI mapped {{count}} column: check it",
+    "mappingApplied_other": "AI mapped {{count}} columns: check them",
+    "kindLabel": "Kind",
+    "kind": {
+      "submission": "Submission document",
+      "bordereau_mapping": "Bordereau columns"
+    },
+    "status": {
+      "ok": "Read",
+      "cached": "From cache",
+      "error": "Error",
+      "refused": "Declined",
+      "limit": "Limit reached",
+      "disabled": "Switched off",
+      "too_big": "Too big"
+    },
+    "user": "User",
+    "when": "When",
+    "file": "File",
+    "model": "Model",
+    "inputTokens": "Tokens in",
+    "outputTokens": "Tokens out",
+    "duration": "Time",
+    "error": "Error",
+    "admin": {
+      "title": "AI-assisted data entry",
+      "help": "Reads submission documents and bordereau columns and suggests values for people to check. The provider, model and key are set in the server’s secrets, never here.",
+      "enabled": "Switched on",
+      "roles": "Roles that may use it",
+      "limit": "Requests per user per day",
+      "limitHint": "Answers from the cache do not count",
+      "badLimit": "The daily limit must be a whole number above zero",
+      "count_one": "{{count}} request",
+      "count_other": "{{count}} requests",
+      "tokens": "tokens in {{input}}, out {{output}}",
+      "noUsage": "No AI requests yet"
     }
   }
 }

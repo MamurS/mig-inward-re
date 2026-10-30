@@ -10,6 +10,7 @@ import type { BrowserContext, Route } from '@playwright/test'
 import { TABLES, USERS, fxRate, type FixtureRole } from './fixtures'
 import { createReceipt, generateSchedule, normalizePremium, premiumSeed, premiumViews } from './premium'
 import { checkLargeLoss, claimStatusError, claimViews, claimsSeed, coverageIssues, createClaimPayment, followUpView, insertClaim } from './claims'
+import { aiExtract } from './ai'
 import { binderFollowUpView, binderPeriods, bindersSeed, bindersView, importBordereau } from './binders'
 
 const PROJECT_REF = 'jltrtqwaxvsrnqmjemzc'
@@ -191,7 +192,7 @@ export async function installMock(
     'counterparties', 'submissions', 'submissions_v', 'submission_status_history', 'follow_ups', 'follow_ups_v', 'documents',
     'premium_installments', 'premium_installments_v', 'premium_receipts', 'premium_receipts_v', 'premium_allocations', 'premium_schedule_check_v',
     'claims', 'claims_v', 'claim_reserves', 'claim_payments', 'claim_payments_v', 'claim_recoveries',
-    'binders', 'binders_v', 'binder_lobs', 'bordereau_templates', 'bordereaux', 'bordereau_lines',
+    'binders', 'binders_v', 'binder_lobs', 'bordereau_templates', 'bordereaux', 'bordereau_lines', 'ai_usage_v',
   ])
   const demoMode = () => Boolean(role && db.profiles.find((p) => p.id === authUser(role).id)?.ui_demo_mode)
   const byId = (table: string, id: unknown) => (db[table] ?? []).find((x) => x.id === id)
@@ -248,6 +249,10 @@ export async function installMock(
     if (url.pathname.startsWith('/auth/v1/')) {
       if (url.pathname.endsWith('/logout')) return json({}, 204)
       return json(user ?? {}, user ? 200 : 401)
+    }
+    if (url.pathname === '/functions/v1/ai-extract') {
+      const out = aiExtract(db, (req.postDataJSON() ?? {}) as Row, role, user?.id ?? null, demoMode())
+      return json(out.body, out.status)
     }
     if (url.pathname.startsWith('/functions/v1/')) return json({ id: 'new-user' })
     if (url.pathname.startsWith('/storage/v1/')) return json({ signedURL: '/favicon.svg', signedUrl: '/favicon.svg' })
@@ -307,6 +312,10 @@ export async function installMock(
       }
       if (rpc[1] === 'demo_link_violations') return json([])
       if (rpc[1] === 'claim_coverage_issues') return json(coverageIssues(db, args.p_submission_id, args.p_date_of_loss, args.p_currency))
+      if (rpc[1] === 'ai_available') {
+        const v = (k: string) => db.settings.find((x) => x.key === k)?.value
+        return json(v('ai_enabled') === true && Boolean(role) && ((v('ai_roles') as string[]) ?? []).includes(String(role)))
+      }
       if (rpc[1] === 'binder_periods') return json(binderPeriods(db, args.p_binder_id))
       if (rpc[1] === 'import_bordereau') {
         const out = importBordereau(db, args as unknown as { p_bordereau: Row; p_lines: Row[]; p_rejected?: number }, role, user?.id ?? null, demoMode())
@@ -395,6 +404,15 @@ export async function installMock(
         }
       }
       if (table === 'binder_lobs' || table === 'bordereau_templates') for (const c of created) c.is_demo = demoMode()
+      if (table === 'settings') {
+        // upsert by key: Admin saves settings with one request
+        for (const c of created) {
+          const old = db.settings.find((x) => x.key === c.key)
+          if (old) Object.assign(old, { value: c.value })
+          else db.settings.push({ key: c.key, value: c.value, description: null })
+        }
+        return json(created, 201)
+      }
       if (table === 'binder_lobs' && params.get('on_conflict')) {
         for (const c of created) db.binder_lobs = db.binder_lobs.filter((x) => !(x.binder_id === c.binder_id && x.lob_id === c.lob_id))
         db.binder_lobs.push(...created.map(({ id: _id, created_at: _c, ...rest }) => rest))

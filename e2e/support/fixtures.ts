@@ -247,6 +247,10 @@ const settings: Row[] = [
   { key: 'auto_no_response_days', value: 30, description: null, updated_at: iso(DAY), updated_by: null },
   { key: 'premium_grace_days', value: 0, description: null, updated_at: iso(DAY), updated_by: null },
   { key: 'premium_default_terms_days', value: 60, description: null, updated_at: iso(DAY), updated_by: null },
+  // AI-assisted entry: switched on in the mock (off by default in the real project — Admin › AI)
+  { key: 'ai_enabled', value: true, description: null, updated_at: iso(DAY), updated_by: null },
+  { key: 'ai_roles', value: ['admin', 'underwriter', 'finance', 'claims'], description: null, updated_at: iso(DAY), updated_by: null },
+  { key: 'ai_daily_limit', value: 100, description: null, updated_at: iso(DAY), updated_by: null },
 ]
 
 const job_runs: Row[] = [{ id: 1, job: 'daily_follow_ups', started_at: iso(5 * 3_600_000), finished_at: iso(5 * 3_600_000 - 400), result: { repeat_follow_ups: 0, expiry_flags: 1, moved_to_no_response: 0 }, error: null, started_by: null }]

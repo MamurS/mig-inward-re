@@ -493,7 +493,8 @@
       "fx": "Valyuta kurslari",
       "settings": "Sozlamalar",
       "jobs": "Rejalashtirilgan vazifalar",
-      "demo": "Demo ma'lumotlar"
+      "demo": "Demo ma'lumotlar",
+      "ai": "SI"
     },
     "saved": "Saqlandi",
     "add": "Qoʻshish",
@@ -948,6 +949,14 @@
         "mga": "Bitta MGA",
         "notes": "Holat, MGA yoki valyutaning o‘zi ham filtrlaydi; late va missing kutilayotgan borderolarni ko‘radi.",
         "languages": "So‘zlar ingliz, rus va o‘zbek tillarida: holat:faol, kechikkan."
+      },
+      "ai_usage": {
+        "status": "Xato yoki rad etilgan so‘rovlar",
+        "kind": "Faqat bordero ustunlari takliflari",
+        "date": "So‘nggi 7 kun",
+        "text": "Hamma joyda matn: foydalanuvchi, fayl nomi, model, xato",
+        "notes": "Holat yoki turning o‘zi ham filtrlaydi.",
+        "languages": "So‘zlar ingliz, rus va o‘zbek tillarida: holat:xato."
       }
     },
     "count_one": "{{count}} ta ariza",
@@ -1003,6 +1012,11 @@
         "placeholder": "Qidirish yoki filtr: binder, MGA, holat, bordero yo‘q, sig‘im…",
         "label": "Binderlarni qidirish yoki filtrlash",
         "words": "binder raqami, MGA, izohlar…"
+      },
+      "ai_usage": {
+        "placeholder": "Qidirish yoki filtr: foydalanuvchi, holat, fayl…",
+        "label": "SI so‘rovlarini qidirish yoki filtrlash",
+        "words": "foydalanuvchi, fayl, xato…"
       }
     },
     "filters": "Filtrlar",
@@ -1514,6 +1528,100 @@
       "noAmounts": "To‘langan summa ham, qoldiq ham yo‘q",
       "duplicateEarlier": "Avvalgi bordero bilan yuklangan",
       "duplicateInFile": "{{line}}-qator bilan bir xil"
+    }
+  },
+  "ai": {
+    "fillButton": "Hujjatdan to‘ldirish",
+    "fillTitle": "Hujjatdan to‘ldirish",
+    "fillHint": "SI slip, kotirovka so‘rovi yoki xatni o‘qib, maydonlarni taklif qiladi. Nimani olishni o‘zingiz tanlaysiz; «Saqlash» bosilmaguncha hech narsa saqlanmaydi.",
+    "source": "Manba",
+    "fromFile": "Fayl",
+    "fromText": "Joylangan matn",
+    "document": "Hujjat",
+    "documentHint": "PDF, rasm yoki matn, 8 MB gacha",
+    "pasteText": "Xat yoki slip matni",
+    "pasteHint": "Xabarni to‘liq joylang: kontekst qancha ko‘p bo‘lsa, shuncha aniq",
+    "privacy": "Hujjat admin tanlagan SI provayderiga faqat shu maydonlarni o‘qish uchun yuboriladi; javob saqlanadi, shu bois bitta fayl ikki marta yuborilmaydi.",
+    "read": "SI bilan o‘qish",
+    "reading": "O‘qilmoqda…",
+    "readBy": "{{model}} o‘qidi",
+    "fromCache": "Avval o‘qilgan: saqlangan javob",
+    "pickHint": "to‘ldiriladigan qiymatlarni belgilang",
+    "notes": "Tekshirish kerak",
+    "nothingFound": "Bu hujjatdan maydonlarni o‘qib bo‘lmadi.",
+    "duplicates": "Reyestrda bormi? O‘xshash arizalar:",
+    "dupReason": {
+      "name": "o‘xshash sug‘urtalovchi",
+      "mga": "o‘sha MGA",
+      "period": "yaqin boshlanish"
+    },
+    "use": "{{field}} ni olish",
+    "confidence": "SI {{pct}} %",
+    "level": {
+      "high": "Yuqori ishonch",
+      "medium": "O‘rtacha ishonch: tekshiring",
+      "low": "Past ishonch: taxmin bo‘lishi mumkin"
+    },
+    "problem": {
+      "noMatch": "«{{name}}» kontragentlarda yo‘q: qo‘shing va tanlang",
+      "unsureMatch": "Qaysi biri ekani aniq emas: {{names}}",
+      "unknownLob": "«{{value}}» yo‘nalishi ma’lumotnomada yo‘q",
+      "unknownCountry": "«{{value}}» mamlakati ma’lumotnomada yo‘q",
+      "unknownCurrency": "«{{value}}» valyutasi ma’lumotnomada yo‘q",
+      "badDate": "«{{value}}» sana emas",
+      "badNumber": "«{{value}}» bu yerda to‘g‘ri son emas"
+    },
+    "another": "Boshqasini o‘qish",
+    "applyN_one": "{{count}} maydonni to‘ldirish",
+    "applyN_other": "{{count}} maydonni to‘ldirish",
+    "applied_one": "{{count}} maydon to‘ldirildi: tekshiring va saqlang",
+    "applied_other": "{{count}} maydon to‘ldirildi: tekshiring va saqlang",
+    "bannerTitle_one": "{{count}} maydon SI tomonidan to‘ldirildi",
+    "bannerTitle_other": "{{count}} maydon SI tomonidan to‘ldirildi",
+    "bannerHint": "Belgilangan maydonlar — takliflar: har birini tekshiring (manba matnni ko‘rish uchun ustiga olib boring). Maydonni o‘zgartirsangiz, belgi yo‘qoladi. «Saqlash» bosilmaguncha hech narsa saqlanmaydi.",
+    "bannerDismiss": "Belgilarni yashirish",
+    "tooBig": "Fayl 8 MB dan katta",
+    "notConfigured": "SI provayderi hali sozlanmagan: admindan kalit qo‘shishni so‘rang",
+    "disabled": "Rolingiz uchun SI yordamida to‘ldirish o‘chirilgan",
+    "limit": "Kunlik SI limiti tugadi; ertaga urinib ko‘ring",
+    "refused": "SI bu hujjatni o‘qishdan bosh tortdi",
+    "suggestMapping": "SI bilan taklif qilish",
+    "mappingApplied_one": "SI {{count}} ustunni moslashtirdi: tekshiring",
+    "mappingApplied_other": "SI {{count}} ustunni moslashtirdi: tekshiring",
+    "kindLabel": "Turi",
+    "kind": {
+      "submission": "Ariza hujjati",
+      "bordereau_mapping": "Bordero ustunlari"
+    },
+    "status": {
+      "ok": "O‘qildi",
+      "cached": "Keshdan",
+      "error": "Xato",
+      "refused": "Rad etildi",
+      "limit": "Limit tugadi",
+      "disabled": "O‘chirilgan",
+      "too_big": "Juda katta"
+    },
+    "user": "Foydalanuvchi",
+    "when": "Qachon",
+    "file": "Fayl",
+    "model": "Model",
+    "inputTokens": "Kirish tokenlari",
+    "outputTokens": "Chiqish tokenlari",
+    "duration": "Vaqt",
+    "error": "Xato",
+    "admin": {
+      "title": "SI yordamida ma’lumot kiritish",
+      "help": "Ariza hujjatlari va bordero ustunlarini o‘qib, tekshirish uchun qiymatlar taklif qiladi. Provayder, model va kalit server sirlarida beriladi, bu yerda emas.",
+      "enabled": "Yoqilgan",
+      "roles": "Foydalana oladigan rollar",
+      "limit": "Foydalanuvchiga kuniga so‘rovlar",
+      "limitHint": "Keshdan javoblar hisoblanmaydi",
+      "badLimit": "Kunlik limit noldan katta butun son bo‘lishi kerak",
+      "count_one": "{{count}} so‘rov",
+      "count_other": "{{count}} so‘rov",
+      "tokens": "tokenlar: kirish {{input}}, chiqish {{output}}",
+      "noUsage": "Hali SI so‘rovlari yo‘q"
     }
   }
 }

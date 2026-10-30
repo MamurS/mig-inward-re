@@ -421,3 +421,47 @@ export const BINDERS_SERVER: ServerSpec = {
   },
   textColumn: 'search_text',
 }
+
+// ---------------------------------------------------------------------------
+// Admin › AI usage log
+// ---------------------------------------------------------------------------
+
+const AI_STATUS_WORDS: Record<string, string[]> = {
+  ok: ['ok', 'done', 'готово', 'tayyor'],
+  cached: ['cached', 'cache', 'кэш', 'kesh'],
+  error: ['error', 'failed', 'ошибка', 'xato'],
+  refused: ['refused', 'declined', 'отказ', 'rad'],
+  limit: ['limit', 'лимит'],
+  disabled: ['disabled', 'off', 'выключен', 'ochiq emas'],
+  too_big: ['too_big', 'big', 'большой', 'katta'],
+}
+const AI_KIND_WORDS: Record<string, string[]> = {
+  submission: ['submission', 'document', 'заявка', 'документ', 'ariza'],
+  bordereau_mapping: ['bordereau', 'mapping', 'бордеро', 'bordero'],
+}
+const wordOptions = (words: Record<string, string[]>, prefix: string) => (ctx: SearchContext): Option[] =>
+  Object.keys(words).map((k) => ({ value: k, label: label(ctx, `${prefix}.${k}`, k), insert: k, names: [...words[k], label(ctx, `${prefix}.${k}`, k)] }))
+
+export const AI_USAGE: Scope = {
+  id: 'ai_usage',
+  fields: [
+    { key: 'status', kind: 'list', aliases: ['state', 'статус', 'holat'], labelKey: 'fields.status', options: wordOptions(AI_STATUS_WORDS, 'ai.status'), partial: 'prefix' },
+    { key: 'kind', kind: 'list', aliases: ['type', 'тип', 'turi'], labelKey: 'ai.kindLabel', options: wordOptions(AI_KIND_WORDS, 'ai.kind'), partial: 'prefix' },
+    { key: 'user', kind: 'list', aliases: ['who', 'пользователь', 'foydalanuvchi'], labelKey: 'ai.user', options: userOptions(), partial: 'contains' },
+    { key: 'date', kind: 'date', looksBack: true, aliases: ['on', 'дата', 'sana'], labelKey: 'ai.when' },
+    { key: 'tokens', kind: 'num', aliases: ['токены', 'token'], labelKey: 'ai.outputTokens' },
+  ],
+  flags: [],
+  dateKeywordField: 'date',
+  exactFields: ['status', 'kind'],
+  weak: [],
+}
+
+export const AI_USAGE_SERVER: ServerSpec = {
+  list: { status: 'status', kind: 'kind', user: 'user_id' },
+  like: {},
+  num: { tokens: 'output_tokens' },
+  date: { date: 'created_at' },
+  flags: {},
+  textColumn: 'search_text',
+}
