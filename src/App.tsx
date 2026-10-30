@@ -37,7 +37,7 @@ export default function App() {
           <Route
             path="dashboard"
             element={
-              <RequireRole roles={['admin', 'management']}>{page(<DashboardPage />)}</RequireRole>
+              <RequireRole roles={['admin', 'management', 'finance']}>{page(<DashboardPage />)}</RequireRole>
             }
           />
           <Route path="ceo-dashboard" element={<Navigate to="/dashboard" replace />} />

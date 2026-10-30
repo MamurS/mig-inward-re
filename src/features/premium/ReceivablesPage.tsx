@@ -24,30 +24,13 @@ import { AGING_BUCKETS } from '@/features/search/scopes'
 import { useListSearch } from '@/features/search/useSearch'
 import { SearchChips } from '@/features/search/SearchChips'
 import { MAX_RECEIVABLES, usePayableTotal, useReceivables, type InstallmentRow } from './api'
+import { ageing } from './summary'
 
 /** Which rows a query looks at: payable asks for return premium; a status for any receivable; else what is still owed. */
 export function receivablesBase(q: ParsedQuery | null): 'open' | 'receivable' | null {
   if (hasFlag(q, 'payable')) return null
   const asksStatus = Boolean(q?.groups.some((g) => g.terms.some((t) => t.kind === 'field' && t.field === 'status' && !t.neg)))
   return asksStatus ? 'receivable' : 'open'
-}
-
-/** Outstanding in USD by ageing bucket (not yet due first); rows without an FX rate are counted apart. */
-export function ageing(rows: InstallmentRow[]) {
-  const buckets: Record<'current' | (typeof AGING_BUCKETS)[number], number> = { current: 0, '0-30': 0, '31-60': 0, '61-90': 0, '90+': 0 }
-  let total = 0
-  let missingRate = 0
-  for (const r of rows) {
-    if (r.type === 'return' || !r.outstanding_amount) continue
-    if (r.outstanding_usd === null) {
-      missingRate++
-      continue
-    }
-    const key = (r.aging_bucket as keyof typeof buckets | null) ?? 'current'
-    buckets[key] = Math.round((buckets[key] + r.outstanding_usd) * 100) / 100
-    total = Math.round((total + r.outstanding_usd) * 100) / 100
-  }
-  return { buckets, total, missingRate }
 }
 
 /**

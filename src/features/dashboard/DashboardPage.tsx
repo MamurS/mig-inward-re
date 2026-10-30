@@ -20,6 +20,7 @@ import { useAuth } from '@/auth/AuthProvider'
 import { formatAmount, formatDate, formatLongDate, formatMonthShort, isoDate, locale } from '@/lib/format'
 import { errorMessage } from '@/lib/errors'
 import { STATUS_SOLID, type SubmissionStatus } from '@/lib/status'
+import { PremiumDashboard } from '@/features/premium/PremiumDashboard'
 
 type Row = {
   id: string
@@ -70,8 +71,9 @@ function useDashboardRows() {
 
 export function DashboardPage() {
   const { t } = useTranslation()
-  const { profile } = useAuth()
+  const { profile, role } = useAuth()
   const { data, isLoading, error } = useDashboardRows()
+  const seesPremium = role === 'admin' || role === 'management' || role === 'finance'
   const thisYear = new Date().getFullYear()
   const [year, setYear] = useState<string>(String(thisYear))
 
@@ -223,6 +225,8 @@ export function DashboardPage() {
           to={registerLink(`status:bound, bound>=${m.yearStart}`)}
         />
       </div>
+
+      {seesPremium && <PremiumDashboard />}
 
       {/* What needs an answer first, then how we are doing */}
       <div className="mb-4 grid gap-4 xl:grid-cols-3">

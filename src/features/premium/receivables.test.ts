@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { parseQuery, type SearchContext } from '@/features/search/query'
 import { RECEIVABLES } from '@/features/search/scopes'
-import { ageing, receivablesBase } from './ReceivablesPage'
+import { receivablesBase } from './ReceivablesPage'
+import { ageing } from './summary'
 import type { InstallmentRow } from './api'
 
 const row = (r: Partial<InstallmentRow>) => ({ type: 'original', outstanding_amount: 100, outstanding_usd: 100, aging_bucket: null, ...r }) as InstallmentRow

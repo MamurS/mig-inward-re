@@ -4,7 +4,7 @@ import type { AppRole } from '@/lib/roles'
 export type NavItem = { to: string; labelKey: string; icon: LucideIcon; roles: AppRole[] }
 
 export const NAV_ITEMS: NavItem[] = [
-  { to: '/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard, roles: ['admin', 'management'] },
+  { to: '/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard, roles: ['admin', 'management', 'finance'] },
   { to: '/submissions', labelKey: 'nav.submissions', icon: FileStack, roles: ['admin', 'underwriter', 'finance', 'claims', 'management'] },
   { to: '/agenda', labelKey: 'nav.agenda', icon: CalendarClock, roles: ['admin', 'underwriter', 'finance', 'claims', 'management'] },
   { to: '/receivables', labelKey: 'nav.receivables', icon: HandCoins, roles: ['admin', 'finance', 'management'] },

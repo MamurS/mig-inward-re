@@ -380,7 +380,11 @@
       "avgShare": "Avg signed share"
     },
     "new": "New counterparty",
-    "exported": "Exported {{count}} counterparties"
+    "exported": "Exported {{count}} counterparties",
+    "premium": {
+      "title": "Premium",
+      "open": "Open in Receivables"
+    }
   },
   "v": {
     "required": "Required",
@@ -444,7 +448,21 @@
     "openInRegister": "Open in register",
     "noOpenOffers": "No offers are waiting for an answer.",
     "offeredOn": "Offered",
-    "daysWaiting": "Days waiting"
+    "daysWaiting": "Days waiting",
+    "premium": {
+      "title": "Premium",
+      "outstanding": "Premium outstanding",
+      "notDue": "{{amount}} not yet due",
+      "overdue": "Overdue premium",
+      "receivedMonth": "Received this month",
+      "receivedYear": "Received in {{year}}",
+      "missingRate_one": "{{count}} item has no FX rate yet and is not in the USD totals",
+      "missingRate_other": "{{count}} items have no FX rate yet and are not in the USD totals",
+      "overdueByAge": "Overdue premium by age",
+      "topMgas": "Top MGAs by overdue premium",
+      "mostOverdue": "Most overdue premium",
+      "noOverdue": "No overdue premium"
+    }
   },
   "admin": {
     "tabs": {

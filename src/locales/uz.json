@@ -380,7 +380,11 @@
       "avgShare": "Oʻrtacha tasdiqlangan ulush"
     },
     "new": "Yangi kontragent",
-    "exported": "{{count}} ta kontragent eksport qilindi"
+    "exported": "{{count}} ta kontragent eksport qilindi",
+    "premium": {
+      "title": "Mukofotlar",
+      "open": "Debitorlikda ochish"
+    }
   },
   "v": {
     "required": "Majburiy maydon",
@@ -444,7 +448,21 @@
     "openInRegister": "Reestrda ochish",
     "noOpenOffers": "Javob kutayotgan takliflar yoʻq.",
     "offeredOn": "Taklif sanasi",
-    "daysWaiting": "Kutish kunlari"
+    "daysWaiting": "Kutish kunlari",
+    "premium": {
+      "title": "Mukofotlar",
+      "outstanding": "Olinadigan mukofot",
+      "notDue": "{{amount}} — muddati kelmagan",
+      "overdue": "Kechikkan mukofot",
+      "receivedMonth": "Shu oyda olingan",
+      "receivedYear": "{{year}} yilda olingan",
+      "missingRate_one": "{{count}} ta pozitsiyada hali kurs yo'q — USD jamiga kirmaydi",
+      "missingRate_other": "{{count}} ta pozitsiyada hali kurs yo'q — USD jamiga kirmaydi",
+      "overdueByAge": "Kechikkan mukofot yoshi bo'yicha",
+      "topMgas": "Eng ko'p kechiktirgan MGA lar",
+      "mostOverdue": "Eng ko'p kechikkan to'lovlar",
+      "noOverdue": "Kechikkan mukofot yo'q"
+    }
   },
   "admin": {
     "tabs": {
