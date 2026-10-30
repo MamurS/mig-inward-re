@@ -301,7 +301,7 @@ export function SearchBar() {
   return (
     <div
       ref={wrapRef}
-      className="relative h-11 w-full max-w-2xl min-w-0"
+      className="relative h-11 w-full min-w-0 flex-1 md:mr-6"
       onBlur={(e) => {
         if (!wrapRef.current?.contains(e.relatedTarget as Node)) {
           setOpen(false)

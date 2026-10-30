@@ -113,8 +113,8 @@ export function AppLayout() {
             <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setMobileOpen((o) => !o)}>
               {mobileOpen ? <X /> : <Menu />}
             </Button>
+            {/* the bar takes the width up to a clear gap before the language switch */}
             <SearchBar />
-            <div className="flex-1" />
             <LanguageSwitcher />
             <UserMenu />
           </header>
