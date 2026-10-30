@@ -15,7 +15,7 @@ import { Amount } from '@/components/Amount'
 import { AgingBadge } from '@/components/AgingBadge'
 import { KpiCard } from '@/components/KpiCard'
 import { errorMessage } from '@/lib/errors'
-import { formatAmount, formatDate, isoDate } from '@/lib/format'
+import { fitWidth, formatAmount, formatDate, isoDate } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { textWords, type ParsedQuery } from '@/features/search/query'
 import { hasFlag } from '@/features/search/client'
@@ -204,7 +204,7 @@ async function exportReceivablesXlsx(rows: InstallmentRow[], t: TFunction) {
   ])
   await writeXlsxFile([head, ...body] as never, {
     sheet: t('pages.receivables.title').slice(0, 31),
-    columns: [{ width: 16 }, { width: 5 }, { width: 12 }, { width: 32 }, { width: 28 }, { width: 28 }, { width: 12 }, { width: 10 }, { width: 8 }, { width: 8 }, { width: 16 }, { width: 16 }, { width: 16 }, { width: 16 }, { width: 16 }, { width: 14 }],
+    columns: [{ width: fitWidth(rows.map((r) => r.ref_no)) }, { width: 5 }, { width: 12 }, { width: fitWidth(rows.map((r) => r.insured_name), 20) }, { width: fitWidth(rows.map((r) => r.mga_name), 20) }, { width: fitWidth(rows.map((r) => r.broker_name), 16) }, { width: 12 }, { width: 10 }, { width: 8 }, { width: 8 }, { width: 16 }, { width: 16 }, { width: 16 }, { width: 16 }, { width: 16 }, { width: 14 }],
     stickyRowsCount: 1,
   }).toFile(`receivables-${isoDate()}.xlsx`)
 }

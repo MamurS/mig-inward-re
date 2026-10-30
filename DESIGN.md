@@ -236,6 +236,14 @@ data-1 `#468de4` (3.39 : 1 on white) · data-2 `#c37c00` (3.39 : 1 on white) · 
   (white, hairline border, very soft shadow, 24 px padding), inputs and
   buttons `rounded-control` at 40 px tall, badges md.
 - **Page padding** 16 / 24 / 32 px (mobile / md / lg).
+- **Reference numbers** (SUB-, RCP-, DEMO-SUB-…, later CLM-): never a
+  fixed width. Lists put the ref in a grid column sized to the longest ref
+  (`max-content`, rows as `subgrid`), aligned to the first line of the name
+  (`items-baseline`), on one line, tabular figures, no extra letter-spacing.
+  Text never overlaps; truncation (ellipsis + tooltip) is the last resort.
+  Excel columns fit the longest value (`fitWidth`). `e2e/layout-overlap.spec.ts`
+  fails on overlapping or silently cut-off text in EN / RU / UZ, both text
+  sizes, with and without Demo mode.
 - **Tables.** No header bar: a quiet small-text header over hairline rows,
   a subtle slate-50 hover; regular rows of 48 px on every table (no density
   switch). A table that cannot fit scrolls inside its own

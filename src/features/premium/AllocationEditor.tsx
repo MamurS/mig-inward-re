@@ -218,7 +218,7 @@ export function AllocationEditor({
           {suggestions.slice(0, 6).map((inst) => (
             <Button key={inst.id} type="button" variant="outline" size="sm" onClick={() => add(inst)} className="max-w-full">
               <Plus />
-              <span className="truncate num">{inst.ref_no} #{inst.installment_no}</span>
+              <span className="truncate num" title={`${inst.ref_no} #${inst.installment_no}`}>{inst.ref_no} #{inst.installment_no}</span>
               <span className="text-muted-foreground num">{formatAmount(inst.outstanding_amount)} {inst.currency}</span>
             </Button>
           ))}

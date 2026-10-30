@@ -20,7 +20,7 @@ import { Amount } from '@/components/Amount'
 import { useAuth } from '@/auth/AuthProvider'
 import { can } from '@/lib/roles'
 import { errorMessage } from '@/lib/errors'
-import { formatAmount, formatDate, isoDate } from '@/lib/format'
+import { fitWidth, formatAmount, formatDate, isoDate } from '@/lib/format'
 import { cleanDecimal, isDecimal } from '@/lib/decimal'
 import { useCounterparties, useCurrencies } from '@/hooks/useReference'
 import { textWords } from '@/features/search/query'
@@ -446,7 +446,7 @@ async function exportReceiptsXlsx(rows: ReceiptRow[], t: TFunction) {
   ])
   await writeXlsxFile([head, ...body] as never, {
     sheet: t('pages.receipts.title').slice(0, 31),
-    columns: [{ width: 15 }, { width: 12 }, { width: 32 }, { width: 8 }, { width: 16 }, { width: 16 }, { width: 16 }, { width: 16 }, { width: 28 }, { width: 40 }],
+    columns: [{ width: fitWidth(rows.map((r) => r.ref_no)) }, { width: 12 }, { width: fitWidth(rows.map((r) => r.payer_name), 20) }, { width: 8 }, { width: 16 }, { width: 16 }, { width: 16 }, { width: 16 }, { width: 28 }, { width: 40 }],
     stickyRowsCount: 1,
   }).toFile(`receipts-${isoDate()}.xlsx`)
 }

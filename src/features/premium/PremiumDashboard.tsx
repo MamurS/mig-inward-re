@@ -49,23 +49,23 @@ export function PremiumDashboard() {
   return (
     <section aria-labelledby="dash-premium" className="mb-4 grid gap-4" data-premium-dashboard>
       <h2 id="dash-premium" className="text-title font-semibold">{t('dash.premium.title')}</h2>
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
-        <KpiCard icon={Wallet} label={t('dash.premium.outstanding')} value={<Amount value={s.outstandingUsd} currency="USD" human />} sub={t('dash.premium.notDue', { amount: formatAmount(s.notDueUsd) })} to={rcv('')} />
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 2xl:grid-cols-5">
+        <KpiCard icon={Wallet} label={t('dash.premium.outstanding')} value={<Amount value={s.outstandingUsd} human />} sub={<>USD · {t('dash.premium.notDue', { amount: formatAmount(s.notDueUsd) })}</>} to={rcv('')} />
         <KpiCard
           icon={AlarmClock}
           label={t('dash.premium.overdue')}
-          value={<Amount value={s.overdueUsd} currency="USD" human />}
-          sub={t('rcv.count', { count: s.overdueCount })}
+          value={<Amount value={s.overdueUsd} human />}
+          sub={<>USD · {t('rcv.count', { count: s.overdueCount })}</>}
           to={rcv('overdue')}
           alert={s.overdueUsd > 0}
         />
-        <KpiCard icon={Banknote} label={t('dash.premium.receivedMonth')} value={<Amount value={s.receivedMonthUsd} currency="USD" human />} to={rcp('received:thismonth')} />
-        <KpiCard icon={CalendarRange} label={t('dash.premium.receivedYear', { year })} value={<Amount value={s.receivedYearUsd} currency="USD" human />} to={rcp(`received>=${year}-01-01`)} />
+        <KpiCard icon={Banknote} label={t('dash.premium.receivedMonth')} value={<Amount value={s.receivedMonthUsd} human />} sub="USD" to={rcp('received:thismonth')} />
+        <KpiCard icon={CalendarRange} label={t('dash.premium.receivedYear', { year })} value={<Amount value={s.receivedYearUsd} human />} sub="USD" to={rcp(`received>=${year}-01-01`)} />
         <KpiCard
           icon={Undo2}
           label={t('rcv.payableTile')}
-          value={<Amount value={s.payableUsd} currency="USD" human />}
-          sub={t('rcv.payableSub', { count: s.payableCount })}
+          value={<Amount value={s.payableUsd} human />}
+          sub={<>USD · {t('rcv.payableSub', { count: s.payableCount })}</>}
           to={rcv('payable')}
         />
       </div>
@@ -75,7 +75,7 @@ export function PremiumDashboard() {
         </p>
       )}
 
-      <div className="grid gap-4 xl:grid-cols-3">
+      <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader><CardTitle>{t('dash.premium.overdueByAge')}</CardTitle></CardHeader>
           <CardContent className="grid gap-4">
@@ -121,7 +121,7 @@ export function PremiumDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="gap-0 py-0">
+        <Card className="gap-0 py-0 lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between gap-2 py-4">
             <CardTitle>{t('dash.premium.mostOverdue')}</CardTitle>
             <Link to={rcv('overdue')} className="text-body text-link hover:underline">{t('dash.openInRegister')}</Link>
@@ -129,16 +129,17 @@ export function PremiumDashboard() {
           {s.mostOverdue.length === 0 ? (
             <EmptyState pictogram="done" title={t('dash.premium.noOverdue')} compact />
           ) : (
-            <ul className="border-t" data-most-overdue>
+            <ul className="grid grid-cols-[max-content_minmax(0,1fr)_auto] border-t sm:grid-cols-[max-content_minmax(0,1fr)_auto_auto]" data-most-overdue data-ref-list>
               {s.mostOverdue.map((r) => (
-                <li key={r.id}>
-                  <Link to={`/submissions/${r.submission_id}`} className="flex items-center gap-3 border-b px-5 py-2 text-body transition-colors last:border-0 hover:bg-slate-50">
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate"><span className="font-medium text-link num">{r.ref_no} #{r.installment_no}</span> · {r.insured_name}</span>
+                <li key={r.id} className="col-span-full grid grid-cols-subgrid">
+                  <Link to={`/submissions/${r.submission_id}`} className="col-span-full grid grid-cols-subgrid items-baseline gap-x-3 border-b px-5 py-2 text-body transition-colors hover:bg-slate-50">
+                    <span className="font-medium whitespace-nowrap text-link num" data-ref>{r.ref_no} #{r.installment_no}</span>
+                    <span className="min-w-0">
+                      <span className="block truncate" title={r.insured_name ?? ''}>{r.insured_name}</span>
                       <span className="block truncate text-caption text-muted-foreground">{r.mga_name}</span>
                     </span>
-                    <AgingBadge days={r.days_overdue ?? 0} />
-                    <span className="w-28 shrink-0 text-right num">{formatAmount(r.outstanding_amount)} <span className="text-caption text-muted-foreground">{r.currency}</span></span>
+                    <span className="hidden sm:inline"><AgingBadge days={r.days_overdue ?? 0} /></span>
+                    <span className="text-right whitespace-nowrap num">{formatAmount(r.outstanding_amount)} <span className="text-caption text-muted-foreground">{r.currency}</span></span>
                   </Link>
                 </li>
               ))}

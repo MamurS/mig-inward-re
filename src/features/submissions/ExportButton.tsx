@@ -4,7 +4,7 @@ import type { TFunction } from 'i18next'
 import { FileSpreadsheet, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { isoDate } from '@/lib/format'
+import { fitWidth, isoDate } from '@/lib/format'
 import { errorMessage } from '@/lib/errors'
 import { buildSubmissionsQuery, type RegisterQuery, type SubmissionRow } from './api'
 
@@ -19,7 +19,7 @@ export async function exportSubmissionsXlsx(rows: SubmissionRow[], t: TFunction)
   const d = (v: string | null) => (v ? new Date(v.length === 10 ? `${v}T00:00:00Z` : v) : null)
   const s = (v: string | null) => (v ? t(`status.${v}`) : null)
   const cols: Col[] = [
-    { header: t('fields.refNo'), value: (r) => r.ref_no, width: 15 },
+    { header: t('fields.refNo'), value: (r) => r.ref_no, width: fitWidth(rows.map((r) => r.ref_no)) },
     { header: t('fields.receivedAt'), value: (r) => d(r.received_at), format: 'dd.mm.yyyy', width: 12 },
     { header: t('fields.status'), value: (r) => s(r.status), width: 14 },
     { header: t('fields.insuredName'), value: (r) => r.insured_name, width: 36 },

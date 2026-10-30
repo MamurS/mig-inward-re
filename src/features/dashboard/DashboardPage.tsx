@@ -238,23 +238,26 @@ export function DashboardPage() {
           {m.oldestOffers.length === 0 ? (
             <EmptyState pictogram="done" title={t('dash.noOpenOffers')} compact />
           ) : (
-            <ul className="border-t">
+            // one grid for the whole list: the ref column is as wide as the longest ref (DEMO-SUB-…), never fixed
+            <ul className="grid grid-cols-[max-content_minmax(8rem,1fr)_auto] border-t md:grid-cols-[max-content_minmax(8rem,1fr)_auto_auto] 2xl:grid-cols-[max-content_minmax(8rem,1fr)_auto_auto_auto]" data-ref-list>
               {m.oldestOffers.map((r) => {
                 const days = daysSince(r.offered_at) ?? 0
                 return (
-                  <li key={r.id}>
-                    <Link to={`/submissions/${r.id}`} className="flex items-center gap-3 border-b px-5 py-2 text-body transition-colors last:border-0 hover:bg-slate-50">
-                      <span className="w-32 shrink-0 font-medium whitespace-nowrap text-link num">{r.ref_no}</span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate">{r.insured_name}</span>
+                  <li key={r.id} className="col-span-full grid grid-cols-subgrid">
+                    <Link to={`/submissions/${r.id}`} className="col-span-full grid grid-cols-subgrid items-baseline gap-x-3 border-b px-5 py-2 text-body transition-colors hover:bg-slate-50">
+                      <span className="font-medium whitespace-nowrap text-link num" data-ref>{r.ref_no}</span>
+                      <span className="min-w-0">
+                        <span className="block truncate" title={r.insured_name}>{r.insured_name}</span>
                         <span className="block truncate text-caption text-muted-foreground">{r.mga_name}</span>
                       </span>
-                      <StatusBadge status={r.status} className="hidden md:inline-flex" />
-                      {r.offer_expired && (
-                        <span title={t('sub.offerExpiredOn', { date: formatDate(r.offer_valid_until) })}><AlertTriangle className="size-4 text-warning-600" /></span>
-                      )}
-                      <span className="w-24 shrink-0 text-right"><AgingBadge days={Math.max(days, 1)} label={t('ui.daysWaiting', { count: days })} /></span>
-                      <span className="w-20 shrink-0 text-right"><Amount value={r.our_gross_premium_usd} human /></span>
+                      <StatusBadge status={r.status} className="hidden 2xl:inline-flex" />
+                      <span className="hidden items-center justify-end gap-2 md:inline-flex">
+                        {r.offer_expired && (
+                          <span title={t('sub.offerExpiredOn', { date: formatDate(r.offer_valid_until) })}><AlertTriangle className="size-4 text-warning-600" /></span>
+                        )}
+                        <AgingBadge days={Math.max(days, 1)} label={t('ui.daysWaiting', { count: days })} />
+                      </span>
+                      <span className="text-right"><Amount value={r.our_gross_premium_usd} human /></span>
                     </Link>
                   </li>
                 )
