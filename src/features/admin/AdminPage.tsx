@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { KeyRound, Loader2, Play, Plus, Save, Trash2, UserPlus } from 'lucide-react'
+import { Database, KeyRound, Loader2, Play, Plus, Save, ShieldCheck, Trash2, UserPlus } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/PageHeader'
 import { Button } from '@/components/ui/button'
@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Field } from '@/components/Field'
 import { SavedCheck, useFlash } from '@/components/SavedCheck'
 import { useAuth } from '@/auth/AuthProvider'
+import { DOCUMENTS_BUCKET } from '@/lib/documents'
 import { supabase } from '@/lib/supabase'
 import { ALL_ROLES, type AppRole } from '@/lib/roles'
 import { formatDate, formatDateTime, isoDate } from '@/lib/format'
@@ -29,7 +30,7 @@ import { FX_PAGE, REFERENCE_PAGE, USERS_PAGE } from '@/features/search/pages'
 import { useListSearch } from '@/features/search/useSearch'
 import { SearchChips } from '@/features/search/SearchChips'
 
-const TABS = ['users', 'reference', 'fx', 'settings', 'jobs'] as const
+const TABS = ['users', 'reference', 'fx', 'settings', 'jobs', 'demo'] as const
 
 export function AdminPage() {
   const { t } = useTranslation()
@@ -46,12 +47,14 @@ export function AdminPage() {
           <TabsTrigger value="fx">{t('admin.tabs.fx')}</TabsTrigger>
           <TabsTrigger value="settings">{t('admin.tabs.settings')}</TabsTrigger>
           <TabsTrigger value="jobs">{t('admin.tabs.jobs')}</TabsTrigger>
+          <TabsTrigger value="demo">{t('admin.tabs.demo')}</TabsTrigger>
         </TabsList>
         <TabsContent value="users"><UsersTab /></TabsContent>
         <TabsContent value="reference"><ReferenceTab /></TabsContent>
         <TabsContent value="fx"><FxTab /></TabsContent>
         <TabsContent value="settings"><SettingsTab /></TabsContent>
         <TabsContent value="jobs"><JobsTab /></TabsContent>
+        <TabsContent value="demo"><DemoTab /></TabsContent>
       </Tabs>
     </>
   )
@@ -735,6 +738,126 @@ function JobsTab() {
           )}
         </TableBody>
       </Table>
+    </Card>
+  )
+}
+
+const DEMO_KINDS = ['counterparties', 'submissions', 'installments', 'receipts', 'follow_ups'] as const
+
+/**
+ * Demo data: load it, check that it never links to real data, delete it all.
+ * The database does the work (seed_demo_data / demo_link_violations /
+ * delete_demo_data); deleting also removes the demo documents' files.
+ */
+function DemoTab() {
+  const { t } = useTranslation()
+  const qc = useQueryClient()
+  const [busy, setBusy] = useState<'seed' | 'check' | 'delete' | null>(null)
+  const [confirm, setConfirm] = useState(false)
+  const [check, setCheck] = useState<{ kind: string; detail: string }[] | null>(null)
+  const counts = useQuery({
+    queryKey: ['admin', 'demo-counts'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('demo_data_counts')
+      if (error) throw error
+      return (data ?? {}) as Record<string, number>
+    },
+  })
+  const loaded = (counts.data?.submissions ?? 0) > 0 || (counts.data?.counterparties ?? 0) > 0
+
+  async function seed() {
+    setBusy('seed')
+    const { error } = await supabase.rpc('seed_demo_data')
+    setBusy(null)
+    if (error) return toast.error(errorMessage(error))
+    toast.success(t('admin.demo.loaded'))
+    await qc.invalidateQueries({ queryKey: ['admin', 'demo-counts'] })
+  }
+
+  async function runCheck() {
+    setBusy('check')
+    const { data, error } = await supabase.rpc('demo_link_violations')
+    setBusy(null)
+    if (error) return toast.error(errorMessage(error))
+    setCheck((data ?? []) as { kind: string; detail: string }[])
+  }
+
+  async function remove() {
+    setBusy('delete')
+    const { data, error } = await supabase.rpc('delete_demo_data')
+    if (error) {
+      setBusy(null)
+      return toast.error(errorMessage(error))
+    }
+    const paths = ((data ?? {}) as { document_paths?: string[] }).document_paths ?? []
+    if (paths.length) {
+      const { error: storageError } = await supabase.storage.from(DOCUMENTS_BUCKET).remove(paths)
+      if (storageError) toast.error(errorMessage(storageError))
+    }
+    setBusy(null)
+    setConfirm(false)
+    setCheck(null)
+    toast.success(t('admin.demo.deleted'))
+    await qc.invalidateQueries()
+  }
+
+  return (
+    <Card className="gap-0 py-0">
+      <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 py-4">
+        <div>
+          <CardTitle>{t('admin.demo.title')}</CardTitle>
+          <p className="mt-1 max-w-3xl text-caption text-muted-foreground">{t('admin.demo.help')}</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => void runCheck()} disabled={busy !== null}>
+            {busy === 'check' ? <Loader2 className="animate-spin" /> : <ShieldCheck />}
+            {t('admin.demo.check')}
+          </Button>
+          <Button variant="outline" onClick={() => void seed()} disabled={busy !== null || loaded || counts.isLoading}>
+            {busy === 'seed' ? <Loader2 className="animate-spin" /> : <Database />}
+            {t('admin.demo.load')}
+          </Button>
+          <Button variant="destructive" onClick={() => setConfirm(true)} disabled={busy !== null || !loaded}>
+            <Trash2 />
+            {t('admin.demo.delete')}
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="grid gap-4 border-t py-4">
+        <dl className="grid grid-cols-2 gap-4 sm:grid-cols-5" data-demo-counts>
+          {DEMO_KINDS.map((k) => (
+            <div key={k}>
+              <dt className="text-caption text-muted-foreground">{t(`admin.demo.kinds.${k}`)}</dt>
+              <dd className="text-title font-semibold tabular-nums">{counts.data?.[k] ?? 0}</dd>
+            </div>
+          ))}
+        </dl>
+        {check !== null && (
+          <div role="status" className={check.length ? 'text-danger-700' : 'text-success-700'}>
+            {check.length === 0 ? t('admin.demo.checkOk') : t('admin.demo.checkBad', { count: check.length })}
+            {check.length > 0 && (
+              <ul className="mt-2 list-disc pl-6 text-caption">
+                {check.slice(0, 20).map((c, i) => <li key={i}>{c.kind}: {c.detail}</li>)}
+              </ul>
+            )}
+          </div>
+        )}
+      </CardContent>
+      <Dialog open={confirm} onOpenChange={(o) => !o && setConfirm(false)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('admin.demo.confirmTitle')}</DialogTitle>
+            <DialogDescription>{t('admin.demo.confirmText', { count: counts.data?.submissions ?? 0 })}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirm(false)}>{t('common.cancel')}</Button>
+            <Button variant="destructive" onClick={() => void remove()} disabled={busy !== null}>
+              {busy === 'delete' ? <Loader2 className="animate-spin" /> : <Trash2 />}
+              {t('admin.demo.deleteConfirm')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   )
 }

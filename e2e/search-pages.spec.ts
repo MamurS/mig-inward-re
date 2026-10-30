@@ -8,12 +8,12 @@ import { readFileSync } from 'node:fs'
 import { expect, test, type Page } from '@playwright/test'
 import { strFromU8, unzipSync } from 'fflate'
 import { installMock } from './support/mockSupabase'
-import { TABLES } from './support/fixtures'
+import { SEEN } from './support/fixtures'
 
 const bar = (page: Page) => page.locator('header').getByRole('combobox')
 const chips = (page: Page) => page.locator('main [data-chip]')
 const rows = (page: Page) => page.locator('main tbody tr')
-const cps = TABLES.counterparties as { name: string; type: string; country_code: string; active: boolean }[]
+const cps = SEEN.counterparties as { name: string; type: string; country_code: string; active: boolean }[]
 
 async function search(page: Page, text: string) {
   await bar(page).click()
@@ -108,7 +108,7 @@ test.describe('agenda', () => {
     await search(page, 'assignee:all, overdue')
     await expect(page).toHaveURL(/\/agenda\?q=/)
     await expect(chips(page)).toHaveCount(2)
-    const fu = TABLES.follow_ups_v as { done_at: string | null; is_overdue: boolean }[]
+    const fu = SEEN.follow_ups_v as { done_at: string | null; is_overdue: boolean }[]
     const overdueOpen = fu.filter((f) => !f.done_at && f.is_overdue).length
     await expect(page.getByRole('tab', { name: new RegExp(`\\(${overdueOpen}\\)`) })).toBeVisible()
     await search(page, 'assignee:all, zzzz-nothing')
@@ -166,7 +166,7 @@ test.describe('admin', () => {
 
 test('a page without a list searches submissions', async ({ page }) => {
   await installMock(page.context(), 'underwriter', 'en')
-  await page.goto(`/submissions/${String(TABLES.submissions[0].id)}`)
+  await page.goto(`/submissions/${String(SEEN.submissions[0].id)}`)
   await page.locator('main h1').waitFor()
   await expect(bar(page)).toHaveAttribute('aria-label', 'Search or filter submissions')
   await search(page, 'bound')

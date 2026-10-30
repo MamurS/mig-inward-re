@@ -61,6 +61,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
+          is_demo: boolean
           name: string
           notes: string | null
           type: Database["public"]["Enums"]["counterparty_type"]
@@ -74,6 +75,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          is_demo?: boolean
           name: string
           notes?: string | null
           type: Database["public"]["Enums"]["counterparty_type"]
@@ -87,6 +89,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          is_demo?: boolean
           name?: string
           notes?: string | null
           type?: Database["public"]["Enums"]["counterparty_type"]
@@ -170,6 +173,7 @@ export type Database = {
           entity_type: Database["public"]["Enums"]["entity_type"]
           file_name: string
           id: string
+          is_demo: boolean
           mime_type: string | null
           size_bytes: number | null
           storage_path: string
@@ -184,6 +188,7 @@ export type Database = {
           entity_type: Database["public"]["Enums"]["entity_type"]
           file_name: string
           id?: string
+          is_demo?: boolean
           mime_type?: string | null
           size_bytes?: number | null
           storage_path: string
@@ -198,6 +203,7 @@ export type Database = {
           entity_type?: Database["public"]["Enums"]["entity_type"]
           file_name?: string
           id?: string
+          is_demo?: boolean
           mime_type?: string | null
           size_bytes?: number | null
           storage_path?: string
@@ -227,6 +233,7 @@ export type Database = {
           entity_id: string
           entity_type: Database["public"]["Enums"]["entity_type"]
           id: string
+          is_demo: boolean
           outcome: string | null
           title: string | null
           type: Database["public"]["Enums"]["follow_up_type"]
@@ -243,6 +250,7 @@ export type Database = {
           entity_id: string
           entity_type: Database["public"]["Enums"]["entity_type"]
           id?: string
+          is_demo?: boolean
           outcome?: string | null
           title?: string | null
           type?: Database["public"]["Enums"]["follow_up_type"]
@@ -259,6 +267,7 @@ export type Database = {
           entity_id?: string
           entity_type?: Database["public"]["Enums"]["entity_type"]
           id?: string
+          is_demo?: boolean
           outcome?: string | null
           title?: string | null
           type?: Database["public"]["Enums"]["follow_up_type"]
@@ -407,6 +416,7 @@ export type Database = {
           id: string
           installment_amount: number
           installment_id: string
+          is_demo: boolean
           receipt_id: string
           updated_at: string
           updated_by: string | null
@@ -419,6 +429,7 @@ export type Database = {
           id?: string
           installment_amount: number
           installment_id: string
+          is_demo?: boolean
           receipt_id: string
           updated_at?: string
           updated_by?: string | null
@@ -431,6 +442,7 @@ export type Database = {
           id?: string
           installment_amount?: number
           installment_id?: string
+          is_demo?: boolean
           receipt_id?: string
           updated_at?: string
           updated_by?: string | null
@@ -492,6 +504,7 @@ export type Database = {
           gross_amount: number
           id: string
           installment_no: number
+          is_demo: boolean
           net_amount: number | null
           notes: string | null
           settled_at: string | null
@@ -515,6 +528,7 @@ export type Database = {
           gross_amount: number
           id?: string
           installment_no: number
+          is_demo?: boolean
           net_amount?: number | null
           notes?: string | null
           settled_at?: string | null
@@ -538,6 +552,7 @@ export type Database = {
           gross_amount?: number
           id?: string
           installment_no?: number
+          is_demo?: boolean
           net_amount?: number | null
           notes?: string | null
           settled_at?: string | null
@@ -617,6 +632,7 @@ export type Database = {
           created_by: string | null
           currency: string
           id: string
+          is_demo: boolean
           notes: string | null
           payer_id: string
           received_date: string
@@ -631,6 +647,7 @@ export type Database = {
           created_by?: string | null
           currency: string
           id?: string
+          is_demo?: boolean
           notes?: string | null
           payer_id: string
           received_date?: string
@@ -645,6 +662,7 @@ export type Database = {
           created_by?: string | null
           currency?: string
           id?: string
+          is_demo?: boolean
           notes?: string | null
           payer_id?: string
           received_date?: string
@@ -692,6 +710,7 @@ export type Database = {
           id: string
           preferred_language: string
           role: Database["public"]["Enums"]["app_role"] | null
+          ui_demo_mode: boolean
           ui_text_size: string
           ui_theme: string
           updated_at: string
@@ -704,6 +723,7 @@ export type Database = {
           id: string
           preferred_language?: string
           role?: Database["public"]["Enums"]["app_role"] | null
+          ui_demo_mode?: boolean
           ui_text_size?: string
           ui_theme?: string
           updated_at?: string
@@ -716,6 +736,7 @@ export type Database = {
           id?: string
           preferred_language?: string
           role?: Database["public"]["Enums"]["app_role"] | null
+          ui_demo_mode?: boolean
           ui_text_size?: string
           ui_theme?: string
           updated_at?: string
@@ -870,6 +891,7 @@ export type Database = {
           id: string
           insured_country: string | null
           insured_name: string
+          is_demo: boolean
           limit_100: number | null
           lob_id: string | null
           mga_id: string
@@ -909,6 +931,7 @@ export type Database = {
           id?: string
           insured_country?: string | null
           insured_name: string
+          is_demo?: boolean
           limit_100?: number | null
           lob_id?: string | null
           mga_id: string
@@ -948,6 +971,7 @@ export type Database = {
           id?: string
           insured_country?: string | null
           insured_name?: string
+          is_demo?: boolean
           limit_100?: number | null
           lob_id?: string | null
           mga_id?: string
@@ -1444,6 +1468,7 @@ export type Database = {
       }
     }
     Functions: {
+      _seed_demo_data: { Args: { p_actor: string }; Returns: Json }
       admin_update_user: {
         Args: {
           p_active: boolean
@@ -1459,6 +1484,7 @@ export type Database = {
           id: string
           preferred_language: string
           role: Database["public"]["Enums"]["app_role"] | null
+          ui_demo_mode: boolean
           ui_text_size: string
           ui_theme: string
           updated_at: string
@@ -1496,6 +1522,7 @@ export type Database = {
           id: string
           insured_country: string | null
           insured_name: string
+          is_demo: boolean
           limit_100: number | null
           lob_id: string | null
           mga_id: string
@@ -1561,6 +1588,7 @@ export type Database = {
           id: string
           insured_country: string | null
           insured_name: string
+          is_demo: boolean
           limit_100: number | null
           lob_id: string | null
           mga_id: string
@@ -1601,6 +1629,7 @@ export type Database = {
           created_by: string | null
           currency: string
           id: string
+          is_demo: boolean
           notes: string | null
           payer_id: string
           received_date: string
@@ -1612,8 +1641,24 @@ export type Database = {
           from: "*"
           to: "premium_receipts"
           isOneToOne: true
-          isSetofOptions: false
+          isSetofReturn: false
         }
+      }
+      delete_demo_data: { Args: never; Returns: Json }
+      demo_data_counts: { Args: never; Returns: Json }
+      demo_data_counts_all: { Args: never; Returns: Json }
+      demo_link_violations: {
+        Args: never
+        Returns: {
+          detail: string
+          kind: string
+          row_id: string
+        }[]
+      }
+      demo_mode: { Args: never; Returns: boolean }
+      entity_is_demo: {
+        Args: { p_entity_id: string; p_entity_type: string }
+        Returns: boolean
       }
       fx_rate_to_usd: {
         Args: { p_currency: string; p_date: string }
@@ -1632,6 +1677,7 @@ export type Database = {
           gross_amount: number
           id: string
           installment_no: number
+          is_demo: boolean
           net_amount: number | null
           notes: string | null
           settled_at: string | null
@@ -1694,6 +1740,7 @@ export type Database = {
       run_daily_premium_follow_ups: { Args: never; Returns: Json }
       run_daily_premium_follow_ups_now: { Args: never; Returns: Json }
       search_norm: { Args: { t: string }; Returns: string }
+      seed_demo_data: { Args: never; Returns: Json }
       setting_bool: {
         Args: { p_default: boolean; p_key: string }
         Returns: boolean

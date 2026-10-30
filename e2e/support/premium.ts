@@ -53,6 +53,10 @@ export function premiumSeed(submissions: Row[]) {
     1,
   )
 
+  // demo data: one overdue installment on a demo risk (hidden unless in demo mode)
+  const izmir = by('DEMO Izmir Port Logistics Centre')
+  const demoRows = scheduleRows(izmir, [{ due_date: d(50), gross_amount: String(izmir.our_gross_premium) }], 1)
+
   const r1 = { id: uid('60000000'), ref_no: 'RCP-2026-0001', received_date: d(200), payer_id: mall.broker_id, currency: 'USD', amount: n(sumMoney([mallRows[0].net_amount as number, '5000.00'])), bank_reference: 'SWIFT MT103 TRB-55120', notes: null, created_at: new Date().toISOString(), created_by: USERS.finance.id, updated_at: new Date().toISOString(), updated_by: null }
   const r2 = { ...r1, id: uid('60000000'), ref_no: 'RCP-2026-0002', received_date: d(15), payer_id: wine.mga_id, currency: 'USD', amount: 12000, bank_reference: 'SWIFT MT103 MRP-10021' }
   const allocations: Row[] = [
@@ -62,7 +66,7 @@ export function premiumSeed(submissions: Row[]) {
     { id: uid('70000000'), receipt_id: r2.id, installment_id: wineRows[0].id, amount: 12000, fx_rate: 0.9205, installment_amount: 11046, created_at: r2.created_at },
   ]
   return {
-    premium_installments: [...mallRows, mallReturn, ...cargoRows, ...wineRows],
+    premium_installments: [...mallRows, mallReturn, ...cargoRows, ...wineRows, ...demoRows],
     premium_receipts: [r1, r2],
     premium_allocations: allocations,
   }

@@ -446,7 +446,8 @@
       "reference": "Ma’lumotnomalar",
       "fx": "Valyuta kurslari",
       "settings": "Sozlamalar",
-      "jobs": "Rejalashtirilgan vazifalar"
+      "jobs": "Rejalashtirilgan vazifalar",
+      "demo": "Demo ma'lumotlar"
     },
     "saved": "Saqlandi",
     "add": "Qoʻshish",
@@ -505,6 +506,28 @@
       "scheduled": "jadval boʻyicha",
       "none": "Hozircha ishga tushirilmagan.",
       "result": "yangi eslatmalar: {{repeats}}, muddati oʻtganlar: {{expiry}}, \"Javob yoʻq\" ga oʻtkazilgan: {{noresp}}"
+    },
+    "demo": {
+      "title": "Demo ma'lumotlar",
+      "help": "O'qitish va tizimni ko'rsatish uchun demo kontragentlar, arizalar, mukofot jadvallari, tushumlar va vazifalar. Nomlari «DEMO» bilan, raqamlari DEMO- bilan boshlanadi. Demo rejimni (Ko'rinish) yoqmaguncha ularni hech kim ko'rmaydi; ular haqiqiy ro'yxatlar, jamlar, eksport va kunlik vazifalarga kirmaydi.",
+      "check": "Bog'lanishlarni tekshirish",
+      "load": "Demo ma'lumotlarni yuklash",
+      "delete": "Barcha demo ma'lumotlarni o'chirish",
+      "loaded": "Demo ma'lumotlar yuklandi",
+      "deleted": "Barcha demo ma'lumotlar o'chirildi",
+      "checkOk": "Demo va haqiqiy ma'lumotlar o'rtasida bog'lanish yo'q.",
+      "checkBad_one": "Demo va haqiqiy ma'lumotlar o'rtasida {{count}} ta bog'lanish topildi:",
+      "checkBad_other": "Demo va haqiqiy ma'lumotlar o'rtasida {{count}} ta bog'lanish topildi:",
+      "confirmTitle": "Barcha demo ma'lumotlar o'chirilsinmi?",
+      "confirmText": "Barcha demo yozuvlar o'chiriladi ({{count}} ta demo ariza jadvallari, tushumlari, vazifalari va hujjatlari bilan). Haqiqiy ma'lumotlarga tegilmaydi. Qaytarib bo'lmaydi.",
+      "deleteConfirm": "Demo ma'lumotlarni o'chirish",
+      "kinds": {
+        "counterparties": "Kontragentlar",
+        "submissions": "Arizalar",
+        "installments": "To'lovlar",
+        "receipts": "Tushumlar",
+        "follow_ups": "Vazifalar"
+      }
     }
   },
   "tokens": {
@@ -702,7 +725,11 @@
     "sizes": {
       "normal": "Oddiy",
       "large": "Yirik"
-    }
+    },
+    "demo": "Demo rejim",
+    "demoHint": "Faqat demo ma'lumotlar ko'rsatiladi (nomlari «DEMO» bilan boshlanadi); rejim yoqilganda haqiqiy ma'lumotlar yashiriladi. Faqat siz uchun.",
+    "demoOn": "Yoqilgan — faqat demo ma'lumotlar",
+    "demoOff": "O'chirilgan"
   },
   "search": {
     "clear": "Qidiruvni tozalash",
@@ -946,5 +973,9 @@
     "overReceipt": "Tushumdan {{amount}} koʻp",
     "fullyAllocated": "Toʻliq taqsimlangan",
     "noReference": "Bu sana uchun saqlangan kurs yoʻq — kursni oʻzingiz kiriting."
+  },
+  "demo": {
+    "banner": "Siz faqat demo ma'lumotlarni ko'ryapsiz. Haqiqiy ma'lumotlar yashirilgan.",
+    "leave": "Demo rejimdan chiqish"
   }
 }

@@ -145,18 +145,36 @@ export async function installMock(
   context: BrowserContext,
   role: FixtureRole | null = 'admin',
   lang: 'en' | 'ru' | 'uz' = 'en',
-  appearance: { theme?: 'grey' | 'blue' | 'green' | 'orange'; textSize?: 'normal' | 'large' } = {},
+  appearance: { theme?: 'grey' | 'blue' | 'green' | 'orange'; textSize?: 'normal' | 'large'; demoMode?: boolean } = {},
 ) {
   const db: Record<string, Row[]> = Object.fromEntries(Object.entries(TABLES).map(([k, v]) => [k, structuredClone(v)]))
   // the signed-in user's saved appearance (profiles.ui_theme / ui_text_size)
   const look = { theme: appearance.theme ?? 'grey', textSize: appearance.textSize ?? 'normal' }
   if (role) {
     const me = db.profiles?.find((p) => p.id === authUser(role).id)
-    if (me) Object.assign(me, { ui_theme: look.theme, ui_text_size: look.textSize })
+    if (me) Object.assign(me, { ui_theme: look.theme, ui_text_size: look.textSize, ui_demo_mode: Boolean(appearance.demoMode) })
   }
   Object.assign(db, premiumSeed(db.submissions_v))
   normalizePremium(db, null)
   const PREMIUM_VIEWS = new Set(['premium_installments_v', 'premium_receipts_v', 'premium_schedule_check_v'])
+
+  // demo data: the restrictive RLS policy is_demo = demo_mode() — a user sees only their own world
+  const DEMO_TABLES = new Set([
+    'counterparties', 'submissions', 'submissions_v', 'submission_status_history', 'follow_ups', 'follow_ups_v', 'documents',
+    'premium_installments', 'premium_installments_v', 'premium_receipts', 'premium_receipts_v', 'premium_allocations', 'premium_schedule_check_v',
+  ])
+  const demoMode = () => Boolean(role && db.profiles.find((p) => p.id === authUser(role).id)?.ui_demo_mode)
+  const byId = (table: string, id: unknown) => (db[table] ?? []).find((x) => x.id === id)
+  const isDemo = (r: Row): boolean => {
+    if (typeof r.is_demo === 'boolean') return r.is_demo
+    if (r.submission_id) return Boolean(byId('submissions', r.submission_id)?.is_demo)
+    if (r.entity_type === 'premium') return isDemo(byId('premium_installments', r.entity_id) ?? {})
+    if (r.entity_id) return Boolean(byId('submissions', r.entity_id)?.is_demo)
+    if (r.payer_id) return Boolean(byId('counterparties', r.payer_id)?.is_demo)
+    if (r.receipt_id) return isDemo(byId('premium_receipts', r.receipt_id) ?? {})
+    return false
+  }
+  const DEMO_SNAPSHOT = Object.fromEntries([...DEMO_TABLES].map((t) => [t, structuredClone((db[t] ?? []).filter(isDemo))]))
 
   const user = role ? authUser(role) : null
   await context.addInitScript(
@@ -232,6 +250,28 @@ export async function installMock(
         normalizePremium(db, user?.id ?? null)
         return out.error ? json({ message: out.error, code: '23514' }, 400) : json(out.data)
       }
+      if (rpc[1] === 'demo_data_counts' || rpc[1] === 'delete_demo_data') {
+        if (role !== 'admin') return json({ message: 'Only an admin can manage demo data', code: '42501' }, 403)
+        const counts = {
+          counterparties: db.counterparties.filter(isDemo).length, submissions: db.submissions.filter(isDemo).length,
+          installments: (db.premium_installments ?? []).filter(isDemo).length, receipts: (db.premium_receipts ?? []).filter(isDemo).length,
+          allocations: (db.premium_allocations ?? []).filter(isDemo).length, follow_ups: db.follow_ups.filter(isDemo).length,
+          documents: (db.documents ?? []).filter(isDemo).length,
+        }
+        if (rpc[1] === 'delete_demo_data') {
+          const paths = (db.documents ?? []).filter(isDemo).map((d) => d.storage_path)
+          for (const t of DEMO_TABLES) if (db[t]) db[t] = db[t].filter((r) => !isDemo(r))
+          return json({ ...counts, document_paths: paths })
+        }
+        return json(counts)
+      }
+      if (rpc[1] === 'seed_demo_data') {
+        if (role !== 'admin') return json({ message: 'Only an admin can load demo data', code: '42501' }, 403)
+        if (db.submissions.some(isDemo)) return json({ message: 'Demo data is already loaded — delete it first', code: '23505' }, 409)
+        for (const [t, rows] of Object.entries(DEMO_SNAPSHOT)) (db[t] ??= []).push(...structuredClone(rows))
+        return json({ submissions: DEMO_SNAPSHOT.submissions.length })
+      }
+      if (rpc[1] === 'demo_link_violations') return json([])
       return json({})
     }
 
@@ -243,7 +283,8 @@ export async function installMock(
     const params = url.searchParams
 
     if (method === 'GET' || method === 'HEAD') {
-      let out = sortRows(filterRows(rows, params), params.get('order'))
+      const visible = DEMO_TABLES.has(table) ? rows.filter((r) => isDemo(r) === demoMode()) : rows
+      let out = sortRows(filterRows(visible, params), params.get('order'))
       // embedded receipt on allocations: select=*,premium_receipts(...)
       if (table === 'premium_allocations' && (params.get('select') ?? '').includes('premium_receipts(')) {
         out = out.map((a) => ({ ...a, premium_receipts: (db.premium_receipts ?? []).find((r) => r.id === a.receipt_id) ?? null }))
@@ -263,6 +304,13 @@ export async function installMock(
       const body = req.postDataJSON()
       const items = (Array.isArray(body) ? body : [body]) as Row[]
       const created = items.map((i) => ({ id: crypto.randomUUID(), created_at: new Date().toISOString(), ...i }))
+      if (['counterparties', 'submissions', 'premium_receipts'].includes(table)) {
+        for (const c of created) {
+          c.is_demo = demoMode()
+          const key = table === 'counterparties' ? 'name' : 'insured_name'
+          if (c.is_demo && c[key] && !String(c[key]).startsWith('DEMO ')) c[key] = `DEMO ${c[key]}`
+        }
+      }
       rows.push(...created)
       if (table.startsWith('premium_')) normalizePremium(db, user?.id ?? null)
       return json((req.headers()['accept'] ?? '').includes('vnd.pgrst.object') ? created[0] : created, 201)

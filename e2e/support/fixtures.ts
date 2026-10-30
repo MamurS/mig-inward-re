@@ -66,10 +66,13 @@ const CP = [
   ['Tashkent Re Brokers', 'broker', 'UZ', 'Dilnoza Rakhimova', 'Account Executive'],
   ['Gulf Placement Partners', 'broker', 'AE', 'Omar Haddad', 'Partner'],
   ['Anadolu Re (run-off)', 'cedent', 'TR', 'Mehmet Yılmaz', 'Run-off Manager'], // inactive
+  // demo data (is_demo): only users in demo mode see these
+  ['DEMO Anatolia MGA', 'mga', 'TR', 'Elif Demir', 'Managing Director'],
+  ['DEMO Bosphorus Re Brokers', 'broker', 'TR', 'Kerem Aydin', 'Senior Broker'],
 ] as const
 const counterparties: Row[] = CP.map(([name, type, country_code, contact, role], i) => ({
   id: `20000000-0000-4000-8000-${String(i + 1).padStart(12, '0')}`,
-  name, type, country_code, active: type !== 'cedent', notes: null,
+  name, type, country_code, active: type !== 'cedent', notes: null, is_demo: name.startsWith('DEMO '),
   contacts: [{ name: contact, role, email: `${contact.split(' ')[0].toLowerCase()}@example.com`, phone: '+998 71 000 0000' }],
   created_at: iso(300 * DAY), created_by: null, updated_at: iso(300 * DAY), updated_by: null,
 }))
@@ -121,19 +124,25 @@ const SPECS: Spec[] = [
   ['Dubai Marina Tower 7', 'AE', 'PROP', 'Meridian Risk Partners', 'Gulf Placement Partners', 'facultative', 'AED', 550000000, 550000000, 1000000, 1100000, 25, 5, null, null, [], 1, null, null, null, null, null, null, 'Residential high-rise PD, terrorism excluded'],
 ]
 
+// demo submissions (is_demo, DEMO-SUB numbers): hidden unless the user is in demo mode
+const DEMO_SPECS: Spec[] = [
+  ['DEMO Izmir Port Logistics Centre', 'TR', 'PROP', 'DEMO Anatolia MGA', 'DEMO Bosphorus Re Brokers', 'facultative', 'USD', 120000000, 120000000, 500000, 600000, 22.5, 5, 10, 10, ['under_review', 'offered', 'bound'], 130, 127, 120, null, 110, 30, null, 'Container terminal PD/BI, earthquake zone 1'],
+  ['DEMO Konya Solar Field', 'TR', 'ENG', 'DEMO Anatolia MGA', 'DEMO Bosphorus Re Brokers', 'facultative', 'USD', 65000000, 65000000, 200000, 195000, 22.5, 5, 12.5, null, ['under_review', 'offered'], 70, 68, 62, null, null, 30, null, 'Operational PV plant, hail and fire'],
+  ['DEMO Gaziantep Textile Park', 'TR', 'PROP', 'DEMO Anatolia MGA', null, 'facultative', 'USD', 70000000, 70000000, 250000, 210000, 22.5, 0, null, null, [], 3, null, null, null, null, null, null, 'Textile park fire & earthquake'],
+]
+
 const submissions: Row[] = []
 const submission_status_history: Row[] = []
 const follow_ups: Row[] = []
-const counters: Record<number, number> = {}
+const counters: Record<string, number> = {}
 
-SPECS.slice()
-  .sort((a, b) => b[16] - a[16])
-  .forEach((s, idx) => {
+function build(s: Spec, idx: number, demo: boolean) {
     const [insured, country, lob, mga, broker, biz, ccy, si, lim, ded, gp, comm, brok, written, signed, path, dRec, dRev, dOff, dNr, dFin, validity, reason, risk] = s
-    const id = `30000000-0000-4000-8000-${String(idx + 1).padStart(12, '0')}`
+    const id = `${demo ? '3d000000' : '30000000'}-0000-4000-8000-${String(idx + 1).padStart(12, '0')}`
     const received = date(dRec)
     const year = Number(received.slice(0, 4))
-    counters[year] = (counters[year] ?? 0) + 1
+    const series = `${demo ? 'DEMO-' : ''}SUB-${year}`
+    counters[series] = (counters[series] ?? 0) + 1
     const status = path.at(-1) ?? 'received'
     const offeredAt = dOff !== null && path.includes('offered') ? iso(dOff * DAY) : null
     const boundAt = status === 'bound' ? iso(dFin! * DAY) : null
@@ -148,7 +157,7 @@ SPECS.slice()
 
     // history
     let prev: string | null = null
-    submission_status_history.push({ id: submission_status_history.length + 1, submission_id: id, from_status: null, to_status: 'received', written_share_pct: null, signed_share_pct: null, comment: 'Submission registered', document_id: null, changed_by: UW, changed_at: iso(dRec * DAY) })
+    submission_status_history.push({ id: submission_status_history.length + 1, submission_id: id, from_status: null, to_status: 'received', written_share_pct: null, signed_share_pct: null, comment: 'Submission registered', document_id: null, changed_by: UW, changed_at: iso(dRec * DAY), is_demo: demo })
     prev = 'received'
     for (const st of path) {
       submission_status_history.push({
@@ -156,7 +165,7 @@ SPECS.slice()
         written_share_pct: ['offered', 'bound', 'ntu', 'no_response'].includes(st) ? written : null,
         signed_share_pct: st === 'bound' ? signed : null,
         comment: st === 'declined' || st === 'ntu' ? reason : st === 'bound' ? 'Firm order received from MGA' : st === 'offered' ? 'Quote sent' : null,
-        document_id: null, changed_by: UW, changed_at: iso(stepAgo(st) * DAY),
+        document_id: null, changed_by: UW, changed_at: iso(stepAgo(st) * DAY), is_demo: demo,
       })
       prev = st
     }
@@ -170,21 +179,21 @@ SPECS.slice()
       follow_ups.push({
         id: `40000000-0000-4000-8000-${String(follow_ups.length + 1).padStart(12, '0')}`, entity_type: 'submission', entity_id: id, type: 'request_update',
         title: 'Request update on offer', due_at: due, assigned_to: UW, done_at: open ? null : iso(doneAgo! * DAY), done_by: open ? null : UW,
-        outcome: open ? null : `Closed automatically: status changed to ${path[path.indexOf('offered') + 1]}`, created_at: offeredAt, created_by: UW, updated_at: offeredAt,
+        outcome: open ? null : `Closed automatically: status changed to ${path[path.indexOf('offered') + 1]}`, created_at: offeredAt, created_by: UW, updated_at: offeredAt, is_demo: demo,
       })
       if (open) next = due
       if (open && offerValid && offerValid < date(0)) {
         follow_ups.push({
           id: `40000000-0000-4000-8000-${String(follow_ups.length + 1).padStart(12, '0')}`, entity_type: 'submission', entity_id: id, type: 'offer_expiry',
           title: 'Offer validity has passed', due_at: `${offerValid}T00:00:00Z`, assigned_to: UW, done_at: null, done_by: null, outcome: null,
-          created_at: iso(DAY), created_by: null, updated_at: iso(DAY),
+          created_at: iso(DAY), created_by: null, updated_at: iso(DAY), is_demo: demo,
         })
         if (`${offerValid}T00:00:00Z` < next!) next = `${offerValid}T00:00:00Z`
       }
     }
 
     const row: Row = {
-      id, ref_no: `SUB-${year}-${String(counters[year]).padStart(4, '0')}`, received_at: received,
+      id, ref_no: `${series}-${String(counters[series]).padStart(4, '0')}`, received_at: received, is_demo: demo,
       source_party_id: cpId(broker) ?? cpId(mga), mga_id: cpId(mga), broker_id: cpId(broker), business_type: biz,
       insured_name: insured, insured_country: country, risk_description: risk, lob_id: lobId(lob),
       period_from: plusDays(received, 30), period_to: plusDays(received, 395), currency: ccy,
@@ -214,7 +223,11 @@ SPECS.slice()
         .filter((x) => x !== null && x !== undefined).join(' '),
     )
     submissions.push(row)
-  })
+}
+SPECS.slice()
+  .sort((a, b) => b[16] - a[16])
+  .forEach((s, idx) => build(s, idx, false))
+DEMO_SPECS.forEach((s, idx) => build(s, idx, true))
 
 const follow_ups_v: Row[] = follow_ups.map((f) => {
   const s = submissions.find((x) => x.id === f.entity_id)!
@@ -241,3 +254,6 @@ export const TABLES: Record<string, Row[]> = {
   submissions, submissions_v: submissions, submission_status_history, follow_ups, follow_ups_v,
   documents: [], audit_log: [], ref_counters: [],
 }
+
+/** What a user out of demo mode sees: the tables without the demo rows. */
+export const SEEN: Record<string, Row[]> = Object.fromEntries(Object.entries(TABLES).map(([k, v]) => [k, v.filter((r) => !r.is_demo)]))

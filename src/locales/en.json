@@ -446,7 +446,8 @@
       "reference": "Reference data",
       "fx": "FX rates",
       "settings": "Settings",
-      "jobs": "Scheduled jobs"
+      "jobs": "Scheduled jobs",
+      "demo": "Demo data"
     },
     "saved": "Saved",
     "add": "Add",
@@ -505,6 +506,28 @@
       "scheduled": "scheduled",
       "none": "No runs yet.",
       "result": "{{repeats}} new reminders, {{expiry}} expired offers flagged, {{noresp}} moved to \"No response\""
+    },
+    "demo": {
+      "title": "Demo data",
+      "help": "Demo counterparties, submissions, premium schedules, receipts and follow-ups for training and showing the system. Their names start with «DEMO» and numbers with DEMO-. Nobody sees them unless they switch on Demo mode (Appearance); they never count in real lists, totals, exports or daily jobs.",
+      "check": "Check links",
+      "load": "Load demo data",
+      "delete": "Delete all demo data",
+      "loaded": "Demo data loaded",
+      "deleted": "All demo data deleted",
+      "checkOk": "No links between demo and real data.",
+      "checkBad_one": "{{count}} link between demo and real data found:",
+      "checkBad_other": "{{count}} links between demo and real data found:",
+      "confirmTitle": "Delete all demo data?",
+      "confirmText": "This removes every demo record ({{count}} demo submissions with their schedules, receipts, follow-ups and documents). Real data is not touched. This cannot be undone.",
+      "deleteConfirm": "Delete demo data",
+      "kinds": {
+        "counterparties": "Counterparties",
+        "submissions": "Submissions",
+        "installments": "Installments",
+        "receipts": "Receipts",
+        "follow_ups": "Follow-ups"
+      }
     }
   },
   "tokens": {
@@ -702,7 +725,11 @@
     "sizes": {
       "normal": "Normal",
       "large": "Large"
-    }
+    },
+    "demo": "Demo mode",
+    "demoHint": "Shows only demo data (names start with «DEMO»); real data is hidden while it is on. Only for you.",
+    "demoOn": "On — you see demo data only",
+    "demoOff": "Off"
   },
   "search": {
     "clear": "Clear search",
@@ -946,5 +973,9 @@
     "overReceipt": "{{amount}} more than the receipt",
     "fullyAllocated": "Fully allocated",
     "noReference": "No stored rate for this date — enter the rate yourself."
+  },
+  "demo": {
+    "banner": "You are looking at demo data only. Real data is hidden.",
+    "leave": "Leave demo mode"
   }
 }

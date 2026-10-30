@@ -10,12 +10,12 @@ import { readFileSync } from 'node:fs'
 import { expect, test, type Page } from '@playwright/test'
 import { strFromU8, unzipSync } from 'fflate'
 import { installMock } from './support/mockSupabase'
-import { TABLES } from './support/fixtures'
+import { SEEN } from './support/fixtures'
 
 const bar = (page: Page) => page.getByRole('combobox', { name: 'Search or filter submissions' })
 const chips = (page: Page) => page.locator('main [data-chip]')
 const rows = (page: Page) => page.locator('main tbody tr')
-const countOf = (status: string[]) => TABLES.submissions.filter((s) => status.includes(String(s.status))).length
+const countOf = (status: string[]) => SEEN.submissions.filter((s) => status.includes(String(s.status))).length
 
 async function register(page: Page, q = '') {
   await page.goto(q ? `/submissions?q=${encodeURIComponent(q)}` : '/submissions')
@@ -42,7 +42,7 @@ test('free text: partial words, any field, diacritics and case ignored', async (
   await installMock(page.context(), 'underwriter', 'en')
   await register(page, 'TASHK')
   await expect(rows(page).first()).toBeVisible()
-  const n = TABLES.submissions.filter((s) => String(s.search_text).includes('tashk')).length
+  const n = SEEN.submissions.filter((s) => String(s.search_text).includes('tashk')).length
   await expect(rows(page)).toHaveCount(n)
   await expect(page.locator('main tbody mark').first()).toHaveText(/tashk/i)
   await register(page, '"Tashkent City Mall"')
@@ -68,7 +68,7 @@ test('OR groups, exclusions, and parts searched as text', async ({ page }) => {
 
   await register(page, '-bound, -declined')
   await expect(chips(page).first()).toContainText('Not Status: Bound')
-  await expect(rows(page)).toHaveCount(TABLES.submissions.length - countOf(['bound', 'declined']))
+  await expect(rows(page)).toHaveCount(SEEN.submissions.length - countOf(['bound', 'declined']))
 
   await register(page, 'Tashkent, foo:bar')
   await expect(chips(page).nth(1)).toContainText('searched as text')
@@ -107,7 +107,7 @@ test('Ctrl K from a page without a list; Enter opens the register with the query
   await page.keyboard.press('Enter')
   await expect(page).toHaveURL(/\/submissions\?q=overdue$/)
   await expect(chips(page).first()).toContainText('Follow-up overdue')
-  await expect(rows(page)).toHaveCount(TABLES.submissions.filter((s) => s.follow_up_overdue).length)
+  await expect(rows(page)).toHaveCount(SEEN.submissions.filter((s) => s.follow_up_overdue).length)
 })
 
 test('suggestions: arrows, Enter inserts field:value, Tab completes', async ({ page }) => {
@@ -128,7 +128,7 @@ test('suggestions: arrows, Enter inserts field:value, Tab completes', async ({ p
   await expect(bar(page)).toBeFocused()
   await page.keyboard.press('Enter')
   await expect(chips(page)).toHaveCount(2)
-  const n = TABLES.submissions.filter((s) => s.mga_name === 'Silk Road Underwriting Agency' && s.status === 'offered').length
+  const n = SEEN.submissions.filter((s) => s.mga_name === 'Silk Road Underwriting Agency' && s.status === 'offered').length
   await expect(page.getByText(new RegExp(`^${n} submissions?$`))).toBeVisible()
 })
 

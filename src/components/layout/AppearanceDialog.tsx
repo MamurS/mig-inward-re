@@ -12,6 +12,7 @@ import { supabase } from '@/lib/supabase'
 import { errorMessage } from '@/lib/errors'
 import { cn } from '@/lib/utils'
 import { THEMES as THEME_COLORS } from '@/design/palette'
+import { useDemoMode } from '@/lib/demo'
 import { applyAppearance, normalizeAppearance, THEMES, TEXT_SIZES, type Appearance } from '@/lib/appearance'
 
 /** Keeps <html data-theme / data-text-size> in step with the signed-in user's profile. */
@@ -33,6 +34,20 @@ export function AppearanceDialog({ open, onClose }: { open: boolean; onClose: ()
   const qc = useQueryClient()
   const [shown, flash] = useFlash()
   const [value, setValue] = useState<Appearance>(normalizeAppearance(profile?.ui_theme, profile?.ui_text_size))
+  const demo = useDemoMode()
+  const [demoBusy, setDemoBusy] = useState(false)
+
+  async function toggleDemo() {
+    setDemoBusy(true)
+    try {
+      await demo.set(!demo.on)
+      flash()
+    } catch (e) {
+      toast.error(errorMessage(e))
+    } finally {
+      setDemoBusy(false)
+    }
+  }
 
   useEffect(() => {
     if (open) setValue(normalizeAppearance(profile?.ui_theme, profile?.ui_text_size))
@@ -109,6 +124,29 @@ export function AppearanceDialog({ open, onClose }: { open: boolean; onClose: ()
             onChange={(textSize) => void choose({ ...value, textSize })}
             options={TEXT_SIZES.map((s) => ({ value: s, label: t(`appearance.sizes.${s}`) }))}
           />
+        </Field>
+
+        <Field label={t('appearance.demo')} hint={t('appearance.demoHint')}>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={demo.on}
+            aria-label={t('appearance.demo')}
+            disabled={demoBusy}
+            onClick={() => void toggleDemo()}
+            className="flex items-center gap-3 self-start rounded-control text-body disabled:opacity-60"
+          >
+            <span
+              aria-hidden
+              className={cn(
+                'relative inline-flex h-6 w-11 shrink-0 rounded-full border transition-colors',
+                demo.on ? 'border-warning-600 bg-warning-600' : 'border-input bg-slate-200',
+              )}
+            >
+              <span className={cn('absolute top-0.5 size-4.5 rounded-full bg-white shadow-sm transition-transform', demo.on ? 'translate-x-5.5' : 'translate-x-0.5')} />
+            </span>
+            {demo.on ? t('appearance.demoOn') : t('appearance.demoOff')}
+          </button>
         </Field>
 
         <SavedCheck show={shown} />
