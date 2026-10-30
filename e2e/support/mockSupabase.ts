@@ -10,6 +10,7 @@ import type { BrowserContext, Route } from '@playwright/test'
 import { TABLES, USERS, fxRate, type FixtureRole } from './fixtures'
 import { createReceipt, generateSchedule, normalizePremium, premiumSeed, premiumViews } from './premium'
 import { checkLargeLoss, claimStatusError, claimViews, claimsSeed, coverageIssues, createClaimPayment, followUpView, insertClaim } from './claims'
+import { binderFollowUpView, binderPeriods, bindersSeed, bindersView, importBordereau } from './binders'
 
 const PROJECT_REF = 'jltrtqwaxvsrnqmjemzc'
 const n = (v: unknown) => Number(v ?? 0)
@@ -179,12 +180,18 @@ export async function installMock(
   db.follow_ups.push(...cs.claimFollowUps)
   db.follow_ups_v.push(...cs.claimFollowUps.map((f) => followUpView(db, f)))
   const CLAIM_VIEWS = new Set(['claims_v', 'claim_payments_v'])
+  // binders: seed, their follow-ups, and binders_v computed on read
+  const bs = bindersSeed(db)
+  Object.assign(db, { binders: bs.binders, binder_lobs: bs.binder_lobs, bordereau_templates: bs.bordereau_templates, bordereaux: bs.bordereaux, bordereau_lines: bs.bordereau_lines })
+  db.follow_ups.push(...bs.followUps)
+  db.follow_ups_v.push(...bs.followUps.map((f) => binderFollowUpView(db, f)))
 
   // demo data: the restrictive RLS policy is_demo = demo_mode() — a user sees only their own world
   const DEMO_TABLES = new Set([
     'counterparties', 'submissions', 'submissions_v', 'submission_status_history', 'follow_ups', 'follow_ups_v', 'documents',
     'premium_installments', 'premium_installments_v', 'premium_receipts', 'premium_receipts_v', 'premium_allocations', 'premium_schedule_check_v',
     'claims', 'claims_v', 'claim_reserves', 'claim_payments', 'claim_payments_v', 'claim_recoveries',
+    'binders', 'binders_v', 'binder_lobs', 'bordereau_templates', 'bordereaux', 'bordereau_lines',
   ])
   const demoMode = () => Boolean(role && db.profiles.find((p) => p.id === authUser(role).id)?.ui_demo_mode)
   const byId = (table: string, id: unknown) => (db[table] ?? []).find((x) => x.id === id)
@@ -193,6 +200,8 @@ export async function installMock(
     if (r.submission_id) return Boolean(byId('submissions', r.submission_id)?.is_demo)
     if (r.entity_type === 'premium') return isDemo(byId('premium_installments', r.entity_id) ?? {})
     if (r.entity_type === 'claim') return isDemo(byId('claims', r.entity_id) ?? {})
+    if (r.entity_type === 'binder') return isDemo(byId('binders', r.entity_id) ?? {})
+    if (r.entity_type === 'bordereau') return isDemo(byId('bordereaux', r.entity_id) ?? {})
     if (r.claim_id) return isDemo(byId('claims', r.claim_id) ?? {})
     if (r.entity_id) return Boolean(byId('submissions', r.entity_id)?.is_demo)
     if (r.payer_id) return Boolean(byId('counterparties', r.payer_id)?.is_demo)
@@ -298,6 +307,12 @@ export async function installMock(
       }
       if (rpc[1] === 'demo_link_violations') return json([])
       if (rpc[1] === 'claim_coverage_issues') return json(coverageIssues(db, args.p_submission_id, args.p_date_of_loss, args.p_currency))
+      if (rpc[1] === 'binder_periods') return json(binderPeriods(db, args.p_binder_id))
+      if (rpc[1] === 'import_bordereau') {
+        const out = importBordereau(db, args as unknown as { p_bordereau: Row; p_lines: Row[]; p_rejected?: number }, role, user?.id ?? null, demoMode())
+        normalizePremium(db, user?.id ?? null)
+        return out.error ? json({ message: out.error, code: out.code }, out.code === '42501' ? 403 : out.code === '23505' ? 409 : 400) : json(out.data)
+      }
       if (rpc[1] === 'create_claim_payment') {
         const out = createClaimPayment(db, args as unknown as { p_payment: Row; p_allocations?: Row[] }, role)
         normalizePremium(db, user?.id ?? null)
@@ -311,6 +326,7 @@ export async function installMock(
     const table = m[1]
     if (PREMIUM_VIEWS.has(table)) Object.assign(db, premiumViews(db, fxRate))
     if (CLAIM_VIEWS.has(table)) Object.assign(db, claimViews(db, fxRate))
+    if (table === 'binders_v') db.binders_v = bindersView(db)
     const rows = (db[table] ??= [])
     const params = url.searchParams
 
@@ -320,6 +336,10 @@ export async function installMock(
       // embedded receipt on allocations: select=*,premium_receipts(...)
       if (table === 'premium_allocations' && (params.get('select') ?? '').includes('premium_receipts(')) {
         out = out.map((a) => ({ ...a, premium_receipts: (db.premium_receipts ?? []).find((r) => r.id === a.receipt_id) ?? null }))
+      }
+      // embedded line of business on binder_lobs: select=…,lines_of_business(...)
+      if (table === 'binder_lobs' && (params.get('select') ?? '').includes('lines_of_business(')) {
+        out = out.map((l) => ({ ...l, lines_of_business: (db.lines_of_business ?? []).find((x) => x.id === l.lob_id) ?? null }))
       }
       const total = out.length
       const offset = Number(params.get('offset') ?? 0)
@@ -365,6 +385,20 @@ export async function installMock(
           const key = table === 'counterparties' ? 'name' : 'insured_name'
           if (c.is_demo && c[key] && !String(c[key]).startsWith('DEMO ')) c[key] = `DEMO ${c[key]}`
         }
+      }
+      if (table === 'binders') {
+        if (role !== 'admin' && role !== 'underwriter') return json({ message: 'new row violates row-level security policy for table "binders"', code: '42501' }, 403)
+        for (const c of created) {
+          c.is_demo = Boolean(byId('counterparties', c.mga_id)?.is_demo)
+          if (c.is_demo && !String(c.binder_ref).startsWith('DEMO-')) c.binder_ref = `DEMO-${c.binder_ref}`
+          Object.assign(c, { capacity_alerted_pct: 0, updated_at: c.created_at, created_by: user?.id ?? null })
+        }
+      }
+      if (table === 'binder_lobs' || table === 'bordereau_templates') for (const c of created) c.is_demo = demoMode()
+      if (table === 'binder_lobs' && params.get('on_conflict')) {
+        for (const c of created) db.binder_lobs = db.binder_lobs.filter((x) => !(x.binder_id === c.binder_id && x.lob_id === c.lob_id))
+        db.binder_lobs.push(...created.map(({ id: _id, created_at: _c, ...rest }) => rest))
+        return json(created, 201)
       }
       rows.push(...created)
       if (table.startsWith('premium_')) normalizePremium(db, user?.id ?? null)

@@ -371,3 +371,53 @@ export const CLAIMS_SERVER: ServerSpec = {
   },
   textColumn: 'search_text',
 }
+
+// ---------------------------------------------------------------------------
+// Binders
+// ---------------------------------------------------------------------------
+
+const BINDER_STATUS_WORDS: Record<string, string[]> = {
+  draft: ['draft', 'черновик', 'qoralama'],
+  active: ['active', 'live', 'действует', 'действующий', 'активный', 'faol'],
+  expired: ['expired', 'истёк', 'истек', 'истекший', 'tugagan'],
+  cancelled: ['cancelled', 'canceled', 'отменён', 'отменен', 'bekor'],
+}
+const binderStatusOptions = (ctx: SearchContext): Option[] =>
+  Object.keys(BINDER_STATUS_WORDS).map((k) => ({ value: k, label: label(ctx, `binder.status.${k}`, k), insert: k, names: [...BINDER_STATUS_WORDS[k], label(ctx, `binder.status.${k}`, k)] }))
+
+export const BINDERS: Scope = {
+  id: 'binders',
+  fields: [
+    { key: 'status', kind: 'list', aliases: ['state', 'статус', 'holat'], labelKey: 'fields.status', options: binderStatusOptions, partial: 'prefix' },
+    { key: 'mga', kind: 'list', aliases: ['мга', 'agent', 'агент'], labelKey: 'fields.mga', options: partyOptions('mga'), partial: 'contains' },
+    { key: 'uw', kind: 'list', aliases: ['underwriter', 'андеррайтер', 'anderrayter'], labelKey: 'fields.underwriter', options: userOptions(), partial: 'contains' },
+    { key: 'ccy', kind: 'list', aliases: ['currency', 'cur', 'валюта', 'valyuta'], labelKey: 'fields.currency', options: currencyOptions, partial: 'none' },
+    { key: 'ref', kind: 'like', aliases: ['binderref', 'номер', 'raqam'], labelKey: 'binder.ref' },
+    { key: 'capacity', kind: 'num', aliases: ['cap', 'used', 'ёмкость', 'емкость', 'sigim'], labelKey: 'binder.capacityPct' },
+    { key: 'expires', kind: 'date', looksBack: false, aliases: ['expiry', 'to', 'окончание', 'tugash'], labelKey: 'binder.periodTo' },
+    { key: 'starts', kind: 'date', looksBack: true, aliases: ['inception', 'from', 'начало', 'boshlanish'], labelKey: 'binder.periodFrom' },
+  ],
+  flags: [
+    { flag: 'missing', words: ['missing', 'нет', 'отсутствует', 'yoq'], labelKey: 'search.flag.bdxMissing' },
+    { flag: 'late', words: ['late', 'просрочен', 'опоздал', 'kechikkan'], labelKey: 'search.flag.bdxLate' },
+    { flag: 'full', words: ['capacityalert', 'near', 'почти', 'тўлиқ'], labelKey: 'search.flag.capacityAlert' },
+    { flag: 'mine', words: MINE.filter((w) => w !== 'me' && w !== 'я'), labelKey: 'search.flag.myBinders', needsUser: true },
+  ],
+  dateKeywordField: 'starts',
+  exactFields: ['status', 'mga', 'ccy'],
+  weak: ['active', 'live', 'my', 'late', 'missing'],
+}
+
+export const BINDERS_SERVER: ServerSpec = {
+  list: { status: 'status', mga: 'mga_id', uw: 'underwriter_id', ccy: 'currency' },
+  like: { ref: 'binder_ref' },
+  num: { capacity: 'capacity_pct' },
+  date: { expires: 'period_to', starts: 'period_from' },
+  flags: {
+    missing: (neg) => `missing_count.${neg ? 'eq' : 'gt'}.0`,
+    late: (neg) => `late_count.${neg ? 'eq' : 'gt'}.0`,
+    full: (neg) => `capacity_pct.${neg ? 'lt' : 'gte'}.80`,
+    mine: (neg, userId) => (!userId ? null : neg ? `or(underwriter_id.is.null,underwriter_id.neq.${userId})` : `underwriter_id.eq.${userId}`),
+  },
+  textColumn: 'search_text',
+}

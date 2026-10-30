@@ -53,6 +53,495 @@ export type Database = {
         }
         Relationships: []
       }
+      binder_lobs: {
+        Row: {
+          binder_id: string
+          is_demo: boolean
+          limit_100: number | null
+          lob_id: string
+        }
+        Insert: {
+          binder_id: string
+          is_demo?: boolean
+          limit_100?: number | null
+          lob_id: string
+        }
+        Update: {
+          binder_id?: string
+          is_demo?: boolean
+          limit_100?: number | null
+          lob_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "binder_lobs_binder_id_fkey"
+            columns: ["binder_id"]
+            isOneToOne: false
+            referencedRelation: "binder_capacity_v"
+            referencedColumns: ["binder_id"]
+          },
+          {
+            foreignKeyName: "binder_lobs_binder_id_fkey"
+            columns: ["binder_id"]
+            isOneToOne: false
+            referencedRelation: "binders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "binder_lobs_binder_id_fkey"
+            columns: ["binder_id"]
+            isOneToOne: false
+            referencedRelation: "binders_v"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "binder_lobs_lob_id_fkey"
+            columns: ["lob_id"]
+            isOneToOne: false
+            referencedRelation: "lines_of_business"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      binders: {
+        Row: {
+          aggregate_limit: number | null
+          binder_ref: string
+          bordereau_due_days: number
+          bordereau_frequency: Database["public"]["Enums"]["bordereau_frequency"]
+          bordereau_kinds: Database["public"]["Enums"]["bordereau_kind"][]
+          broker_id: string | null
+          brokerage_pct: number
+          capacity_alerted_pct: number
+          commission_pct: number
+          created_at: string
+          created_by: string | null
+          currency: string
+          id: string
+          is_demo: boolean
+          limit_per_risk: number | null
+          mga_id: string
+          notes: string | null
+          our_share_pct: number
+          period_from: string
+          period_to: string
+          status: Database["public"]["Enums"]["binder_status"]
+          territories: string[]
+          underwriter_id: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          aggregate_limit?: number | null
+          binder_ref: string
+          bordereau_due_days?: number
+          bordereau_frequency?: Database["public"]["Enums"]["bordereau_frequency"]
+          bordereau_kinds?: Database["public"]["Enums"]["bordereau_kind"][]
+          broker_id?: string | null
+          brokerage_pct?: number
+          capacity_alerted_pct?: number
+          commission_pct?: number
+          created_at?: string
+          created_by?: string | null
+          currency: string
+          id?: string
+          is_demo?: boolean
+          limit_per_risk?: number | null
+          mga_id: string
+          notes?: string | null
+          our_share_pct: number
+          period_from: string
+          period_to: string
+          status?: Database["public"]["Enums"]["binder_status"]
+          territories?: string[]
+          underwriter_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          aggregate_limit?: number | null
+          binder_ref?: string
+          bordereau_due_days?: number
+          bordereau_frequency?: Database["public"]["Enums"]["bordereau_frequency"]
+          bordereau_kinds?: Database["public"]["Enums"]["bordereau_kind"][]
+          broker_id?: string | null
+          brokerage_pct?: number
+          capacity_alerted_pct?: number
+          commission_pct?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          id?: string
+          is_demo?: boolean
+          limit_per_risk?: number | null
+          mga_id?: string
+          notes?: string | null
+          our_share_pct?: number
+          period_from?: string
+          period_to?: string
+          status?: Database["public"]["Enums"]["binder_status"]
+          territories?: string[]
+          underwriter_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "binders_broker_id_fkey"
+            columns: ["broker_id"]
+            isOneToOne: false
+            referencedRelation: "counterparties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "binders_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "binders_currency_fkey"
+            columns: ["currency"]
+            isOneToOne: false
+            referencedRelation: "currencies"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "binders_mga_id_fkey"
+            columns: ["mga_id"]
+            isOneToOne: false
+            referencedRelation: "counterparties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "binders_underwriter_id_fkey"
+            columns: ["underwriter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "binders_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bordereau_lines: {
+        Row: {
+          binder_id: string
+          bordereau_id: string
+          cause: string | null
+          claim_id: string | null
+          claim_ref: string | null
+          comment: string | null
+          currency: string | null
+          date_of_loss: string | null
+          dup_key: string
+          gross_premium_100: number | null
+          id: string
+          insured_country: string | null
+          insured_name: string | null
+          is_demo: boolean
+          kind: Database["public"]["Enums"]["bordereau_kind"]
+          limit_100: number | null
+          line_no: number
+          lob_id: string | null
+          messages: Json
+          notified_date: string | null
+          outstanding_100: number | null
+          paid_100: number | null
+          period_from: string | null
+          period_to: string | null
+          policy_ref: string | null
+          raw: Json
+          status: Database["public"]["Enums"]["bordereau_line_status"]
+          sum_insured_100: number | null
+        }
+        Insert: {
+          binder_id: string
+          bordereau_id: string
+          cause?: string | null
+          claim_id?: string | null
+          claim_ref?: string | null
+          comment?: string | null
+          currency?: string | null
+          date_of_loss?: string | null
+          dup_key: string
+          gross_premium_100?: number | null
+          id?: string
+          insured_country?: string | null
+          insured_name?: string | null
+          is_demo?: boolean
+          kind: Database["public"]["Enums"]["bordereau_kind"]
+          limit_100?: number | null
+          line_no: number
+          lob_id?: string | null
+          messages?: Json
+          notified_date?: string | null
+          outstanding_100?: number | null
+          paid_100?: number | null
+          period_from?: string | null
+          period_to?: string | null
+          policy_ref?: string | null
+          raw?: Json
+          status?: Database["public"]["Enums"]["bordereau_line_status"]
+          sum_insured_100?: number | null
+        }
+        Update: {
+          binder_id?: string
+          bordereau_id?: string
+          cause?: string | null
+          claim_id?: string | null
+          claim_ref?: string | null
+          comment?: string | null
+          currency?: string | null
+          date_of_loss?: string | null
+          dup_key?: string
+          gross_premium_100?: number | null
+          id?: string
+          insured_country?: string | null
+          insured_name?: string | null
+          is_demo?: boolean
+          kind?: Database["public"]["Enums"]["bordereau_kind"]
+          limit_100?: number | null
+          line_no?: number
+          lob_id?: string | null
+          messages?: Json
+          notified_date?: string | null
+          outstanding_100?: number | null
+          paid_100?: number | null
+          period_from?: string | null
+          period_to?: string | null
+          policy_ref?: string | null
+          raw?: Json
+          status?: Database["public"]["Enums"]["bordereau_line_status"]
+          sum_insured_100?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bordereau_lines_binder_id_fkey"
+            columns: ["binder_id"]
+            isOneToOne: false
+            referencedRelation: "binder_capacity_v"
+            referencedColumns: ["binder_id"]
+          },
+          {
+            foreignKeyName: "bordereau_lines_binder_id_fkey"
+            columns: ["binder_id"]
+            isOneToOne: false
+            referencedRelation: "binders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bordereau_lines_binder_id_fkey"
+            columns: ["binder_id"]
+            isOneToOne: false
+            referencedRelation: "binders_v"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bordereau_lines_bordereau_id_fkey"
+            columns: ["bordereau_id"]
+            isOneToOne: false
+            referencedRelation: "bordereaux"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bordereau_lines_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "claims"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bordereau_lines_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "claims_v"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bordereau_lines_currency_fkey"
+            columns: ["currency"]
+            isOneToOne: false
+            referencedRelation: "currencies"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "bordereau_lines_lob_id_fkey"
+            columns: ["lob_id"]
+            isOneToOne: false
+            referencedRelation: "lines_of_business"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bordereau_templates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          header_row: number
+          id: string
+          is_demo: boolean
+          kind: Database["public"]["Enums"]["bordereau_kind"]
+          mapping: Json
+          mga_id: string
+          name: string
+          sheet: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          header_row?: number
+          id?: string
+          is_demo?: boolean
+          kind: Database["public"]["Enums"]["bordereau_kind"]
+          mapping?: Json
+          mga_id: string
+          name: string
+          sheet?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          header_row?: number
+          id?: string
+          is_demo?: boolean
+          kind?: Database["public"]["Enums"]["bordereau_kind"]
+          mapping?: Json
+          mga_id?: string
+          name?: string
+          sheet?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bordereau_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bordereau_templates_mga_id_fkey"
+            columns: ["mga_id"]
+            isOneToOne: false
+            referencedRelation: "counterparties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bordereaux: {
+        Row: {
+          binder_id: string
+          computed_total: number | null
+          created_at: string
+          created_by: string | null
+          file_name: string | null
+          id: string
+          installment_ids: string[]
+          is_demo: boolean
+          kind: Database["public"]["Enums"]["bordereau_kind"]
+          line_count: number
+          notes: string | null
+          period_end: string
+          period_start: string
+          received_date: string
+          ref_no: string
+          rejected_count: number
+          stated_total: number | null
+          template_id: string | null
+          totals_comment: string | null
+          warning_count: number
+        }
+        Insert: {
+          binder_id: string
+          computed_total?: number | null
+          created_at?: string
+          created_by?: string | null
+          file_name?: string | null
+          id?: string
+          installment_ids?: string[]
+          is_demo?: boolean
+          kind: Database["public"]["Enums"]["bordereau_kind"]
+          line_count?: number
+          notes?: string | null
+          period_end: string
+          period_start: string
+          received_date?: string
+          ref_no: string
+          rejected_count?: number
+          stated_total?: number | null
+          template_id?: string | null
+          totals_comment?: string | null
+          warning_count?: number
+        }
+        Update: {
+          binder_id?: string
+          computed_total?: number | null
+          created_at?: string
+          created_by?: string | null
+          file_name?: string | null
+          id?: string
+          installment_ids?: string[]
+          is_demo?: boolean
+          kind?: Database["public"]["Enums"]["bordereau_kind"]
+          line_count?: number
+          notes?: string | null
+          period_end?: string
+          period_start?: string
+          received_date?: string
+          ref_no?: string
+          rejected_count?: number
+          stated_total?: number | null
+          template_id?: string | null
+          totals_comment?: string | null
+          warning_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bordereaux_binder_id_fkey"
+            columns: ["binder_id"]
+            isOneToOne: false
+            referencedRelation: "binder_capacity_v"
+            referencedColumns: ["binder_id"]
+          },
+          {
+            foreignKeyName: "bordereaux_binder_id_fkey"
+            columns: ["binder_id"]
+            isOneToOne: false
+            referencedRelation: "binders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bordereaux_binder_id_fkey"
+            columns: ["binder_id"]
+            isOneToOne: false
+            referencedRelation: "binders_v"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bordereaux_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bordereaux_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "bordereau_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       claim_payments: {
         Row: {
           amount: number
@@ -376,6 +865,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claims_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "binders_v"
+            referencedColumns: ["submission_id"]
           },
           {
             foreignKeyName: "claims_submission_id_fkey"
@@ -945,6 +1441,13 @@ export type Database = {
             foreignKeyName: "premium_installments_submission_id_fkey"
             columns: ["submission_id"]
             isOneToOne: false
+            referencedRelation: "binders_v"
+            referencedColumns: ["submission_id"]
+          },
+          {
+            foreignKeyName: "premium_installments_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
             referencedRelation: "follow_ups_v"
             referencedColumns: ["submission_id"]
           },
@@ -1210,6 +1713,13 @@ export type Database = {
             foreignKeyName: "submission_status_history_submission_id_fkey"
             columns: ["submission_id"]
             isOneToOne: false
+            referencedRelation: "binders_v"
+            referencedColumns: ["submission_id"]
+          },
+          {
+            foreignKeyName: "submission_status_history_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
             referencedRelation: "follow_ups_v"
             referencedColumns: ["submission_id"]
           },
@@ -1238,6 +1748,7 @@ export type Database = {
       }
       submissions: {
         Row: {
+          binder_id: string | null
           bound_at: string | null
           broker_id: string | null
           brokerage_pct: number
@@ -1278,6 +1789,7 @@ export type Database = {
           written_share_pct: number | null
         }
         Insert: {
+          binder_id?: string | null
           bound_at?: string | null
           broker_id?: string | null
           brokerage_pct?: number
@@ -1318,6 +1830,7 @@ export type Database = {
           written_share_pct?: number | null
         }
         Update: {
+          binder_id?: string | null
           bound_at?: string | null
           broker_id?: string | null
           brokerage_pct?: number
@@ -1358,6 +1871,27 @@ export type Database = {
           written_share_pct?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "submissions_binder_id_fkey"
+            columns: ["binder_id"]
+            isOneToOne: false
+            referencedRelation: "binder_capacity_v"
+            referencedColumns: ["binder_id"]
+          },
+          {
+            foreignKeyName: "submissions_binder_id_fkey"
+            columns: ["binder_id"]
+            isOneToOne: false
+            referencedRelation: "binders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submissions_binder_id_fkey"
+            columns: ["binder_id"]
+            isOneToOne: false
+            referencedRelation: "binders_v"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "submissions_broker_id_fkey"
             columns: ["broker_id"]
@@ -1425,6 +1959,92 @@ export type Database = {
       }
     }
     Views: {
+      binder_capacity_v: {
+        Row: {
+          aggregate_limit: number | null
+          binder_id: string | null
+          missing_rate: number | null
+          risk_lines: number | null
+          used_100: number | null
+        }
+        Relationships: []
+      }
+      binders_v: {
+        Row: {
+          aggregate_limit: number | null
+          binder_ref: string | null
+          bordereau_due_days: number | null
+          bordereau_frequency:
+            | Database["public"]["Enums"]["bordereau_frequency"]
+            | null
+          bordereau_kinds:
+            | Database["public"]["Enums"]["bordereau_kind"][]
+            | null
+          broker_id: string | null
+          broker_name: string | null
+          brokerage_pct: number | null
+          capacity_missing_rate: number | null
+          capacity_pct: number | null
+          capacity_used_100: number | null
+          commission_pct: number | null
+          created_at: string | null
+          currency: string | null
+          id: string | null
+          last_received: string | null
+          late_count: number | null
+          limit_per_risk: number | null
+          lob_codes: string | null
+          mga_id: string | null
+          mga_name: string | null
+          missing_count: number | null
+          notes: string | null
+          our_share_pct: number | null
+          period_from: string | null
+          period_to: string | null
+          risk_lines: number | null
+          search_text: string | null
+          status: Database["public"]["Enums"]["binder_status"] | null
+          submission_id: string | null
+          submission_ref: string | null
+          submission_status:
+            | Database["public"]["Enums"]["submission_status"]
+            | null
+          territories: string[] | null
+          underwriter_id: string | null
+          underwriter_name: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "binders_broker_id_fkey"
+            columns: ["broker_id"]
+            isOneToOne: false
+            referencedRelation: "counterparties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "binders_currency_fkey"
+            columns: ["currency"]
+            isOneToOne: false
+            referencedRelation: "currencies"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "binders_mga_id_fkey"
+            columns: ["mga_id"]
+            isOneToOne: false
+            referencedRelation: "counterparties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "binders_underwriter_id_fkey"
+            columns: ["underwriter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       claim_payments_v: {
         Row: {
           amount: number | null
@@ -1595,6 +2215,13 @@ export type Database = {
             foreignKeyName: "claims_submission_id_fkey"
             columns: ["submission_id"]
             isOneToOne: false
+            referencedRelation: "binders_v"
+            referencedColumns: ["submission_id"]
+          },
+          {
+            foreignKeyName: "claims_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
             referencedRelation: "follow_ups_v"
             referencedColumns: ["submission_id"]
           },
@@ -1709,13 +2336,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "submissions_mga_id_fkey"
-            columns: ["mga_id"]
-            isOneToOne: false
-            referencedRelation: "counterparties"
-            referencedColumns: ["id"]
-          },
         ]
       }
       premium_installments_v: {
@@ -1780,6 +2400,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "currencies"
             referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "premium_installments_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "binders_v"
+            referencedColumns: ["submission_id"]
           },
           {
             foreignKeyName: "premium_installments_submission_id_fkey"
@@ -2060,6 +2687,7 @@ export type Database = {
       }
     }
     Functions: {
+      _seed_demo_binders: { Args: { p_actor: string }; Returns: Json }
       _seed_demo_claims: { Args: { p_actor: string }; Returns: Json }
       _seed_demo_data: { Args: { p_actor: string }; Returns: Json }
       admin_update_user: {
@@ -2101,6 +2729,7 @@ export type Database = {
           p_written_share_pct?: number
         }
         Returns: {
+          binder_id: string | null
           bound_at: string | null
           broker_id: string | null
           brokerage_pct: number
@@ -2151,6 +2780,23 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      binder_capacity_alert: {
+        Args: { p_binder_id: string }
+        Returns: undefined
+      }
+      binder_periods: {
+        Args: { p_binder_id: string }
+        Returns: {
+          bordereau_id: string
+          due_date: string
+          kind: Database["public"]["Enums"]["bordereau_kind"]
+          period_end: string
+          period_start: string
+          received_date: string
+          ref_no: string
+          state: string
+        }[]
+      }
       can_edit_premium_schedule: {
         Args: { p_submission_id: string }
         Returns: boolean
@@ -2171,6 +2817,7 @@ export type Database = {
           p_written_share_pct?: number | string
         }
         Returns: {
+          binder_id: string | null
           bound_at: string | null
           broker_id: string | null
           brokerage_pct: number
@@ -2340,6 +2987,37 @@ export type Database = {
         Args: { roles: Database["public"]["Enums"]["app_role"][] }
         Returns: boolean
       }
+      import_bordereau: {
+        Args: { p_bordereau: Json; p_lines: Json; p_rejected?: number }
+        Returns: {
+          binder_id: string
+          computed_total: number | null
+          created_at: string
+          created_by: string | null
+          file_name: string | null
+          id: string
+          installment_ids: string[]
+          is_demo: boolean
+          kind: Database["public"]["Enums"]["bordereau_kind"]
+          line_count: number
+          notes: string | null
+          period_end: string
+          period_start: string
+          received_date: string
+          ref_no: string
+          rejected_count: number
+          stated_total: number | null
+          template_id: string | null
+          totals_comment: string | null
+          warning_count: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "bordereaux"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       is_app_user: { Args: never; Returns: boolean }
       is_own_installment: {
         Args: { p_installment_id: string }
@@ -2374,6 +3052,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      run_daily_bordereau_follow_ups: { Args: never; Returns: Json }
       run_daily_claim_follow_ups: { Args: never; Returns: Json }
       run_daily_claim_follow_ups_now: { Args: never; Returns: Json }
       run_daily_follow_ups: { Args: never; Returns: Json }
@@ -2398,6 +3077,10 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "underwriter" | "finance" | "claims" | "management"
+      binder_status: "draft" | "active" | "expired" | "cancelled"
+      bordereau_frequency: "monthly" | "quarterly"
+      bordereau_kind: "risk" | "premium" | "claims"
+      bordereau_line_status: "ok" | "warning"
       business_type: "facultative" | "binder"
       claim_payment_method: "cash" | "offset_against_premium"
       claim_payment_type: "indemnity" | "expense" | "cash_call"
@@ -2420,7 +3103,13 @@ export type Database = {
         | "proof_of_loss"
         | "cash_call_request"
         | "payment_proof"
-      entity_type: "submission" | "premium" | "claim" | "bordereau" | "receipt"
+      entity_type:
+        | "submission"
+        | "premium"
+        | "claim"
+        | "bordereau"
+        | "receipt"
+        | "binder"
       follow_up_type:
         | "request_update"
         | "offer_expiry"
@@ -2430,6 +3119,8 @@ export type Database = {
         | "cash_call_due"
         | "claim_review"
         | "large_loss"
+        | "bordereau_missing"
+        | "capacity_alert"
       installment_status: "open" | "partially_paid" | "paid" | "written_off"
       installment_type: "original" | "additional" | "return"
       submission_status:
@@ -2568,6 +3259,10 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "underwriter", "finance", "claims", "management"],
+      binder_status: ["draft", "active", "expired", "cancelled"],
+      bordereau_frequency: ["monthly", "quarterly"],
+      bordereau_kind: ["risk", "premium", "claims"],
+      bordereau_line_status: ["ok", "warning"],
       business_type: ["facultative", "binder"],
       claim_payment_method: ["cash", "offset_against_premium"],
       claim_payment_type: ["indemnity", "expense", "cash_call"],
@@ -2591,7 +3286,14 @@ export const Constants = {
         "cash_call_request",
         "payment_proof",
       ],
-      entity_type: ["submission", "premium", "claim", "bordereau", "receipt"],
+      entity_type: [
+        "submission",
+        "premium",
+        "claim",
+        "bordereau",
+        "receipt",
+        "binder",
+      ],
       follow_up_type: [
         "request_update",
         "offer_expiry",
@@ -2601,6 +3303,8 @@ export const Constants = {
         "cash_call_due",
         "claim_review",
         "large_loss",
+        "bordereau_missing",
+        "capacity_alert",
       ],
       installment_status: ["open", "partially_paid", "paid", "written_off"],
       installment_type: ["original", "additional", "return"],

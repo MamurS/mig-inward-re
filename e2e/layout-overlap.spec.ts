@@ -82,6 +82,9 @@ const PAGES: { name: string; path: string; role: FixtureRole; ready: string }[] 
   { name: 'claims', path: '/claims', role: 'claims', ready: 'main tbody tr' },
   { name: 'claim', path: '/claims/80000000-0000-4000-8000-000000000001', role: 'claims', ready: '[data-claim-header]' },
   { name: 'claims dashboard', path: '/dashboard', role: 'claims', ready: '[data-claims-dashboard] [data-ratio-table]' },
+  { name: 'binders', path: '/binders', role: 'underwriter', ready: 'main tbody tr' },
+  { name: 'binder', path: '/binders/b1000000-0000-4000-8000-000000000001', role: 'underwriter', ready: '[data-periods-grid]' },
+  { name: 'binders dashboard', path: '/dashboard', role: 'management', ready: '[data-binders-dashboard] [data-ref-list]' },
 ]
 
 for (const demoMode of [false, true]) {
@@ -93,6 +96,7 @@ for (const demoMode of [false, true]) {
         for (const p of PAGES) {
           // the demo world has no counterparty with that id; use the demo MGA there
           const path = demoMode && p.name === 'counterparty' ? '/counterparties/20000000-0000-4000-8000-000000000007'
+            : demoMode && p.name === 'binder' ? '/binders/b1000000-0000-4000-8000-000000000003'
             : demoMode && p.name === 'claim' ? `/claims/80000000-0000-4000-8000-${String(DEMO_CLAIM_SEQ).padStart(12, '0')}` : p.path
           await installMock(context, p.role, lang, { textSize, demoMode })
           const page = await context.newPage()
