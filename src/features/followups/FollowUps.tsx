@@ -21,6 +21,7 @@ import { addDays, formatDate, isoDate } from '@/lib/format'
 import { errorMessage } from '@/lib/errors'
 import { cn } from '@/lib/utils'
 import type { Enums, Tables } from '@/lib/database.types'
+import type { AppRole } from '@/lib/roles'
 import { useUsers, userName } from '@/hooks/useReference'
 
 export type FollowUp = Tables<'follow_ups'> & Partial<Tables<'follow_ups_v'>>
@@ -30,9 +31,10 @@ const FU_TYPES: Enums<'follow_up_type'>[] = ['request_update', 'offer_expiry', '
 /** Who may act on a follow-up: writers of the entity type, or the assignee. Mirrors the RLS policy. */
 export function useCanActOnFollowUp() {
   const { role, profile } = useAuth()
-  return (f: Pick<Tables<'follow_ups'>, 'entity_type' | 'assigned_to'>) => {
+  return (f: Pick<Tables<'follow_ups'>, 'entity_type' | 'assigned_to'> & { assigned_role?: AppRole | null }) => {
     if (!role) return false
     if (f.assigned_to && f.assigned_to === profile?.id) return true
+    if (f.assigned_role && f.assigned_role === role) return true // a team follow-up: anyone in the team
     if (f.entity_type === 'submission' || f.entity_type === 'bordereau') return role === 'admin' || role === 'underwriter'
     if (f.entity_type === 'premium') return role === 'admin' || role === 'finance'
     if (f.entity_type === 'claim') return role === 'admin' || role === 'claims'
@@ -54,14 +56,14 @@ function invalidateFollowUps(qc: ReturnType<typeof useQueryClient>) {
 export function useMyOverdueCount() {
   const { profile, role } = useAuth()
   return useQuery({
-    queryKey: ['my-overdue', profile?.id],
+    queryKey: ['my-overdue', profile?.id, role],
     enabled: Boolean(profile?.id && role),
     refetchInterval: 5 * 60_000,
     queryFn: async () => {
       const { count, error } = await supabase
         .from('follow_ups')
         .select('id', { count: 'exact', head: true })
-        .eq('assigned_to', profile!.id)
+        .or(`assigned_to.eq.${profile!.id}${role ? `,assigned_role.eq.${role}` : ''}`)
         .is('done_at', null)
         .lt('due_at', new Date().toISOString())
       if (error) throw error
@@ -111,6 +113,7 @@ export function CloseFollowUpDialog({ followUp, onClose }: { followUp: FollowUp 
           title: followUp!.title,
           due_at: new Date(`${nextDate}T09:00:00`).toISOString(),
           assigned_to: followUp!.assigned_to,
+          assigned_role: followUp!.assigned_role ?? null, // a team follow-up stays the team's
         })
         if (e2) throw e2
       }
@@ -345,7 +348,8 @@ export function FollowUpItem({
   const canAct = useCanActOnFollowUp()
   const overdue = !f.done_at && new Date(f.due_at) < new Date()
   const daysOverdue = overdue ? Math.floor((Date.now() - new Date(f.due_at).getTime()) / 86_400_000) : 0
-  const assignee = f.assigned_to_name ?? userName(users.data?.find((u) => u.id === f.assigned_to))
+  const assignee =
+    f.assigned_to_name ?? (f.assigned_to ? userName(users.data?.find((u) => u.id === f.assigned_to)) : f.assigned_role ? t('fu.team', { role: t(`roles.${f.assigned_role}`) }) : '')
   const actionable = !f.done_at && canAct(f)
 
   const due = (
@@ -372,7 +376,7 @@ export function FollowUpItem({
           </div>
           {showEntity && f.entity_ref && (
             <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-caption">
-              <Link to={`/submissions/${f.entity_id}`} className="font-medium text-link hover:underline num">
+              <Link to={`/submissions/${f.submission_id ?? f.entity_id}`} className="font-medium text-link hover:underline num">
                 {f.entity_ref}
               </Link>
               <span className="truncate">{f.entity_label}</span>
@@ -404,7 +408,7 @@ export function FollowUpItem({
           </>
         )}
         <div className="flex shrink-0 items-center gap-1">
-          {onPeek && f.entity_type === 'submission' && (
+          {onPeek && (f.entity_type === 'submission' || f.submission_id) && (
             <Button
               size="sm"
               variant="ghost"

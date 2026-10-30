@@ -70,7 +70,7 @@ export function LoginPage() {
   return (
     <div className="grid min-h-screen bg-background lg:grid-cols-[minmax(0,11fr)_minmax(0,9fr)]">
       {/* Brand panel */}
-      <section className="relative flex min-h-56 flex-col justify-between overflow-hidden bg-sidebar p-6 text-white lg:min-h-screen lg:p-12">
+      <section className="relative flex min-h-56 flex-col justify-between overflow-hidden bg-navy-800 p-6 text-white lg:min-h-screen lg:p-12">
         {PHOTO ? (
           <>
             <img src={PHOTO} alt="" className="absolute inset-0 size-full object-cover" />
@@ -84,14 +84,14 @@ export function LoginPage() {
           <div className="flex size-10 items-center justify-center rounded-md bg-white/10 text-body font-display-bold text-white">MIG</div>
           <div className="leading-tight">
             <div className="text-body font-semibold text-white">{t('app.name')}</div>
-            <div className="text-caption text-sidebar-muted">{t('app.tagline')}</div>
+            <div className="text-caption text-navy-200">{t('app.tagline')}</div>
           </div>
         </div>
         <div className="relative hidden max-w-lg lg:block">
           <p className="font-display-bold text-display text-white">{t('auth.brandLine')}</p>
-          <p className="mt-4 text-lead text-sidebar-muted">{t('auth.brandSub')}</p>
+          <p className="mt-4 text-lead text-navy-200">{t('auth.brandSub')}</p>
         </div>
-        <p className="relative hidden text-caption text-sidebar-muted lg:block">© {new Date().getFullYear()} MIG</p>
+        <p className="relative hidden text-caption text-navy-200 lg:block">© {new Date().getFullYear()} MIG</p>
       </section>
 
       {/* Form */}

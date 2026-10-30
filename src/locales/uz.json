@@ -8,7 +8,9 @@
     "submissions": "Arizalar",
     "agenda": "Mening vazifalarim",
     "counterparties": "Kontragentlar",
-    "admin": "Boshqaruv"
+    "admin": "Boshqaruv",
+    "receipts": "Tushumlar",
+    "receivables": "Debitorlik"
   },
   "roles": {
     "admin": "Administrator",
@@ -51,7 +53,9 @@
     "remove": "Olib tashlash",
     "active": "Faol",
     "inactive": "nofaol",
-    "close": "Yopish"
+    "close": "Yopish",
+    "yes": "Ha",
+    "no": "Yoʻq"
   },
   "pages": {
     "dashboard": {
@@ -73,6 +77,14 @@
     "admin": {
       "title": "Boshqaruv",
       "subtitle": "Foydalanuvchilar va rollar, ma’lumotnomalar, sozlamalar"
+    },
+    "receipts": {
+      "title": "Tushumlar",
+      "subtitle": "MGA va brokerlardan olingan mukofot va har bir tushum nimani toʻlagani"
+    },
+    "receivables": {
+      "title": "Debitorlik qarzi",
+      "subtitle": "MGA bizga qarzdor bo'lgan summalar — muddati va yoshi bo'yicha, hamda biz qaytarishimiz kerak bo'lgan mukofotlar"
     }
   },
   "errors": {
@@ -123,7 +135,8 @@
   "fuType": {
     "request_update": "Holat soʻrash",
     "offer_expiry": "Taklif muddati tugashi",
-    "other": "Boshqa"
+    "other": "Boshqa",
+    "premium_overdue": "Mukofot muddati oʻtgan"
   },
   "audit": {
     "INSERT": "yaratildi",
@@ -323,7 +336,8 @@
     "scheduleNext": "Keyingi eslatmani rejalashtirish",
     "titleField": "Sarlavha",
     "titlePlaceholder": "Masalan: yangi shartlar boʻyicha MGA ga qoʻngʻiroq",
-    "type": "Turi"
+    "type": "Turi",
+    "team": "{{role}} jamoasi"
   },
   "cp": {
     "add": {
@@ -364,6 +378,12 @@
       "thisYearUsd": "shu yil: {{amount}}",
       "openOffers": "Ochiq takliflar",
       "avgShare": "Oʻrtacha tasdiqlangan ulush"
+    },
+    "new": "Yangi kontragent",
+    "exported": "{{count}} ta kontragent eksport qilindi",
+    "premium": {
+      "title": "Mukofotlar",
+      "open": "Debitorlikda ochish"
     }
   },
   "v": {
@@ -428,7 +448,21 @@
     "openInRegister": "Reestrda ochish",
     "noOpenOffers": "Javob kutayotgan takliflar yoʻq.",
     "offeredOn": "Taklif sanasi",
-    "daysWaiting": "Kutish kunlari"
+    "daysWaiting": "Kutish kunlari",
+    "premium": {
+      "title": "Mukofotlar",
+      "outstanding": "Olinadigan mukofot",
+      "notDue": "{{amount}} — muddati kelmagan",
+      "overdue": "Kechikkan mukofot",
+      "receivedMonth": "Shu oyda olingan",
+      "receivedYear": "{{year}} yilda olingan",
+      "missingRate_one": "{{count}} ta pozitsiyada hali kurs yo'q — USD jamiga kirmaydi",
+      "missingRate_other": "{{count}} ta pozitsiyada hali kurs yo'q — USD jamiga kirmaydi",
+      "overdueByAge": "Kechikkan mukofot yoshi bo'yicha",
+      "topMgas": "Eng ko'p kechiktirgan MGA lar",
+      "mostOverdue": "Eng ko'p kechikkan to'lovlar",
+      "noOverdue": "Kechikkan mukofot yo'q"
+    }
   },
   "admin": {
     "tabs": {
@@ -436,7 +470,8 @@
       "reference": "Ma’lumotnomalar",
       "fx": "Valyuta kurslari",
       "settings": "Sozlamalar",
-      "jobs": "Rejalashtirilgan vazifalar"
+      "jobs": "Rejalashtirilgan vazifalar",
+      "demo": "Demo ma'lumotlar"
     },
     "saved": "Saqlandi",
     "add": "Qoʻshish",
@@ -475,14 +510,22 @@
       "confirmDelete": "{{date}} sanadagi {{ccy}} kursi oʻchirilsinmi?"
     },
     "settings": {
-      "firstDays": "Taklifdan keyingi birinchi eslatma (kun)",
-      "firstDaysHint": "Taklif berilganda avtomatik yaratiladi.",
-      "repeatDays": "Eslatmalarni har (kun) takrorlash",
-      "repeatDaysHint": "Kundalik vazifa ochiq takliflar uchun keyingi eslatmani yaratadi.",
-      "autoEnabled": "Eski takliflarni avtomatik \"Javob yoʻq\" holatiga oʻtkazish",
-      "autoDays": "…dan keyin (taklifdan beri kun)",
-      "autoDaysHint": "Kech javobni baribir kiritish mumkin: \"Javob yoʻq\" → Bound / NTU.",
-      "invalidDays": "Kunlar 1 dan 365 gacha butun son boʻlishi kerak."
+      "groups": {
+        "followUps": "Takliflar bo'yicha eslatmalar",
+        "premium": "Mukofotlar"
+      },
+      "follow_up_first_days": "Taklifdan keyingi birinchi eslatma (kun)",
+      "follow_up_first_daysHint": "Ariza «Taklif» holatiga o'tganda avtomatik yaratiladi.",
+      "follow_up_repeat_days": "Eslatmalarni har (kun) takrorlash",
+      "follow_up_repeat_daysHint": "Kunlik vazifalar ochiq takliflar va to'lanmagan mukofotlar uchun keyingi eslatmani yaratadi.",
+      "auto_no_response_enabled": "Eski takliflarni avtomatik «Javob yo'q» ga o'tkazish",
+      "auto_no_response_days": "…dan keyin (taklifdan beri kun)",
+      "auto_no_response_daysHint": "Kech javobni baribir yozish mumkin: «Javob yo'q» → Tasdiqlandi / Qabul qilinmadi.",
+      "premium_default_terms_days": "Standart to'lov muddati (boshlanishdan kun)",
+      "premium_default_terms_daysHint": "Arizada PPW sanasi va o'z to'lov muddati bo'lmasa.",
+      "premium_grace_days": "Birinchi kechikish eslatmasigacha imtiyoz (kun)",
+      "premium_grace_daysHint": "0 = muddatdan keyingi kun.",
+      "invalid": "{{label}}: {{min}} dan {{max}} gacha son kiriting."
     },
     "jobs": {
       "title": "Kundalik eslatma vazifasi",
@@ -495,6 +538,28 @@
       "scheduled": "jadval boʻyicha",
       "none": "Hozircha ishga tushirilmagan.",
       "result": "yangi eslatmalar: {{repeats}}, muddati oʻtganlar: {{expiry}}, \"Javob yoʻq\" ga oʻtkazilgan: {{noresp}}"
+    },
+    "demo": {
+      "title": "Demo ma'lumotlar",
+      "help": "O'qitish va tizimni ko'rsatish uchun demo kontragentlar, arizalar, mukofot jadvallari, tushumlar va vazifalar. Nomlari «DEMO» bilan, raqamlari DEMO- bilan boshlanadi. Demo rejimni (Ko'rinish) yoqmaguncha ularni hech kim ko'rmaydi; ular haqiqiy ro'yxatlar, jamlar, eksport va kunlik vazifalarga kirmaydi.",
+      "check": "Bog'lanishlarni tekshirish",
+      "load": "Demo ma'lumotlarni yuklash",
+      "delete": "Barcha demo ma'lumotlarni o'chirish",
+      "loaded": "Demo ma'lumotlar yuklandi",
+      "deleted": "Barcha demo ma'lumotlar o'chirildi",
+      "checkOk": "Demo va haqiqiy ma'lumotlar o'rtasida bog'lanish yo'q.",
+      "checkBad_one": "Demo va haqiqiy ma'lumotlar o'rtasida {{count}} ta bog'lanish topildi:",
+      "checkBad_other": "Demo va haqiqiy ma'lumotlar o'rtasida {{count}} ta bog'lanish topildi:",
+      "confirmTitle": "Barcha demo ma'lumotlar o'chirilsinmi?",
+      "confirmText": "Barcha demo yozuvlar o'chiriladi ({{count}} ta demo ariza jadvallari, tushumlari, vazifalari va hujjatlari bilan). Haqiqiy ma'lumotlarga tegilmaydi. Qaytarib bo'lmaydi.",
+      "deleteConfirm": "Demo ma'lumotlarni o'chirish",
+      "kinds": {
+        "counterparties": "Kontragentlar",
+        "submissions": "Arizalar",
+        "installments": "To'lovlar",
+        "receipts": "Tushumlar",
+        "follow_ups": "Vazifalar"
+      }
     }
   },
   "tokens": {
@@ -517,7 +582,17 @@
     "playMotion": "Animatsiyani koʻrsatish",
     "reducedMotion": "Tizimda «harakatni kamaytirish» yoqilgan boʻlsa, hammasi bir zumda oʻzgaradi.",
     "sampleTable": "Namuna jadval",
-    "amount": "Summa"
+    "amount": "Summa",
+    "themes": "Rang mavzulari",
+    "themesHint": "Mavzu faqat urgʻu shkalasini, sahifa va yon panel tusini oʻzgartiradi. Holat va muddat oʻtish ranglari toʻrttasida ham bir xil. Quyida shu mavzudagi har bir rang juftligi uchun kontrast.",
+    "pair": {
+      "button": "Asosiy tugmadagi matn",
+      "link": "Oq fondagi havola",
+      "nav": "Faol menyu bandi",
+      "sidebarText": "Yon panel matni",
+      "canvasText": "Sahifadagi ikkinchi darajali matn",
+      "ring": "Oq fondagi fokus chizigʻi"
+    }
   },
   "ui": {
     "actions": "Amallar",
@@ -527,10 +602,6 @@
     "clearSelection": "Bekor qilish",
     "columns": "Ustunlar",
     "daysOverdue": "{{count}} kun kechikdi",
-    "density": "Zichlik",
-    "densityComfortable": "Keng · 56 px",
-    "densityCompact": "Ixcham · 40 px",
-    "densityDefault": "Standart · 48 px",
     "editSubmission": "Tahrirlash",
     "emptyFiltered": "Filtrlarni kamaytiring yoki qidiruvni qisqartiring.",
     "exportSelected": "Tanlanganlarni yuklab olish",
@@ -584,5 +655,401 @@
     "noSubmissionsYet": "Ulardan hali ariza kelmagan",
     "moreFilters": "Qoʻshimcha filtrlar",
     "resetColumns": "Standart holatga qaytarish"
+  },
+  "prem": {
+    "tab": "Mukofot",
+    "addAdditional": "Qoʻshimcha mukofot qoʻshish",
+    "addReturn": "Qaytariladigan mukofot qoʻshish",
+    "addRow": "Toʻlov qoʻshish",
+    "additionalAdded": "Qoʻshimcha mukofot qoʻshildi",
+    "additionalExplain": "MGA bizga qoʻshimcha toʻlashi kerak boʻlgan mukofot (masalan, qoʻshimcha shartnoma boʻyicha). Komissiya va brokerlik — arizadagidek.",
+    "count": "Toʻlovlar soni",
+    "countHint": "Kamida 2",
+    "createSchedule": "Mukofot jadvalini yaratish",
+    "deductions": "Komissiya + brokerlik",
+    "diffExplain": "Jadval kutilgan mukofotdan {{diff}} {{ccy}} farq qiladi. Saqlash mumkin — farq koʻrinib turadi.",
+    "difference": "Farq",
+    "differs": "Farq bor",
+    "dueDate": "Toʻlov muddati",
+    "every": "Har",
+    "everyMonths": {
+      "1": "oy",
+      "3": "chorak",
+      "6": "yarim yil"
+    },
+    "expectedGross": "Bizning yalpi mukofot (kutilgan)",
+    "expectedNet": "Kutilgan sof",
+    "firstDue": "Birinchi muddat",
+    "gross": "Yalpi",
+    "grossAmount": "Yalpi summa, {{ccy}}",
+    "howToPay": "Qanday toʻlanadi",
+    "leftToSettle": "Qoldiq",
+    "markSettled": "MGA ga toʻlanganini belgilash",
+    "mismatch": "Tasdiqlangan ulush {{was}} dan {{now}} ga oʻzgardi — jadval endi mos emas.",
+    "mismatchAllocated": "Tushumlar allaqachon taqsimlangan: toʻlovlarni tahrirlang yoki qoʻshimcha / qaytariladigan mukofot qoʻshing.",
+    "mode": {
+      "single": "Bir martada",
+      "equal": "Teng toʻlovlar",
+      "custom": "Qoʻlda"
+    },
+    "net": "Sof",
+    "noReceipts": "Hali tushumlar yoʻq.",
+    "noSchedule": "Mukofot jadvali hali yoʻq",
+    "noScheduleHint": "Moliya boʻlimi MGA nima va qachon toʻlashini koʻrishi uchun jadval yarating.",
+    "onlyBound": "Mukofot jadvali ariza tasdiqlangandan keyin yaratiladi.",
+    "paid": "Toʻlangan",
+    "paidToMgaOn": "MGA ga toʻlangan sana",
+    "payBy": "Toʻlash muddati",
+    "payableToMga": "MGA ga toʻlanadi",
+    "positiveHint": "Musbat summa kiriting",
+    "previewInvalid": "Har bir toʻlov uchun muddat va musbat summa kiriting.",
+    "reasonRequired": "Hisobdan chiqarish sababini yozing",
+    "receipts": "Tushumlar",
+    "receivable": "Olinadigan (qoldiq)",
+    "regenerate": "Jadvalni qayta yaratish",
+    "replaceHint": "Saqlash joriy jadvalning asosiy toʻlovlarini almashtiradi. Qoʻshimcha va qaytariladigan mukofot oʻzgarmaydi.",
+    "replaceSchedule": "Jadvalni almashtirish",
+    "returnAdded": "Qaytariladigan mukofot qoʻshildi — MGA ga toʻlanadi",
+    "returnExplain": "MGA ga qaytaradigan mukofotimiz. U toʻlanadigan summa sifatida koʻrsatiladi va MGA qarzidan ayirilmaydi.",
+    "scheduleSaved": "Mukofot jadvali saqlandi: toʻlovlar — {{count}}",
+    "scheduledNet": "Jadval boʻyicha sof",
+    "settleExplain": "{{amount}} {{ccy}} MGA ga qaytarildi.",
+    "settleTitle": "Qaytariladigan mukofot №{{no}} toʻlandi",
+    "settledOn": "MGA ga {{date}} da toʻlangan",
+    "settledToast": "Qaytariladigan mukofot №{{no}} toʻlangan deb belgilandi",
+    "status": {
+      "open": "Ochiq",
+      "partially_paid": "Qisman toʻlangan",
+      "paid": "Toʻlangan",
+      "written_off": "Hisobdan chiqarilgan",
+      "to_pay": "Toʻlanadi",
+      "settled": "Toʻlangan"
+    },
+    "total": "Jami",
+    "type": "Turi",
+    "types": {
+      "original": "Mukofot",
+      "additional": "Qoʻshimcha",
+      "return": "Qaytarish"
+    },
+    "undoWriteOff": "Hisobdan chiqarishni bekor qilish",
+    "weOwe": "biz MGA ga qarzdormiz",
+    "writeOff": "Hisobdan chiqarish",
+    "writeOffExplain": "Qoldiq {{amount}} {{ccy}}. Hisobdan chiqarish muddati oʻtganlik eslatmalarini toʻxtatadi; sabab ismingiz va sana bilan saqlanadi.",
+    "writeOffReason": "Sabab",
+    "writeOffTitle": "№{{no}} toʻlovni hisobdan chiqarish",
+    "writeOffUndone": "№{{no}} hisobdan chiqarish bekor qilindi",
+    "writtenOffBy": "{{who}} hisobdan chiqargan, {{when}}",
+    "writtenOffToast": "№{{no}} toʻlov hisobdan chiqarildi"
+  },
+  "appearance": {
+    "title": "Koʻrinish",
+    "subtitle": "Rang mavzusi va matn oʻlchami. Profilingizda saqlanadi va barcha qurilmalarda ishlaydi.",
+    "theme": "Rang mavzusi",
+    "themes": {
+      "grey": "Kulrang",
+      "blue": "Moviy",
+      "green": "Yashil",
+      "orange": "Toʻq sariq"
+    },
+    "textSize": "Matn oʻlchami",
+    "textSizeHint": "«Yirik» barcha matnni bir pogʻona kattalashtiradi.",
+    "sizes": {
+      "normal": "Oddiy",
+      "large": "Yirik"
+    },
+    "demo": "Demo rejim",
+    "demoHint": "Faqat demo ma'lumotlar ko'rsatiladi (nomlari «DEMO» bilan boshlanadi); rejim yoqilganda haqiqiy ma'lumotlar yashiriladi. Faqat siz uchun.",
+    "demoOn": "Yoqilgan — faqat demo ma'lumotlar",
+    "demoOff": "O'chirilgan"
+  },
+  "search": {
+    "clear": "Qidiruvni tozalash",
+    "suggestions": "Takliflar",
+    "enterToSearch": "Qidirish uchun Enter bosing",
+    "removeRecent": "Soʻnggi qidiruvlardan olib tashlash",
+    "tip": "Maslahat: , — VA, ; — YOKI, - — chiqarib tashlash.",
+    "helpLink": "Sintaksis boʻyicha yordam",
+    "group": {
+      "recent": "Soʻnggi qidiruvlar",
+      "filter": "Filtr",
+      "record": "Arizani ochish",
+      "page": "Oʻtish"
+    },
+    "kind": {
+      "status": "Holat",
+      "mga": "MGA",
+      "broker": "Broker",
+      "lob": "Sugʻurta turi",
+      "ccy": "Valyuta",
+      "country": "Mamlakat",
+      "uw": "Anderrayter",
+      "page": "Boʻlim",
+      "action": "Amal"
+    },
+    "understood": "Soʻrovingiz qanday tushunildi",
+    "or": "yoki",
+    "not": "{{label}} emas",
+    "asText": "matn sifatida qidirildi",
+    "asTextHint": "«{{raw}}» filtr sifatida tanilmadi, shuning uchun matn sifatida qidirildi",
+    "removePart": "«{{label}}»ni qidiruvdan olib tashlash",
+    "clearSearch": "Qidiruvni tozalash",
+    "editSearch": "Soʻrovni oʻzgartirish",
+    "f": {
+      "premium": "Bizning mukofot (USD)",
+      "si": "Sugʻurta summasi (USD)"
+    },
+    "flag": {
+      "overdue": "Eslatma muddati oʻtgan",
+      "expired": "Taklif muddati tugagan",
+      "mine": "Mening arizalarim",
+      "inactive": "Nofaollar bilan",
+      "fuOverdue": "Muddati oʻtgan",
+      "active": "Faqat faollar",
+      "onlyInactive": "Faqat nofaollar",
+      "unallocated": "Toʻliq taqsimlanmagan",
+      "allocated": "Toʻliq taqsimlangan",
+      "premOverdue": "Kechikkan",
+      "payable": "MGA ga to'lanadigan (qaytarish)"
+    },
+    "kw": {
+      "today": "Bugun qabul qilingan",
+      "thisweek": "Shu hafta qabul qilingan",
+      "thismonth": "Shu oy qabul qilingan"
+    },
+    "help": {
+      "title": "Qanday qidirish kerak",
+      "intro": "Soʻzlarni yozing — hamma joydan qidiriladi, yoki filtrlarni qoʻshing. Sinab koʻrish uchun misolni bosing.",
+      "submissions": {
+        "text": "Hamma joyda matn: raqam, sugʻurtalanuvchi, risk, MGA, broker, mamlakat, tur, izohlar. Soʻzning bir qismi yetarli.",
+        "phrase": "Aniq ibora",
+        "and": ", — VA: barcha qismlar mos kelishi kerak",
+        "or": "; — guruhlar orasida YOKI",
+        "pipe": "filtr ichida | — qiymatlardan istalgani",
+        "exclude": "- chiqarib tashlaydi (holat, filtr yoki soʻz)",
+        "fields": "Filtrlar: status, mga, broker, lob, country, ccy, uw, type, ref (yoki holat:, valyuta:, mamlakat: …)",
+        "numbers": "Sonlar: bizning mukofot USD da, ulush %, si (sugʻurta summasi, USD); k, m, bn",
+        "dates": "Sanalar: received, inception, expiry, bound; oraliq .. bilan",
+        "within": "Keyingi (yoki oxirgi) N kun ichida",
+        "keywords": "Kalit soʻzlar: overdue / kechikkan, expired / eskirgan, noresponse, mine / mening, today / bugun, thisweek, thismonth",
+        "notes": "Holat, MGA, tur yoki valyutaga aynan mos soʻz (tasdiqlandi, USD) filtrga aylanadi; qolgani matn sifatida qidiriladi.",
+        "languages": "Filtr nomlari va soʻzlar ingliz, rus va oʻzbek tillarida tushuniladi: статус:связан, holat:tasdiqlandi, валюта:usd, просрочено, bugun."
+      },
+      "counterparties": {
+        "text": "Hamma joyda matn: nom, mamlakat, kontaktlar (ism, e-mail, telefon), izohlar",
+        "type": "Tur: MGA, broker yoki sedent; | — bir nechta",
+        "country": "Mamlakat kodi yoki nomi boʻyicha",
+        "exclude": ", — VA · - chiqarib tashlaydi",
+        "inactive": "Nofaol kontragentlarni ham koʻrsatish (aks holda yashirin)",
+        "notes": "Tur yoki mamlakatga aynan mos soʻz (broker, Oʻzbekiston) filtrga aylanadi; qolgani matn sifatida qidiriladi.",
+        "languages": "Soʻzlar ingliz, rus va oʻzbek tillarida tushuniladi: turi:broker, mamlakat:Oʻzbekiston, nofaol."
+      },
+      "agenda": {
+        "text": "Hamma joyda matn: mavzu, ariza raqami va sugʻurtalanuvchi, MGA, natija",
+        "overdue": "Faqat muddati oʻtganlar",
+        "type": "Tur: request_update, offer_expiry, premium_overdue, other",
+        "due": "Keyingi N kun ichida muddati (yoki due:2026-11-01..2026-11-30)",
+        "assignee": "Hammaning eslatmalari (administrator va rahbariyat; yoki assignee:Malika)",
+        "notes": "Masʼulsiz — sizning eslatmalaringiz. today, thisweek va thismonth muddatga tegishli.",
+        "languages": "Soʻzlar ingliz, rus va oʻzbek tillarida tushuniladi: kechikkan, muddat<7d, просрочено."
+      },
+      "users": {
+        "text": "Hamma joyda matn: ism, e-mail",
+        "role": "Rol; | — bir nechta",
+        "inactive": "Faqat nofaollar (active — faqat faollar)",
+        "notes": "Rolga aynan mos soʻz (moliya) filtrga aylanadi.",
+        "languages": "Soʻzlar ingliz, rus va oʻzbek tillarida tushuniladi: rol:moliya, nofaol."
+      },
+      "reference": {
+        "text": "Hamma joyda matn: kod va barcha tillardagi nomlar (uchala jadvalda)",
+        "inactive": "Faqat nofaol qatorlar (active — faqat faollar)",
+        "notes": "Valyutalar, mamlakatlar va sugʻurta turlarini birdaniga saralaydi.",
+        "languages": "Soʻzlar ingliz, rus va oʻzbek tillarida tushuniladi."
+      },
+      "fx": {
+        "ccy": "Bitta valyuta (maydonsiz kod ham saralaydi)",
+        "dates": "Bir nechta valyuta, sanadan boshlab",
+        "source": "Kurs manbai: manual yoki cbu",
+        "notes": "Faqat oxirgilarini emas, barcha saqlangan kurslarni qidiradi.",
+        "languages": "Soʻzlar ingliz, rus va oʻzbek tillarida tushuniladi: valyuta:EUR, sana>=2026-10-01."
+      },
+      "receipts": {
+        "text": "Hamma joyda matn: raqam, bank maʼlumotnomasi, toʻlovchi, izohlar",
+        "unallocated": "Taqsimlanmagan qoldigʻi bor tushumlar",
+        "payer": "Toʻlovchi va valyuta",
+        "dates": "Sanadan beri qabul qilingan, summa 10 000 dan koʻp",
+        "ref": "Raqami boʻyicha bitta tushum",
+        "notes": "Maydonsiz valyuta kodi yoki toʻlovchi nomi ham saralaydi.",
+        "languages": "Soʻzlar ingliz, rus va oʻzbek tillarida tushuniladi: taqsimlanmagan, valyuta:EUR, нераспределено."
+      },
+      "receivables": {
+        "text": "Istalgan joyda matn: raqam, sug'urtalanuvchi, MGA, broker",
+        "days": "45 kundan ortiq kechikkan",
+        "bucket": "Bir yoki bir nechta yosh guruhi",
+        "mga": "Bitta MGA, faqat kechikkanlar",
+        "due": "Keyingi 30 kun ichida to'lanadigan",
+        "payable": "MGA ga qaytariladigan mukofotlar (debitorlikdan alohida)",
+        "notes": "Holat yoki qaytarish ko'rsatilmasa, hali to'lanmagan summalar ko'rinadi. MGA, broker, valyuta yoki yosh guruhi nomining o'zi filtrlaydi.",
+        "languages": "So'zlar ingliz, rus va o'zbek tillarida ishlaydi: просрочено>45, корзина:61-90, qaytarish."
+      }
+    },
+    "count_one": "{{count}} ta ariza",
+    "count_other": "{{count}} ta ariza",
+    "startTyping": "Nom, raqam yoki filtr yozing, masalan holat:tasdiqlandi",
+    "page": {
+      "submissions": {
+        "placeholder": "Qidiruv yoki filtr: sugʻurtalanuvchi, MGA, holat, valyuta…",
+        "label": "Arizalarni qidirish va saralash",
+        "words": "nom, raqam, risk, izohlar…"
+      },
+      "counterparties": {
+        "placeholder": "Qidiruv yoki filtr: nom, tur, mamlakat…",
+        "label": "Kontragentlarni qidirish va saralash",
+        "words": "nom, kontakt, e-mail…"
+      },
+      "agenda": {
+        "placeholder": "Qidiruv yoki filtr: mavzu, ariza, tur, muddat…",
+        "label": "Eslatmalarni qidirish va saralash",
+        "words": "mavzu, raqam, sugʻurtalanuvchi…"
+      },
+      "users": {
+        "placeholder": "Qidiruv yoki filtr: ism, e-mail, rol…",
+        "label": "Foydalanuvchilarni qidirish va saralash",
+        "words": "ism, e-mail…"
+      },
+      "reference": {
+        "placeholder": "Qidiruv yoki filtr: kod, nom…",
+        "label": "Maʼlumotnomalarni qidirish va saralash",
+        "words": "kod, nom…"
+      },
+      "fx": {
+        "placeholder": "Qidiruv yoki filtr: valyuta, sana, manba…",
+        "label": "Valyuta kurslarini qidirish va saralash",
+        "words": "valyuta…"
+      },
+      "receipts": {
+        "placeholder": "Qidiruv yoki filtr: toʻlovchi, bank maʼlumotnomasi, valyuta…",
+        "label": "Tushumlarni qidirish va saralash",
+        "words": "raqam, maʼlumotnoma, toʻlovchi…"
+      },
+      "receivables": {
+        "placeholder": "Qidirish yoki filtr: sug'urtalanuvchi, MGA, overdue>45, bucket:61-90…",
+        "label": "Debitorlik bo'yicha qidirish",
+        "words": "raqam, sug'urtalanuvchi, MGA, broker…"
+      }
+    },
+    "filters": "Filtrlar",
+    "builder": {
+      "title": "Filtrlar",
+      "intro": "Nimani koʻrishni tanlang. «Qoʻllash» qidiruvni satrga yozadi — uni u yerda oʻqish va oʻzgartirish mumkin.",
+      "words": "Soʻzlarni oʻz ichiga oladi",
+      "from": "dan",
+      "to": "gacha",
+      "min": "dan",
+      "max": "gacha",
+      "only": "Faqat koʻrsatish",
+      "kept": "Qidiruvingizdan yana saqlandi:",
+      "preview": "Qidiruv",
+      "nothing": "Hammasi (filtrsiz)",
+      "clear": "Hammasini tozalash",
+      "apply": "Qoʻllash",
+      "any": "Istalgan",
+      "nSelected": "{{count}} ta tanlandi",
+      "find": "Topish…",
+      "noMatch": "Hech narsa topilmadi",
+      "clearField": "Tozalash",
+      "orNotice": "Qidiruvingizda YOKI guruhlari (;) bor — uni satrda oʻzgartiring yoki bu yerda yangi filtr boshlang.",
+      "startOver": "Yangi filtr"
+    },
+    "noMatch": "Bu qidiruv boʻyicha hech narsa yoʻq"
+  },
+  "rcp": {
+    "payer": "Toʻlovchi",
+    "bankReference": "Bank maʼlumotnomasi",
+    "receivedDate": "Qabul qilingan",
+    "amount": "Summa",
+    "amountIn": "Summa, {{ccy}}",
+    "amountUsd": "Summa (USD)",
+    "allocated": "Taqsimlangan",
+    "unallocated": "Taqsimlanmagan",
+    "fully": "Toʻliq taqsimlangan",
+    "exported": "{{count}} ta tushum eksport qilindi",
+    "new": "Yangi tushum",
+    "count_one": "{{count}} ta tushum",
+    "count_other": "{{count}} ta tushum",
+    "totalUsd": "Jami (USD)",
+    "none": "Hali tushumlar yoʻq",
+    "noneHint": "Pul kelishi bilan yozing — «Yangi tushum».",
+    "newHint": "Olingan summani yozing, soʻng u qaysi badallarni toʻlashini koʻrsating. Qoldiq siz taqsimlamaguningizcha taqsimlanmagan boʻlib qoladi.",
+    "fillFirst": "Tushumni taqsimlash uchun toʻlovchi, valyuta va summani kiriting.",
+    "recorded": "{{ref}} yozildi",
+    "saveWithAllocations_one": "Tushum va {{count}} ta taqsimotni yozish",
+    "saveWithAllocations_other": "Tushum va {{count}} ta taqsimotni yozish",
+    "saveUnallocated": "Tushumni yozish (taqsimlanmagan)",
+    "allocatedMore": "{{ref}}: taqsimotlar saqlandi",
+    "confirmRemove": "Bu taqsimot oʻchirilsinmi? Badal yana shu summaga toʻlanmagan boʻladi.",
+    "removed": "Taqsimot oʻchirildi",
+    "paysFor": "Toʻlaydi",
+    "allocAmount": "Summa, {{ccy}}",
+    "onInstallment": "Badalga",
+    "nothingAllocated": "Hali hech narsa taqsimlanmagan",
+    "removeAllocation": "Taqsimotni oʻchirish",
+    "allocateRest": "Qolgan {{amount}}ni taqsimlash",
+    "saveAllocations_one": "{{count}} ta taqsimotni saqlash",
+    "saveAllocations_other": "{{count}} ta taqsimotni saqlash",
+    "allocate": "Badallarga taqsimlash",
+    "allocateHint": "Toʻlovchining ochiq badallari taklif qilinadi, eng erta muddatlilari birinchi. Turli valyutalarda kursni kiriting — oldindan koʻrish badalga nima tushishini koʻrsatadi.",
+    "autoAllocate": "Avtomatik taqsimlash",
+    "noneYet": "Quyida badal qoʻshing yoki avtomatik taqsimlang.",
+    "noOpenForPayer": "Bu toʻlovchida ochiq badallar yoʻq — quyida boshqa toʻlovchining badalini qoʻshing yoki tushumni taqsimlamasdan yozing.",
+    "outstanding": "Qoldiq",
+    "removeRow": "Olib tashlash",
+    "max": "Maks.",
+    "rate": "Kurs: 1 {{from}} uchun {{to}}",
+    "useReference": "Qabul sanasidagi saqlangan kursni olish",
+    "useReferenceShort": "Saqlangan",
+    "reference": "Saqlangan kurs: {{rate}}",
+    "inverted": "Kurs teskari koʻrinadi: u 1 ÷ saqlangan kursga yaqin. 1 {{from}} uchun {{to}} kiriting.",
+    "far": "Saqlangan kursdan 10 % dan koʻproq farq qiladi — tekshiring.",
+    "err": {
+      "gone": "Bu badal endi pul qabul qila olmaydi.",
+      "amount": "Noldan katta summa kiriting.",
+      "rate": "Kursni kiriting.",
+      "overInstallment": "Qoldiqdan koʻp ({{max}} {{ccy}})."
+    },
+    "addOther": "Boshqa toʻlovchining badalini qoʻshish…",
+    "leftUnallocated": "Taqsimlanmagan: {{amount}}",
+    "overReceipt": "Tushumdan {{amount}} koʻp",
+    "fullyAllocated": "Toʻliq taqsimlangan",
+    "noReference": "Bu sana uchun saqlangan kurs yoʻq — kursni oʻzingiz kiriting."
+  },
+  "demo": {
+    "banner": "Siz faqat demo ma'lumotlarni ko'ryapsiz. Haqiqiy ma'lumotlar yashirilgan.",
+    "leave": "Demo rejimdan chiqish"
+  },
+  "rcv": {
+    "bucket": "Qarz yoshi",
+    "daysOverdue": "Kechikkan kunlar",
+    "outstanding": "Qoldiq",
+    "usd": "Qoldiq, USD",
+    "noRate": "Bu valyuta uchun hali kurs yo'q: USD jamiga kirmaydi",
+    "noRateShort": "kurs yo'q",
+    "exported_one": "{{count}} ta to'lov eksport qilindi",
+    "exported_other": "{{count}} ta to'lov eksport qilindi",
+    "ageing": "Qarz yoshi, USD",
+    "totalOutstanding": "Olinadigan qoldiq",
+    "notDue": "Muddati kelmagan",
+    "bucketDays": "{{bucket}} kun",
+    "payableTile": "MGA ga to'lanadigan",
+    "payableSub_one": "{{count}} ta qaytarish",
+    "payableSub_other": "{{count}} ta qaytarish",
+    "count_one": "{{count}} ta to'lov",
+    "count_other": "{{count}} ta to'lov",
+    "countPayable_one": "{{count}} ta qaytarish to'lanadi",
+    "countPayable_other": "{{count}} ta qaytarish to'lanadi",
+    "missingRate_one": "{{count}} ta kurssiz USD jamiga kirmaydi",
+    "missingRate_other": "{{count}} ta kurssiz USD jamiga kirmaydi",
+    "none": "Qarz yo'q",
+    "noneHint": "Tasdiqlangan arizada mukofot jadvali bo'lganda to'lovlar shu yerda ko'rinadi."
   }
 }

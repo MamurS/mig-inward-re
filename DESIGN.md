@@ -37,13 +37,59 @@ the hue:
   steps (≥ 3 : 1). The test `src/design/contrast.test.ts` proves the worst
   pair of every ramp.
 - **Ramps.** `slate` — warm neutrals (hue 70, chroma 0.012): text, borders,
-  surfaces. `navy` — the brand, reserved for the sidebar, the primary button
-  and focus of brand moments. `sky` — secondary: focus ring, links,
+  surfaces. `brand` — the theme accent (primary button, active nav, links,
+  focus ring, selected rows, KPI chips, chart accent); it is one of four
+  ramps, chosen by the colour theme. `navy` — the company colour, kept for the
+  logo chip and the login panel only. `sky` — secondary: focus ring, links,
   informational highlights. `success`, `warning`, `danger`, `info` — feedback.
   `violet`, `teal`, `magenta` — only for data (charts, status scale).
-- **Page background** is the warm canvas; cards are white.
-- **No dark theme** for now: the light theme is the default, and a dark theme
-  ships only once it passes the same contrast test.
+- **Page background** is the theme's canvas tint (with a faint accent wash at
+  the top); cards are white.
+- **No dark theme** for now: a dark theme ships only once it passes the same
+  contrast test.
+
+### Colour themes and text size
+
+Four light themes, chosen per user under user menu → **Appearance** and saved
+on the profile (`profiles.ui_theme`, `ui_text_size`):
+
+| theme | accent | page and sidebar tint |
+|---|---|---|
+| Grey (default) | blue | cool grey |
+| Blue | blue | pale sky |
+| Green | green | lime / salad |
+| Orange | orange | peach |
+
+- **Mechanics.** `palette.ts` → `THEMES` builds each theme's `brand` ramp on
+  the same equal-luminance steps as every other ramp, so the pairing rule —
+  and the contrast test — hold in every theme by construction. `tokens.css`
+  holds the grey theme in `@theme` and one `:root[data-theme='…']` block per
+  other theme re-mapping `--color-brand-*`, `primary`, `ring`, `link`,
+  `canvas`, `sidebar*`, `data-1` and `seq-*`. Components only use roles and
+  `brand-*` — **no component knows the theme**.
+- **Fixed in every theme:** status and ageing colours, feedback colours,
+  text and borders (slate).
+- **Pastels are backgrounds only** (canvas, sidebar, `brand-50/100` tints);
+  text on them uses steps ≥ 5 apart.
+- **Text size.** Normal / Large; Large moves every `text-*` one step up
+  (`:root[data-text-size='large']`). Only type changes — never layout tokens.
+- **Applying.** `src/lib/appearance.ts` sets `data-theme` / `data-text-size`
+  on `<html>`; the last choice is cached in `localStorage` (`mig.appearance`)
+  and an inline script in `index.html` applies it before the first paint, so
+  there is no flash. A theme change cross-fades colours for 150 ms
+  (`theme-fade`); a size change is instant. Both respect reduced motion.
+- **The admin token page** (`/admin/tokens`) shows all four themes with their
+  ramps and measured contrast.
+
+### Sidebar
+
+Light and frosted: the theme's sidebar tint at 72 % behind
+`backdrop-filter: saturate(1.4) blur(18px)`, a solid tint where that is not
+supported (`glass-sidebar` in `index.css`), a hairline right border, no heavy
+shadow. Dark text (`sidebar-foreground` slate-800, `sidebar-muted` slate-600),
+20 px icons; the active item is a soft accent pill (`sidebar-accent` brand-100,
+text brand-800, medium weight); hover is a gentle slate-100. No navy in the
+sidebar except the logo chip.
 
 ### Roles (shadcn/ui vocabulary)
 
@@ -67,7 +113,7 @@ amber and orange to red. Badges are tinted; **only 90+ is solid** (white on
 `aging-90plus` with `-tint/-line/-ink/-deep`.
 
 **Charts** — categorical `data-1 … data-8` (all ≥ 3 : 1 on white, in an order
-that keeps neighbours distinct), sequential `seq-1 … seq-9` (navy 100 … 900).
+that keeps neighbours distinct), sequential `seq-1 … seq-9` (theme accent 100 … 900).
 
 ### Palette values (generated from `palette.ts`)
 
@@ -86,7 +132,23 @@ that keeps neighbours distinct), sequential `seq-1 … seq-9` (navy 100 … 900)
 | teal | `#eefdfc`<br>`oklch(98.3% 0.016 192.1)` | `#d1f9f6`<br>`oklch(95.3% 0.041 190.9)` | `#a2f1eb`<br>`oklch(90.5% 0.078 189.8)` | `#5ddcd4`<br>`oklch(82.2% 0.113 189.5)` | `#009c97`<br>`oklch(62.5% 0.108 190.8)` | `#007d78`<br>`oklch(53.2% 0.092 189.9)` | `#006965`<br>`oklch(47.0% 0.081 190.2)` | `#005653`<br>`oklch(40.9% 0.070 190.7)` | `#004441`<br>`oklch(34.9% 0.060 189.8)` | `#002524`<br>`oklch(23.9% 0.041 192.1)` |
 | magenta | `#fff9fc`<br>`oklch(98.8% 0.007 345.3)` | `#ffedf7`<br>`oklch(96.3% 0.023 342.9)` | `#ffd7ec`<br>`oklch(91.9% 0.052 345.2)` | `#ffb2dd`<br>`oklch(84.9% 0.104 345.0)` | `#dc5dab`<br>`oklch(66.2% 0.180 345.3)` | `#bb3e8e`<br>`oklch(56.6% 0.181 345.1)` | `#a1317a`<br>`oklch(50.4% 0.166 344.7)` | `#862564`<br>`oklch(43.8% 0.148 345.0)` | `#6a1b4e`<br>`oklch(37.0% 0.125 345.3)` | `#43042f`<br>`oklch(26.0% 0.103 345.0)` |
 
-Canvas `#f8f6f5` `oklch(97.4% 0.003 48.7)`. Pairing: 5 steps worst 4.62 (canvas/slate-500), 4 steps worst 3.13 (canvas/navy-400).
+Canvas (no theme) `#f8f6f5`. Pairing across every ramp, every theme accent, canvas and sidebar: 5 steps worst 4.62 (canvas/slate-500), 4 steps worst 3.12 (canvas/brand(blue)-400).
+
+### Themes
+
+| theme | 50 | 100 | 200 | 300 | 400 | 500 | 600 | 700 | 800 | 900 | canvas | sidebar |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| grey | `#f7fbff` | `#e9f3ff` | `#d0e4ff` | `#a4cbff` | `#468de4` | `#2770c4` | `#1c5eab` | `#134d8e` | `#0c3b71` | `#002047` | `#f5f7fa` | `#fafbfe` |
+| blue | `#f6fbff` | `#e9f3ff` | `#cce5ff` | `#9dcdff` | `#3690e2` | `#0b72c2` | `#0061a8` | `#004e8a` | `#003d6d` | `#002240` | `#edf9ff` | `#f7fcff` |
+| green | `#f1fdf3` | `#dbfade` | `#b7efbe` | `#88db94` | `#2ca04a` | `#008131` | `#006e29` | `#005920` | `#004517` | `#002809` | `#eefdd8` | `#f5ffe5` |
+| orange | `#fff9f5` | `#ffeee6` | `#ffdac7` | `#ffb991` | `#df6a09` | `#b45300` | `#9a4600` | `#7f3800` | `#642b00` | `#3b1600` | `#fff5ee` | `#fffbf7` |
+
+| theme | white on primary | link on white | active nav | sidebar muted text | muted text on canvas | ring on white |
+|---|---|---|---|---|---|---|
+| grey | 6.48 | 6.48 | 9.96 | 6.27 | 6.04 | 3.39 |
+| blue | 6.41 | 6.41 | 9.92 | 6.28 | 6.05 | 3.36 |
+| green | 6.44 | 6.44 | 10.06 | 6.28 | 6.08 | 3.37 |
+| orange | 6.46 | 6.46 | 9.87 | 6.30 | 6.04 | 3.39 |
 
 ### Status scale
 
@@ -111,9 +173,9 @@ Canvas `#f8f6f5` `oklch(97.4% 0.003 48.7)`. Pairing: 5 steps worst 4.62 (canvas/
 
 ### Categorical
 
-data-1 `#4690d7` (3.37 : 1 on white) · data-2 `#c37c00` (3.39 : 1 on white) · data-3 `#009c97` (3.39 : 1 on white) · data-4 `#dc5dab` (3.39 : 1 on white) · data-5 `#0095c9` (3.42 : 1 on white) · data-6 `#00a05b` (3.40 : 1 on white) · data-7 `#a274e8` (3.39 : 1 on white) · data-8 `#fe4741` (3.39 : 1 on white)
+data-1 `#468de4` (3.39 : 1 on white) · data-2 `#c37c00` (3.39 : 1 on white) · data-3 `#009c97` (3.39 : 1 on white) · data-4 `#dc5dab` (3.39 : 1 on white) · data-5 `#0095c9` (3.42 : 1 on white) · data-6 `#00a05b` (3.40 : 1 on white) · data-7 `#a274e8` (3.39 : 1 on white) · data-8 `#fe4741` (3.39 : 1 on white) — data-1 follows the theme accent (grey shown).
 
-### Roles
+### Roles (grey theme; the others re-map primary, ring, link, canvas and sidebar*)
 
 | role | hex |
 |---|---|
@@ -123,7 +185,7 @@ data-1 `#4690d7` (3.37 : 1 on white) · data-2 `#c37c00` (3.39 : 1 on white) · 
 | card-foreground | `#23211e` |
 | popover | `#ffffff` |
 | popover-foreground | `#23211e` |
-| primary | `#1b609e` |
+| primary | `#1c5eab` |
 | primary-foreground | `#ffffff` |
 | secondary | `#f3f1ef` |
 | secondary-foreground | `#23211e` |
@@ -135,12 +197,16 @@ data-1 `#4690d7` (3.37 : 1 on white) · data-2 `#c37c00` (3.39 : 1 on white) · 
 | destructive-foreground | `#ffffff` |
 | border | `#e5e2de` |
 | input | `#cdc8c2` |
-| ring | `#0095c9` |
-| link | `#00658a` |
-| sidebar | `#0a3c68` |
-| sidebar-foreground | `#fafaf9` |
-| sidebar-muted | `#cce4ff` |
-| sidebar-accent | `#124f84` |
+| ring | `#468de4` |
+| link | `#1c5eab` |
+| canvas | `#f5f7fa` |
+| sidebar | `#fafbfe` |
+| sidebar-foreground | `#3e3a37` |
+| sidebar-muted | `#635d58` |
+| sidebar-accent | `#e9f3ff` |
+| sidebar-accent-foreground | `#0c3b71` |
+| sidebar-hover | `#f3f1ef` |
+| sidebar-border | `#e5e2de` |
 
 ## Type
 
@@ -148,8 +214,11 @@ data-1 `#4690d7` (3.37 : 1 on white) · data-2 `#c37c00` (3.39 : 1 on white) · 
   display face — only for page titles, the logo and KPI figures
   (`font-display-bold`). Both cover Cyrillic (incl. ў қ ғ ҳ) and the Uzbek
   modifier letter ʻ (U+02BB) and ’ (U+2019).
-- **Scale** (px / line height): caption 12/16 · small 13/18 · body 14/20 ·
-  lead 16/24 · title 20/28 · headline 28/34 · display 36/40. Classes
+- **Scale** (px / line height, Normal): caption 12/18 · small 13/20 ·
+  table 14/21 · body 15/22.5 (forms too) · lead 16/24 · title 18/26 (section
+  titles) · headline 28/36 (page titles) · display 34/40 (KPI figures).
+  Large text moves each one step up (caption 13 … display 36). 12 px is the
+  minimum anywhere. Classes
   `text-caption … text-display`; Tailwind's default sizes and `text-[Npx]`
   are forbidden (the scale test fails).
 - **Weights.** 400 regular, 500 medium (labels, table headers, buttons),
@@ -163,9 +232,28 @@ data-1 `#4690d7` (3.37 : 1 on white) · data-2 `#c37c00` (3.39 : 1 on white) · 
 - **4 px grid.** Spacing steps 1, 2, 3, 4, 5, 6, 8, 10, 12, 14, 16, 20
   (Tailwind units, × 4 px); `0.5` (2 px) only for hairlines and badge
   padding. Half steps (`1.5`, `2.5`) are forbidden.
-- **Radii** sm 4 · md 6 · lg 8 · xl 12 px. Cards xl, controls md, badges md.
-- **Shadows** — two only: `shadow-card` (hairline lift at rest) and
-  `shadow-pop` (menus, side panels, dialogs).
+- **Radii** sm 4 · md 6 · lg 8 · control 10 · xl 12 · 2xl 16 px. Cards xl
+  (white, hairline border, very soft shadow, 24 px padding), inputs and
+  buttons `rounded-control` at 40 px tall, badges md.
+- **Page padding** 16 / 24 / 32 px (mobile / md / lg).
+- **Reference numbers** (SUB-, RCP-, DEMO-SUB-…, later CLM-): never a
+  fixed width. Lists put the ref in a grid column sized to the longest ref
+  (`max-content`, rows as `subgrid`), aligned to the first line of the name
+  (`items-baseline`), on one line, tabular figures, no extra letter-spacing.
+  Text never overlaps; truncation (ellipsis + tooltip) is the last resort.
+  Excel columns fit the longest value (`fitWidth`). `e2e/layout-overlap.spec.ts`
+  fails on overlapping or silently cut-off text in EN / RU / UZ, both text
+  sizes, with and without Demo mode.
+- **Tables.** No header bar: a quiet small-text header over hairline rows,
+  a subtle slate-50 hover; regular rows of 48 px on every table (no density
+  switch). A table that cannot fit scrolls inside its own
+  box with the first column frozen; the page itself never scrolls sideways
+  and row actions stay visible (sticky right column on the Premium tab).
+- **Page header.** Quiet breadcrumbs, the title (headline), a subtitle, the
+  actions on the right.
+- **Shadows** — `shadow-card` (hairline lift at rest), `shadow-pop` (menus,
+  side panels, dialogs), and the search bar's pair: `shadow-search` at rest,
+  `shadow-search-active` on hover, focus and with its suggestions.
 - **Scrim** behind overlays: `bg-scrim/50`.
 
 ## Motion
@@ -174,8 +262,74 @@ IBM Carbon tokens: durations `fast-01` 70 ms, `fast-02` 110 ms, `moderate-01`
 150 ms (productive: hover, press, small reveals), `moderate-02` 240 ms and
 `slow-01` 400 ms (expressive: panels, page-level change). Easings
 `productive-*` and `expressive-*` (`--ease-*`). The default transition is
-110 ms productive-standard. Under `prefers-reduced-motion: reduce`, all
+150 ms productive-standard. Under `prefers-reduced-motion: reduce`, all
 animation and transition durations collapse to ~0.
+
+## Search
+
+One search bar, in the top bar — search and filtering in one place (no
+separate register search box, status pills or checkboxes). Google-like: a
+white pill (`rounded-full`, 44 px, hairline border at rest that gives way to
+`shadow-search-active` on hover / focus), search icon left, × to clear,
+`Ctrl K` hint; suggestions open in a panel that continues the pill (same
+width, rounded bottom) and floats over the page, so nothing moves.
+
+**Language** (`src/features/search/query.ts`, one pure parser; unit tests in
+`query.test.ts`): `,` AND · `;` OR between groups · `|` several values ·
+`-` exclude · `"…"` exact phrase · `field:value` with `status mga broker lob
+country ccy uw type ref` · `premium share si` with `> < >= <= ..` (k / m / bn)
+· `received inception expiry bound` dates (`2026-10`, `01.10.2026`, `a..b`,
+`30d`) · keywords `overdue expired noresponse mine today thisweek thismonth`.
+Field names, keywords and status words in EN, RU and UZ; case, diacritics
+and apostrophes ignored (`normalize.ts` = `public.search_norm()`). A word that
+is exactly a status, MGA, line, country or currency filters by it (weak
+synonyms like «new» only when alone in their part); anything not understood
+is searched as text and its chip says so — never an error.
+
+**In the database.** `postgrest.ts` turns the query into one PostgREST logic
+tree on `submissions_v`; free text matches `submissions_v.search_text`. The
+register and the Excel export run the same query.
+
+**Behaviour.** Chips under the page header read the query back (one per part,
+«OR» between groups, × removes that part from the text) with the result count.
+On the register the table filters live (200 ms); elsewhere Enter opens the
+register with the query; a direct hit (ref no. / insured) opens the record.
+`?q=` holds the query (bookmarks, Back / Forward; old `?status=…` links are
+rewritten once). Dashboard and counterparty links fill the bar with the
+equivalent query (`overdue`, `status:offered|no_response`, `mga:"…"`).
+Suggestions: recent searches (per user, with ×), `field:value` matches, direct
+hits, pages; ↑ ↓ Enter Tab Esc; a syntax tip with a help popover.
+
+**Filter builder.** The funnel icon at the right of the pill opens plain
+controls for the page's fields (chips for short lists, searchable checklists
+for long ones, min / max, from / to dates, switches). Apply writes the
+equivalent query text into the bar (shown live as «Search: …» while you pick),
+and the builder always opens on what the bar says — so people filter without
+the syntax and learn it by seeing it. It edits one AND group; what it has no
+control for (exclusions, OR, `ref:`, relative or open-ended ranges) is kept
+exactly as typed. Model: `search/builder.ts` (unit-tested round trip).
+
+**The only search / filter control.** The bar searches the list of the page
+it is on — placeholder, words, suggestions, chips and builder follow the page.
+No page has a search box, filter pills or filter checkboxes of its own.
+
+| page | searches | words (EN / RU / UZ) | where |
+|---|---|---|---|
+| Submissions | the register | status, mga, broker, lob, country, ccy, uw, type, ref, premium, share, si, dates; overdue, expired, mine | database |
+| Counterparties | the list | type (mga / broker / cedent), country; `inactive` shows inactive ones too | browser (reference-sized) |
+| Agenda | follow-ups (both tabs) | assignee (`all`, a name, `mine`), type, due; overdue; today / thisweek = due | browser; `assignee:` loads others' (admin, management) |
+| Admin › Users | users | role; active / inactive | browser |
+| Admin › Reference data | currencies, countries, lines | text; active / inactive | browser |
+| Admin › FX rates | all stored rates | ccy, date, source | database |
+| anything else | submissions | — | Enter opens the register |
+
+The admin tab is in the URL (`?tab=fx`), so the bar knows the list; switching
+tab starts a fresh search.
+
+**One engine, a scope per page.** `query.ts` is the parser; `scopes.ts` says
+what each page's search knows (fields with EN/RU/UZ aliases, values, keywords);
+`pages.ts` says which scope runs where, where its rows are filtered, the
+builder's controls and the help examples.
 
 ## Interaction rules
 
@@ -197,7 +351,7 @@ All under `src/components/`; screens compose them, never re-style them.
 
 | component | file | rules |
 |---|---|---|
-| **Table v2** | `data/DataTable.tsx` | Density 40 / 48 / 56 px (default 48), remembered per user (`usePref`, localStorage keyed by user id). Sticky header and frozen first column inside a scroll box. Column show / hide (first column always shown), remembered. Row actions appear on hover / focus in a pinned right cell — reserved space, no shift. Selecting rows shows a floating bulk bar (fixed, never pushes the page). Search matches are wrapped in `<mark>` (`highlight()`). Skeleton rows at the final row height while loading. Empty → `EmptyState`. |
+| **Table v2** | `data/DataTable.tsx` | Regular rows of 48 px everywhere (no density switch). Sticky header and frozen first column inside a scroll box. Column show / hide (first column always shown), remembered. Row actions appear on hover / focus in a pinned right cell — reserved space, no shift. Selecting rows shows a floating bulk bar (fixed, never pushes the page). Search matches are wrapped in `<mark>` (`highlight()`). Skeleton rows at the final row height while loading. Empty → `EmptyState`. |
 | **Quick view** | `features/*/…QuickView` | A right side panel with the essentials and the next actions (open, edit, open in register). Used by the register, the agenda and the counterparties list. |
 | **Side panel** | `ui/dialog.tsx` | Every task dialog opens docked right (max 512 px, full height, 240 ms expressive slide); the footer sticks to the bottom edge. `variant="center"` only for short confirmations. |
 | **KPI card** | `KpiCard.tsx` | Label, figure in the display face, change vs the previous comparable period (green = good direction, red = bad, grey = flat), 12-month sparkline, click-through to the rows behind it. `alert` puts the figure in danger ink. |
@@ -287,5 +441,6 @@ jokes, no codes.
 | type, spacing, colour scale | `npm test` (`scale.test.ts`) | no off-scale sizes, half steps, hex colours or stray weights |
 | contrast | `npm test` (`contrast.test.ts`) | palette pairing rule, every status/ageing pair, and every colour class pair in `src` ≥ 4.5 : 1 text / 3 : 1 icons |
 | layout stability | `npx playwright test layout-stability` | 7 screens × EN/RU/UZ: no landmark moves on load, hover, focus or menu open |
-| components | `npx playwright test components` | density / columns remembered, sticky header, frozen column, highlight, bulk bar, quick views, ⌘K, blur validation, sticky footer, side panels |
+| search | `npm test` (`query.test.ts`), `npx playwright test search` | the parser on every example in EN/RU/UZ and messy input; typing, chips, OR, URL / Back, Ctrl K, keyboard suggestions, export = results, the bar in 4 themes × 2 text sizes |
+| components | `npx playwright test components` | 48 px rows, columns remembered, sticky header, frozen column, highlight, bulk bar, quick views, ⌘K, blur validation, sticky footer, side panels |
 | screenshots | `SHOTS=<dir> npx playwright test screenshots` | before/after captures, offline mock data |

@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { KeyRound, Loader2, Play, Plus, Save, Trash2, UserPlus } from 'lucide-react'
+import { Database, KeyRound, Loader2, Play, Plus, Save, ShieldCheck, Trash2, UserPlus } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/PageHeader'
 import { Button } from '@/components/ui/button'
@@ -14,6 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Field } from '@/components/Field'
 import { SavedCheck, useFlash } from '@/components/SavedCheck'
 import { useAuth } from '@/auth/AuthProvider'
+import { DOCUMENTS_BUCKET } from '@/lib/documents'
 import { supabase } from '@/lib/supabase'
 import { ALL_ROLES, type AppRole } from '@/lib/roles'
 import { formatDate, formatDateTime, isoDate } from '@/lib/format'
@@ -21,25 +23,38 @@ import { cleanDecimal, isDecimal } from '@/lib/decimal'
 import { errorMessage } from '@/lib/errors'
 import type { Tables } from '@/lib/database.types'
 import { useCurrencies } from '@/hooks/useReference'
+import { norm } from '@/features/search/normalize'
+import type { ParsedQuery } from '@/features/search/query'
+import { matchesQuery, type ClientSpec } from '@/features/search/client'
+import { FX_PAGE, REFERENCE_PAGE, USERS_PAGE } from '@/features/search/pages'
+import { useListSearch } from '@/features/search/useSearch'
+import { SearchChips } from '@/features/search/SearchChips'
+
+const TABS = ['users', 'reference', 'fx', 'settings', 'jobs', 'demo'] as const
 
 export function AdminPage() {
   const { t } = useTranslation()
+  // the tab lives in the URL, so the search bar knows which list it filters (and links keep the tab)
+  const [params, setParams] = useSearchParams()
+  const tab = TABS.find((x) => x === params.get('tab')) ?? 'users'
   return (
     <>
       <PageHeader title={t('pages.admin.title')} subtitle={t('pages.admin.subtitle')} />
-      <Tabs defaultValue="users">
+      <Tabs value={tab} onValueChange={(v) => setParams({ tab: v })}>
         <TabsList className="flex-wrap">
           <TabsTrigger value="users">{t('admin.tabs.users')}</TabsTrigger>
           <TabsTrigger value="reference">{t('admin.tabs.reference')}</TabsTrigger>
           <TabsTrigger value="fx">{t('admin.tabs.fx')}</TabsTrigger>
           <TabsTrigger value="settings">{t('admin.tabs.settings')}</TabsTrigger>
           <TabsTrigger value="jobs">{t('admin.tabs.jobs')}</TabsTrigger>
+          <TabsTrigger value="demo">{t('admin.tabs.demo')}</TabsTrigger>
         </TabsList>
         <TabsContent value="users"><UsersTab /></TabsContent>
         <TabsContent value="reference"><ReferenceTab /></TabsContent>
         <TabsContent value="fx"><FxTab /></TabsContent>
         <TabsContent value="settings"><SettingsTab /></TabsContent>
         <TabsContent value="jobs"><JobsTab /></TabsContent>
+        <TabsContent value="demo"><DemoTab /></TabsContent>
       </Tabs>
     </>
   )
@@ -81,6 +96,16 @@ function UsersTab() {
       return data
     },
   })
+  const { parsed, setQ } = useListSearch(USERS_PAGE)
+  const spec: ClientSpec<Tables<'profiles'>> = useMemo(
+    () => ({
+      text: (u) => norm([u.full_name, u.email].filter(Boolean).join(' ')),
+      list: { role: (u) => u.role },
+      flags: { active: (u) => u.active, inactive: (u) => !u.active },
+    }),
+    [],
+  )
+  const shown = (users.data ?? []).filter((u) => matchesQuery(parsed, u, spec))
   const [edits, setEdits] = useState<Record<string, { full_name: string; role: AppRole | ''; active: boolean }>>({})
   const [creating, setCreating] = useState(false)
   const [pwFor, setPwFor] = useState<Tables<'profiles'> | null>(null)
@@ -105,8 +130,10 @@ function UsersTab() {
   }
 
   return (
+    <>
+    {parsed && <SearchChips query={parsed} scope={USERS_PAGE.scope} onChange={setQ} count={t('ui.rows', { count: shown.length })} />}
     <Card className="gap-0 py-0">
-      <CardHeader className="flex flex-row items-center justify-between py-4">
+      <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 py-4">
         <div>
           <CardTitle>{t('admin.tabs.users')}</CardTitle>
           <p className="mt-1 text-caption text-muted-foreground">{t('admin.users.help')}</p>
@@ -128,7 +155,7 @@ function UsersTab() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {users.data?.map((u) => {
+          {shown.map((u) => {
             const e = edits[u.id]
             if (!e) return null
             const changed = e.full_name !== (u.full_name ?? '') || e.role !== (u.role ?? '') || e.active !== u.active
@@ -165,6 +192,7 @@ function UsersTab() {
       <CreateUserDialog open={creating} onClose={() => setCreating(false)} />
       <SetPasswordDialog user={pwFor} onClose={() => setPwFor(null)} />
     </Card>
+    </>
   )
 }
 
@@ -293,7 +321,9 @@ function RefTable({
   cols,
   title,
   orderBy,
+  query,
 }: {
+  query: ParsedQuery | null
   table: 'currencies' | 'countries' | 'lines_of_business'
   pk: 'code' | 'id'
   cols: RefCol[]
@@ -312,6 +342,14 @@ function RefTable({
   })
   const [edits, setEdits] = useState<Record<string, Record<string, string | boolean>>>({})
   const [draft, setDraft] = useState<Record<string, string>>({})
+  const spec: ClientSpec<Record<string, string | boolean | number | null>> = useMemo(
+    () => ({
+      text: (r) => norm(cols.map((c) => r[c.key]).filter((v) => v !== null && v !== undefined).join(' ')),
+      flags: { active: (r) => Boolean(r.active), inactive: (r) => !r.active },
+    }),
+    [cols],
+  )
+  const shown = (rows.data ?? []).filter((r) => matchesQuery(query, r, spec))
 
   const refresh = () => Promise.all([qc.invalidateQueries({ queryKey: ['admin', table] }), qc.invalidateQueries({ queryKey: ['ref'] })])
 
@@ -347,7 +385,7 @@ function RefTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {rows.data?.map((r) => {
+            {shown.map((r) => {
               const id = String(r[pk])
               const e = edits[id] ?? {}
               const val = (k: string) => (k in e ? e[k] : r[k]) as string | boolean | null
@@ -404,9 +442,12 @@ function RefTable({
 
 function ReferenceTab() {
   const { t } = useTranslation()
+  const { parsed, setQ } = useListSearch(REFERENCE_PAGE)
   return (
     <div className="grid gap-4">
+      {parsed && parsed.groups.length > 0 && <SearchChips query={parsed} scope={REFERENCE_PAGE.scope} onChange={setQ} count={null} />}
       <RefTable
+        query={parsed}
         table="lines_of_business"
         pk="id"
         orderBy="sort_order"
@@ -420,6 +461,7 @@ function ReferenceTab() {
       />
       <div className="grid gap-4 xl:grid-cols-2">
         <RefTable
+          query={parsed}
           table="currencies"
           pk="code"
           orderBy="sort_order"
@@ -430,6 +472,7 @@ function ReferenceTab() {
           ]}
         />
         <RefTable
+          query={parsed}
           table="countries"
           pk="code"
           orderBy="name"
@@ -457,12 +500,14 @@ function FxTab() {
   const [ccy, setCcy] = useState('')
   const [date, setDate] = useState(isoDate())
   const [rate, setRate] = useState('')
-  const [filter, setFilter] = useState('')
+  // the search bar filters the rates in the database (all of them, not only the 300 latest shown)
+  const { parsed, filter, setQ } = useListSearch(FX_PAGE)
   const rates = useQuery({
     queryKey: ['admin', 'fx', filter],
+    enabled: parsed !== null,
     queryFn: async () => {
       let q = supabase.from('fx_rates').select('*').order('rate_date', { ascending: false }).order('currency').limit(300)
-      if (filter) q = q.eq('currency', filter)
+      if (filter) q = q.or(filter)
       const { data, error } = await q
       if (error) throw error
       return data
@@ -490,6 +535,7 @@ function FxTab() {
 
   return (
     <div className="grid gap-4">
+      {parsed && parsed.groups.length > 0 && <SearchChips query={parsed} scope={FX_PAGE.scope} onChange={setQ} count={t('ui.rows', { count: rates.data?.length ?? 0 })} />}
       <Card>
         <CardHeader>
           <CardTitle>{t('admin.fx.add')}</CardTitle>
@@ -517,14 +563,8 @@ function FxTab() {
         </CardContent>
       </Card>
       <Card className="gap-0 py-0">
-        <CardHeader className="flex flex-row items-center justify-between py-4">
+        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 py-4">
           <CardTitle>{t('admin.tabs.fx')}</CardTitle>
-          <div className="w-36">
-            <NativeSelect value={filter} onChange={(e) => setFilter(e.target.value)}>
-              <option value="">{t('sub.allCurrencies')}</option>
-              {currencies.data?.filter((c) => c.code !== 'USD').map((c) => <option key={c.code} value={c.code}>{c.code}</option>)}
-            </NativeSelect>
-          </div>
         </CardHeader>
         <div className="max-h-[480px] overflow-y-auto">
           <Table>
@@ -562,7 +602,31 @@ function FxTab() {
 // ---------------------------------------------------------------------------
 // Settings
 // ---------------------------------------------------------------------------
-const SETTING_KEYS = ['follow_up_first_days', 'follow_up_repeat_days', 'auto_no_response_enabled', 'auto_no_response_days'] as const
+/**
+ * Settings, grouped by module. A number setting has a range and a label /
+ * hint under admin.settings.<key> and <key>Hint; a switch (bool) can turn
+ * the numbers after it on and off (`enables`).
+ */
+type SettingDef = { key: string; kind: 'days' | 'number' | 'bool'; min?: number; max?: number; enables?: string[] }
+export const SETTING_GROUPS: { id: string; settings: SettingDef[] }[] = [
+  {
+    id: 'followUps',
+    settings: [
+      { key: 'follow_up_first_days', kind: 'days', min: 1, max: 365 },
+      { key: 'follow_up_repeat_days', kind: 'days', min: 1, max: 365 },
+      { key: 'auto_no_response_enabled', kind: 'bool', enables: ['auto_no_response_days'] },
+      { key: 'auto_no_response_days', kind: 'days', min: 1, max: 365 },
+    ],
+  },
+  {
+    id: 'premium',
+    settings: [
+      { key: 'premium_default_terms_days', kind: 'days', min: 0, max: 365 },
+      { key: 'premium_grace_days', kind: 'days', min: 0, max: 365 },
+    ],
+  },
+]
+const ALL_SETTINGS = SETTING_GROUPS.flatMap((g) => g.settings)
 
 function SettingsTab() {
   const { t } = useTranslation()
@@ -580,19 +644,22 @@ function SettingsTab() {
   const [savedShown, flashSaved] = useFlash()
 
   useEffect(() => {
-    if (settings.data) setVals(Object.fromEntries(settings.data.map((s) => [s.key, s.value as string | boolean])))
+    if (settings.data) setVals(Object.fromEntries(settings.data.map((s) => [s.key, typeof s.value === 'boolean' ? s.value : String(s.value)])))
   }, [settings.data])
 
+  const disabledBy = (key: string) => ALL_SETTINGS.find((s) => s.enables?.includes(key) && !vals[s.key])
+
   async function save() {
-    for (const k of ['follow_up_first_days', 'follow_up_repeat_days', 'auto_no_response_days']) {
-      const n = Number(vals[k])
-      if (!Number.isInteger(n) || n < 1 || n > 365) {
-        toast.error(t('admin.settings.invalidDays'))
+    for (const d of ALL_SETTINGS) {
+      if (d.kind === 'bool' || disabledBy(d.key)) continue
+      const n = Number(vals[d.key])
+      if (!Number.isFinite(n) || (d.kind === 'days' && !Number.isInteger(n)) || n < (d.min ?? 0) || n > (d.max ?? Infinity)) {
+        toast.error(t('admin.settings.invalid', { label: t(`admin.settings.${d.key}`), min: d.min ?? 0, max: d.max ?? '∞' }))
         return
       }
     }
     setBusy(true)
-    const rows = SETTING_KEYS.map((k) => ({ key: k, value: k === 'auto_no_response_enabled' ? Boolean(vals[k]) : Number(vals[k]) }))
+    const rows = ALL_SETTINGS.filter((d) => vals[d.key] !== undefined).map((d) => ({ key: d.key, value: d.kind === 'bool' ? Boolean(vals[d.key]) : Number(vals[d.key]) }))
     const { error } = await supabase.from('settings').upsert(rows)
     setBusy(false)
     if (error) return toast.error(errorMessage(error))
@@ -601,31 +668,43 @@ function SettingsTab() {
   }
 
   return (
-    <Card className="max-w-2xl">
-      <CardHeader><CardTitle>{t('admin.tabs.settings')}</CardTitle></CardHeader>
-      <CardContent className="grid gap-4">
-        <Field label={t('admin.settings.firstDays')} hint={t('admin.settings.firstDaysHint')}>
-          <Input type="number" min={1} max={365} className="w-32" value={String(vals.follow_up_first_days ?? '')} onChange={(e) => setVals({ ...vals, follow_up_first_days: e.target.value })} />
-        </Field>
-        <Field label={t('admin.settings.repeatDays')} hint={t('admin.settings.repeatDaysHint')}>
-          <Input type="number" min={1} max={365} className="w-32" value={String(vals.follow_up_repeat_days ?? '')} onChange={(e) => setVals({ ...vals, follow_up_repeat_days: e.target.value })} />
-        </Field>
-        <label className="flex items-center gap-2 text-body">
-          <input type="checkbox" checked={Boolean(vals.auto_no_response_enabled)} onChange={(e) => setVals({ ...vals, auto_no_response_enabled: e.target.checked })} />
-          {t('admin.settings.autoEnabled')}
-        </label>
-        <Field label={t('admin.settings.autoDays')} hint={t('admin.settings.autoDaysHint')}>
-          <Input type="number" min={1} max={365} className="w-32" value={String(vals.auto_no_response_days ?? '')} onChange={(e) => setVals({ ...vals, auto_no_response_days: e.target.value })} disabled={!vals.auto_no_response_enabled} />
-        </Field>
-        <div className="flex items-center gap-3">
-          <Button onClick={() => void save()} disabled={busy}>
-            {busy ? <Loader2 className="animate-spin" /> : <Save />}
-            {t('ui.form.saveSettings')}
-          </Button>
-          <SavedCheck show={savedShown} />
-        </div>
-      </CardContent>
-    </Card>
+    <div className="grid max-w-2xl gap-4">
+      {SETTING_GROUPS.map((g) => (
+        <Card key={g.id} data-settings-group={g.id}>
+          <CardHeader><CardTitle>{t(`admin.settings.groups.${g.id}`)}</CardTitle></CardHeader>
+          <CardContent className="grid gap-4">
+            {g.settings.map((d) =>
+              d.kind === 'bool' ? (
+                <label key={d.key} className="flex items-center gap-2 text-body">
+                  <input type="checkbox" checked={Boolean(vals[d.key])} onChange={(e) => setVals({ ...vals, [d.key]: e.target.checked })} />
+                  {t(`admin.settings.${d.key}`)}
+                </label>
+              ) : (
+                <Field key={d.key} label={t(`admin.settings.${d.key}`)} hint={t(`admin.settings.${d.key}Hint`)} htmlFor={`setting-${d.key}`}>
+                  <Input
+                    id={`setting-${d.key}`}
+                    type="number"
+                    min={d.min}
+                    max={d.max}
+                    className="w-40 text-right tabular-nums"
+                    value={String(vals[d.key] ?? '')}
+                    onChange={(e) => setVals({ ...vals, [d.key]: e.target.value })}
+                    disabled={Boolean(disabledBy(d.key))}
+                  />
+                </Field>
+              ),
+            )}
+          </CardContent>
+        </Card>
+      ))}
+      <div className="flex items-center gap-3">
+        <Button onClick={() => void save()} disabled={busy}>
+          {busy ? <Loader2 className="animate-spin" /> : <Save />}
+          {t('ui.form.saveSettings')}
+        </Button>
+        <SavedCheck show={savedShown} />
+      </div>
+    </div>
   )
 }
 
@@ -658,7 +737,7 @@ function JobsTab() {
 
   return (
     <Card className="gap-0 py-0">
-      <CardHeader className="flex flex-row items-center justify-between py-4">
+      <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 py-4">
         <div>
           <CardTitle>{t('admin.jobs.title')}</CardTitle>
           <p className="mt-1 text-caption text-muted-foreground">{t('admin.jobs.help')}</p>
@@ -698,6 +777,126 @@ function JobsTab() {
           )}
         </TableBody>
       </Table>
+    </Card>
+  )
+}
+
+const DEMO_KINDS = ['counterparties', 'submissions', 'installments', 'receipts', 'follow_ups'] as const
+
+/**
+ * Demo data: load it, check that it never links to real data, delete it all.
+ * The database does the work (seed_demo_data / demo_link_violations /
+ * delete_demo_data); deleting also removes the demo documents' files.
+ */
+function DemoTab() {
+  const { t } = useTranslation()
+  const qc = useQueryClient()
+  const [busy, setBusy] = useState<'seed' | 'check' | 'delete' | null>(null)
+  const [confirm, setConfirm] = useState(false)
+  const [check, setCheck] = useState<{ kind: string; detail: string }[] | null>(null)
+  const counts = useQuery({
+    queryKey: ['admin', 'demo-counts'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('demo_data_counts')
+      if (error) throw error
+      return (data ?? {}) as Record<string, number>
+    },
+  })
+  const loaded = (counts.data?.submissions ?? 0) > 0 || (counts.data?.counterparties ?? 0) > 0
+
+  async function seed() {
+    setBusy('seed')
+    const { error } = await supabase.rpc('seed_demo_data')
+    setBusy(null)
+    if (error) return toast.error(errorMessage(error))
+    toast.success(t('admin.demo.loaded'))
+    await qc.invalidateQueries({ queryKey: ['admin', 'demo-counts'] })
+  }
+
+  async function runCheck() {
+    setBusy('check')
+    const { data, error } = await supabase.rpc('demo_link_violations')
+    setBusy(null)
+    if (error) return toast.error(errorMessage(error))
+    setCheck((data ?? []) as { kind: string; detail: string }[])
+  }
+
+  async function remove() {
+    setBusy('delete')
+    const { data, error } = await supabase.rpc('delete_demo_data')
+    if (error) {
+      setBusy(null)
+      return toast.error(errorMessage(error))
+    }
+    const paths = ((data ?? {}) as { document_paths?: string[] }).document_paths ?? []
+    if (paths.length) {
+      const { error: storageError } = await supabase.storage.from(DOCUMENTS_BUCKET).remove(paths)
+      if (storageError) toast.error(errorMessage(storageError))
+    }
+    setBusy(null)
+    setConfirm(false)
+    setCheck(null)
+    toast.success(t('admin.demo.deleted'))
+    await qc.invalidateQueries()
+  }
+
+  return (
+    <Card className="gap-0 py-0">
+      <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 py-4">
+        <div>
+          <CardTitle>{t('admin.demo.title')}</CardTitle>
+          <p className="mt-1 max-w-3xl text-caption text-muted-foreground">{t('admin.demo.help')}</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => void runCheck()} disabled={busy !== null}>
+            {busy === 'check' ? <Loader2 className="animate-spin" /> : <ShieldCheck />}
+            {t('admin.demo.check')}
+          </Button>
+          <Button variant="outline" onClick={() => void seed()} disabled={busy !== null || loaded || counts.isLoading}>
+            {busy === 'seed' ? <Loader2 className="animate-spin" /> : <Database />}
+            {t('admin.demo.load')}
+          </Button>
+          <Button variant="destructive" onClick={() => setConfirm(true)} disabled={busy !== null || !loaded}>
+            <Trash2 />
+            {t('admin.demo.delete')}
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="grid gap-4 border-t py-4">
+        <dl className="grid grid-cols-2 gap-4 sm:grid-cols-5" data-demo-counts>
+          {DEMO_KINDS.map((k) => (
+            <div key={k}>
+              <dt className="text-caption text-muted-foreground">{t(`admin.demo.kinds.${k}`)}</dt>
+              <dd className="text-title font-semibold tabular-nums">{counts.data?.[k] ?? 0}</dd>
+            </div>
+          ))}
+        </dl>
+        {check !== null && (
+          <div role="status" className={check.length ? 'text-danger-700' : 'text-success-700'}>
+            {check.length === 0 ? t('admin.demo.checkOk') : t('admin.demo.checkBad', { count: check.length })}
+            {check.length > 0 && (
+              <ul className="mt-2 list-disc pl-6 text-caption">
+                {check.slice(0, 20).map((c, i) => <li key={i}>{c.kind}: {c.detail}</li>)}
+              </ul>
+            )}
+          </div>
+        )}
+      </CardContent>
+      <Dialog open={confirm} onOpenChange={(o) => !o && setConfirm(false)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('admin.demo.confirmTitle')}</DialogTitle>
+            <DialogDescription>{t('admin.demo.confirmText', { count: counts.data?.submissions ?? 0 })}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirm(false)}>{t('common.cancel')}</Button>
+            <Button variant="destructive" onClick={() => void remove()} disabled={busy !== null}>
+              {busy === 'delete' ? <Loader2 className="animate-spin" /> : <Trash2 />}
+              {t('admin.demo.deleteConfirm')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   )
 }

@@ -6,11 +6,15 @@ import { extendTailwindMerge } from 'tailwind-merge'
 const twMerge = extendTailwindMerge({
   extend: {
     classGroups: {
-      'font-size': [{ text: ['caption', 'small', 'body', 'lead', 'title', 'headline', 'display'] }],
+      'font-size': [{ text: ['caption', 'small', 'table', 'body', 'lead', 'title', 'headline', 'display'] }],
     },
   },
 })
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
+}
+
+export function isMac() {
+  return typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
 }

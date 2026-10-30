@@ -4,8 +4,9 @@
 
 /*
  * Design tokens come from src/design/palette.ts (generated into tokens.css):
- * warm neutrals, navy brand (sidebar), sky secondary (links, focus), semantic
- * ramps, the submission-status and overdue-ageing scales. See DESIGN.md.
+ * warm neutrals, the theme accent (`brand`, re-mapped per Appearance theme via
+ * :root[data-theme]), semantic ramps, the submission-status and overdue-ageing
+ * scales (the same in every theme). Text size via :root[data-text-size]. See DESIGN.md.
  */
 
 @layer base {
@@ -17,6 +18,11 @@
   }
   body {
     @apply bg-canvas font-sans text-body text-foreground antialiased;
+    /* A very soft wash of the theme accent: the frosted sidebar reads as a layer above it. */
+    background-image:
+      radial-gradient(60rem 40rem at 0% 0%, color-mix(in oklab, var(--color-brand-100) 55%, transparent), transparent 70%),
+      radial-gradient(50rem 36rem at 100% 100%, color-mix(in oklab, var(--color-brand-50) 70%, transparent), transparent 70%);
+    background-attachment: fixed;
     /* Tabular figures everywhere: money, shares and counts line up. */
     font-feature-settings: "tnum" 1, "cv11" 1;
   }
@@ -27,6 +33,27 @@
   }
   :focus:not(:focus-visible) {
     outline: none;
+  }
+}
+
+/* The light, frosted sidebar: translucent theme tint + blur, hairline edge.
+   Solid fallback where backdrop-filter is unsupported. */
+@utility glass-sidebar {
+  background-color: var(--color-sidebar);
+  border-right: 1px solid var(--color-sidebar-border);
+  @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    background-color: color-mix(in oklab, var(--color-sidebar) 72%, transparent);
+    -webkit-backdrop-filter: saturate(1.4) blur(18px);
+    backdrop-filter: saturate(1.4) blur(18px);
+  }
+}
+
+/* Switching theme: colours fade for 150 ms (never sizes — nothing moves). */
+@utility theme-fade {
+  & *,
+  & {
+    transition-property: background-color, border-color, color, fill, stroke !important;
+    transition-duration: var(--duration-moderate-01) !important;
   }
 }
 

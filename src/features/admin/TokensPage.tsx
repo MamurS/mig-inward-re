@@ -19,12 +19,16 @@ import {
   STATUS_COLORS,
   STEPS,
   TEXT_MIN,
+  THEMES,
+  THEME_NAMES,
   TYPE_SCALE,
   contrast,
   luminance,
   worstContrastAt,
   type AgingKey,
+  roleTokens,
   type RampName,
+  type ThemeName,
 } from '@/design/palette'
 
 /**
@@ -37,6 +41,7 @@ import {
 const TYPE_CLASS: Record<keyof typeof TYPE_SCALE, string> = {
   caption: 'text-caption',
   small: 'text-small',
+  table: 'text-table',
   body: 'text-body',
   lead: 'text-lead',
   title: 'text-title',
@@ -61,6 +66,70 @@ function Swatch({ hex, label, sub }: { hex: string; label: string; sub?: string 
       </div>
       <div className="truncate text-caption text-muted-foreground num" title={sub ? `${hex} · ${sub}` : hex}>{hex}</div>
       {sub && <div className="truncate text-caption text-muted-foreground num" title={sub}>{sub}</div>}
+    </div>
+  )
+}
+
+/** One theme: a miniature of the app in it, its accent ramp, and the contrast of every pairing it uses. */
+function ThemePreview({ theme }: { theme: ThemeName }) {
+  const { t } = useTranslation()
+  const c = THEMES[theme]
+  const r = roleTokens(theme)
+  const pairs: [string, string, string, number][] = [
+    ['button', r['primary-foreground'], r.primary, TEXT_MIN],
+    ['link', r.link, '#ffffff', TEXT_MIN],
+    ['nav', r['sidebar-accent-foreground'], r['sidebar-accent'], TEXT_MIN],
+    ['sidebarText', r['sidebar-muted'], r.sidebar, TEXT_MIN],
+    ['canvasText', r['muted-foreground'], r.canvas, TEXT_MIN],
+    ['ring', r.ring, '#ffffff', GRAPHIC_MIN],
+  ]
+  return (
+    <div className="grid min-w-0 gap-3" data-theme-preview={theme}>
+      <div className="text-body font-medium">{t(`appearance.themes.${theme}`)}</div>
+      <div className="flex h-36 overflow-hidden rounded-lg border" style={{ background: c.canvas }} aria-hidden>
+        <div className="grid w-2/5 content-start gap-2 border-r p-3" style={{ background: c.sidebar, borderColor: r['sidebar-border'] }}>
+          <div className="mb-1 h-2.5 w-3/5 rounded-sm" style={{ background: RAMPS.slate[300] }} />
+          <div className="flex h-6 items-center gap-2 rounded-md px-2" style={{ background: r['sidebar-accent'] }}>
+            <span className="size-2.5 rounded-sm" style={{ background: c.brand[600] }} />
+            <span className="h-1.5 w-3/5 rounded-sm" style={{ background: r['sidebar-accent-foreground'] }} />
+          </div>
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="flex h-6 items-center gap-2 px-2">
+              <span className="size-2.5 rounded-sm" style={{ background: RAMPS.slate[500] }} />
+              <span className="h-1.5 w-1/2 rounded-sm" style={{ background: RAMPS.slate[400] }} />
+            </div>
+          ))}
+        </div>
+        <div className="grid flex-1 content-start gap-2 p-3">
+          <div className="grid gap-2 rounded-md border bg-white p-2">
+            <div className="h-2 w-1/2 rounded-sm" style={{ background: RAMPS.slate[700] }} />
+            <div className="flex h-8 items-end gap-1">
+              {[40, 70, 55, 90, 65].map((h, i) => <span key={i} className="flex-1 rounded-t-sm" style={{ height: `${h}%`, background: c.brand[500] }} />)}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="h-5 w-12 rounded" style={{ background: r.primary }} />
+            <span className="h-1.5 w-8 rounded-sm" style={{ background: r.link }} />
+          </div>
+        </div>
+      </div>
+      <div className="grid grid-cols-10 gap-0.5 overflow-hidden rounded-md">
+        {STEPS.map((step) => <span key={step} className="h-4" title={`brand-${step} ${c.brand[step]}`} style={{ background: c.brand[step] }} />)}
+      </div>
+      <dl className="grid gap-1 text-caption">
+        {pairs.map(([key, fg, bg, min]) => {
+          const v = contrast(fg, bg)
+          return (
+            <div key={key} className="flex items-center justify-between gap-2">
+              <dt className="flex min-w-0 items-center gap-2 text-muted-foreground">
+                <span className="inline-flex size-5 shrink-0 items-center justify-center rounded-sm border text-caption font-semibold" style={{ background: bg, color: fg }}>A</span>
+                <span className="truncate" title={t(`tokens.pair.${key}`)}>{t(`tokens.pair.${key}`)}</span>
+              </dt>
+              <dd className={v >= min ? 'font-medium num' : 'font-medium text-danger-700 num'}>{v.toFixed(2)} : 1</dd>
+            </div>
+          )
+        })}
+      </dl>
     </div>
   )
 }
@@ -96,6 +165,16 @@ export function TokensPage() {
             <div className="grid max-w-40 gap-2">
               <div className="text-body font-medium">{t('tokens.canvas')}</div>
               <Swatch hex={CANVAS} label="canvas" sub={`${ratio(RAMPS.slate[500], CANVAS)} : 1 slate-500`} />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader><CardTitle>{t('tokens.themes')}</CardTitle></CardHeader>
+          <CardContent className="grid gap-6">
+            <p className="text-body text-muted-foreground">{t('tokens.themesHint')}</p>
+            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+              {THEME_NAMES.map((name) => <ThemePreview key={name} theme={name} />)}
             </div>
           </CardContent>
         </Card>
@@ -193,7 +272,7 @@ export function TokensPage() {
                     <span className="text-caption text-muted-foreground num">{name} · {ms}</span>
                     <div className="h-4 rounded-sm bg-slate-100">
                       <div
-                        className="size-4 rounded-sm bg-navy-600"
+                        className="size-4 rounded-sm bg-brand-600"
                         style={{
                           transform: moved ? 'translateX(12rem)' : 'none',
                           transitionProperty: 'transform',

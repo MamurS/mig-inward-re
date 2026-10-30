@@ -99,3 +99,8 @@ export function addDays(iso: string, days: number): string {
   d.setDate(d.getDate() + days)
   return isoDate(d)
 }
+
+/** An Excel column width (characters) that fits every value: never narrower than `min`. */
+export function fitWidth(values: (string | null | undefined)[], min = 12, max = 60): number {
+  return Math.min(max, Math.max(min, ...values.map((v) => (v ?? '').length + 2)))
+}

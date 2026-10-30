@@ -5,6 +5,14 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MIG Inward Re</title>
+    <script>
+      // Appearance before the first paint (theme + text size; see src/lib/appearance.ts)
+      try {
+        var a = JSON.parse(localStorage.getItem('mig.appearance') || '{}')
+        if (/^(grey|blue|green|orange)$/.test(a.theme)) document.documentElement.dataset.theme = a.theme
+        if (/^(normal|large)$/.test(a.textSize)) document.documentElement.dataset.textSize = a.textSize
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

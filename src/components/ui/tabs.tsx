@@ -4,13 +4,13 @@ import { cn } from '@/lib/utils'
 
 const Tabs = P.Root
 function TabsList({ className, ...props }: React.ComponentProps<typeof P.List>) {
-  return <P.List className={cn('inline-flex h-9 items-center rounded-lg bg-muted p-1 text-muted-foreground', className)} {...props} />
+  return <P.List className={cn('inline-flex min-h-10 max-w-full flex-wrap items-center gap-y-1 rounded-control bg-muted p-1 text-muted-foreground', className)} {...props} />
 }
 function TabsTrigger({ className, ...props }: React.ComponentProps<typeof P.Trigger>) {
   return (
     <P.Trigger
       className={cn(
-        'inline-flex items-center gap-2 rounded-md px-3 py-1 text-body font-medium whitespace-nowrap transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm',
+        'inline-flex items-center gap-2 rounded-lg px-3 py-1 text-body font-medium whitespace-nowrap transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm',
         className,
       )}
       {...props}

@@ -11,14 +11,14 @@ export type Pictogram = 'search' | 'inbox' | 'done' | 'documents' | 'chart' | 'p
 const STROKE = { fill: 'none', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' } as const
 
 function Art({ kind }: { kind: Pictogram }) {
-  // The soft disc behind each drawing is navy-100; strokes are navy-500, accents sky-400 (≥ 3 : 1 on white).
-  const disc = <circle cx="32" cy="32" r="30" className="fill-navy-100" stroke="none" />
+  // The soft disc behind each drawing is brand-100; strokes are brand-500, accents sky-400 (≥ 3 : 1 on white).
+  const disc = <circle cx="32" cy="32" r="30" className="fill-brand-100" stroke="none" />
   switch (kind) {
     case 'search':
       return (
         <>
           {disc}
-          <g {...STROKE} className="stroke-navy-500">
+          <g {...STROKE} className="stroke-brand-500">
             <rect x="14" y="16" width="26" height="32" rx="3" />
             <path d="M19 24h16M19 30h12M19 36h8" />
           </g>
@@ -32,7 +32,7 @@ function Art({ kind }: { kind: Pictogram }) {
       return (
         <>
           {disc}
-          <g {...STROKE} className="stroke-navy-500">
+          <g {...STROKE} className="stroke-brand-500">
             <path d="M12 36l7-16h26l7 16v10a3 3 0 0 1-3 3H15a3 3 0 0 1-3-3z" />
             <path d="M12 36h12l3 5h10l3-5h12" />
           </g>
@@ -43,7 +43,7 @@ function Art({ kind }: { kind: Pictogram }) {
       return (
         <>
           {disc}
-          <g {...STROKE} className="stroke-navy-500">
+          <g {...STROKE} className="stroke-brand-500">
             <rect x="14" y="16" width="36" height="32" rx="3" />
             <path d="M14 25h36M22 12v8M42 12v8" />
           </g>
@@ -54,7 +54,7 @@ function Art({ kind }: { kind: Pictogram }) {
       return (
         <>
           {disc}
-          <g {...STROKE} className="stroke-navy-500">
+          <g {...STROKE} className="stroke-brand-500">
             <path d="M20 14h16l8 8v26a2 2 0 0 1-2 2H20a2 2 0 0 1-2-2V16a2 2 0 0 1 2-2z" />
             <path d="M36 14v8h8" />
           </g>
@@ -65,7 +65,7 @@ function Art({ kind }: { kind: Pictogram }) {
       return (
         <>
           {disc}
-          <g {...STROKE} className="stroke-navy-500">
+          <g {...STROKE} className="stroke-brand-500">
             <path d="M14 48h36M18 48V30M28 48V22M38 48V34" />
           </g>
           <path {...STROKE} className="stroke-sky-400" d="M46 48V16" strokeDasharray="3 4" />
@@ -75,7 +75,7 @@ function Art({ kind }: { kind: Pictogram }) {
       return (
         <>
           {disc}
-          <g {...STROKE} className="stroke-navy-500">
+          <g {...STROKE} className="stroke-brand-500">
             <circle cx="26" cy="26" r="7" />
             <path d="M14 48c0-7 5-12 12-12s12 5 12 12" />
           </g>

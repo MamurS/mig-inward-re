@@ -3,9 +3,10 @@ import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { Bar, BarChart, CartesianGrid, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, AlarmClock, CircleCheckBig, FileSearch, Hourglass, Inbox } from 'lucide-react'
 import { PageHeader } from '@/components/PageHeader'
 import { KpiCard } from '@/components/KpiCard'
+import { registerLink } from '@/features/submissions/filters'
 import { Skeleton } from '@/components/Skeleton'
 import { Amount, formatHuman } from '@/components/Amount'
 import { AgingBadge } from '@/components/AgingBadge'
@@ -19,6 +20,7 @@ import { useAuth } from '@/auth/AuthProvider'
 import { formatAmount, formatDate, formatLongDate, formatMonthShort, isoDate, locale } from '@/lib/format'
 import { errorMessage } from '@/lib/errors'
 import { STATUS_SOLID, type SubmissionStatus } from '@/lib/status'
+import { PremiumDashboard } from '@/features/premium/PremiumDashboard'
 
 type Row = {
   id: string
@@ -45,7 +47,7 @@ const partOfDay = () => {
 const COLUMNS =
   'id, ref_no, insured_name, status, received_at, offered_at, bound_at, offer_valid_until, mga_id, mga_name, lob_name, our_gross_premium_usd, follow_up_overdue, offer_expired'
 
-const BAR = 'var(--color-navy-500)'
+const BAR = 'var(--color-brand-500)'
 /** Axis text: slate-600 reads at 6.5 : 1 on white. */
 const TICK = { fontSize: 12, fill: 'var(--color-slate-600)' }
 
@@ -69,8 +71,9 @@ function useDashboardRows() {
 
 export function DashboardPage() {
   const { t } = useTranslation()
-  const { profile } = useAuth()
+  const { profile, role } = useAuth()
   const { data, isLoading, error } = useDashboardRows()
+  const seesPremium = role === 'admin' || role === 'management' || role === 'finance'
   const thisYear = new Date().getFullYear()
   const [year, setYear] = useState<string>(String(thisYear))
 
@@ -201,53 +204,60 @@ export function DashboardPage() {
       <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
         <KpiCard
           label={t('dash.tiles.receivedMonth')}
+          icon={Inbox}
           value={m.receivedThisMonth}
           delta={m.receivedDelta}
           deltaLabel={t('ui.kpi.vsLastMonth')}
           series={m.receivedTrend}
-          to={`/submissions?from=${m.monthStart}`}
+          to={registerLink('thismonth')}
         />
-        <KpiCard label={t('dash.tiles.underReview')} value={m.underReview} sub={t('dash.tiles.notReviewed', { count: m.notReviewed })} to="/submissions?status=under_review" />
-        <KpiCard label={t('dash.tiles.awaiting')} value={m.awaiting} sub={t('ui.kpi.offeredOrNoResponse')} to="/submissions?status=offered,no_response&sort=next_follow_up_at&dir=asc" />
-        <KpiCard label={t('dash.tiles.overdue')} value={m.overdue} sub={t('ui.kpi.followUpsPastDue')} to="/submissions?overdue=1" alert={m.overdue > 0} />
+        <KpiCard icon={FileSearch} label={t('dash.tiles.underReview')} value={m.underReview} sub={t('dash.tiles.notReviewed', { count: m.notReviewed })} to={registerLink('status:under_review')} />
+        <KpiCard icon={Hourglass} label={t('dash.tiles.awaiting')} value={m.awaiting} sub={t('ui.kpi.offeredOrNoResponse')} to={registerLink('status:offered|no_response', { sort: 'next_follow_up_at', dir: 'asc' })} />
+        <KpiCard icon={AlarmClock} label={t('dash.tiles.overdue')} value={m.overdue} sub={t('ui.kpi.followUpsPastDue')} to={registerLink('overdue')} alert={m.overdue > 0} />
         <KpiCard
           label={t('dash.tiles.boundYtd', { year: thisYear })}
+          icon={CircleCheckBig}
           value={m.boundYtd}
           delta={m.boundDelta}
           deltaLabel={t('ui.kpi.vsLastYear')}
           sub={<><Amount value={m.boundYtdUsd} currency="USD" human /> {t('dash.tiles.ourGross')}</>}
           series={m.boundTrend}
-          to={`/submissions?status=bound&boundFrom=${m.yearStart}`}
+          to={registerLink(`status:bound, bound>=${m.yearStart}`)}
         />
       </div>
+
+      {seesPremium && <PremiumDashboard />}
 
       {/* What needs an answer first, then how we are doing */}
       <div className="mb-4 grid gap-4 xl:grid-cols-3">
         <Card className="gap-0 py-0 xl:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between gap-2 py-4">
+          <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 py-4">
             <CardTitle>{t('dash.oldestOffers')}</CardTitle>
-            <Link to="/submissions?status=offered,no_response&sort=received_at&dir=asc" className="text-body text-link hover:underline">{t('dash.openInRegister')}</Link>
+            <Link to={registerLink('status:offered|no_response', { sort: 'received_at', dir: 'asc' })} className="text-body text-link hover:underline">{t('dash.openInRegister')}</Link>
           </CardHeader>
           {m.oldestOffers.length === 0 ? (
             <EmptyState pictogram="done" title={t('dash.noOpenOffers')} compact />
           ) : (
-            <ul className="border-t">
+            // one grid for the whole list: the ref column is as wide as the longest ref (DEMO-SUB-…), never fixed
+            <ul className="grid grid-cols-[max-content_minmax(8rem,1fr)_auto] border-t md:grid-cols-[max-content_minmax(8rem,1fr)_auto_auto] 2xl:grid-cols-[max-content_minmax(8rem,1fr)_auto_auto_auto]" data-ref-list>
               {m.oldestOffers.map((r) => {
                 const days = daysSince(r.offered_at) ?? 0
                 return (
-                  <li key={r.id}>
-                    <Link to={`/submissions/${r.id}`} className="flex items-center gap-3 border-b px-5 py-2 text-body transition-colors last:border-0 hover:bg-slate-50">
-                      <span className="w-32 shrink-0 font-medium whitespace-nowrap text-link num">{r.ref_no}</span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate">{r.insured_name}</span>
+                  <li key={r.id} className="col-span-full grid grid-cols-subgrid">
+                    <Link to={`/submissions/${r.id}`} className="col-span-full grid grid-cols-subgrid items-baseline gap-x-3 border-b px-5 py-2 text-body transition-colors hover:bg-slate-50">
+                      <span className="font-medium whitespace-nowrap text-link num" data-ref>{r.ref_no}</span>
+                      <span className="min-w-0">
+                        <span className="block truncate" title={r.insured_name}>{r.insured_name}</span>
                         <span className="block truncate text-caption text-muted-foreground">{r.mga_name}</span>
                       </span>
-                      <StatusBadge status={r.status} className="hidden md:inline-flex" />
-                      {r.offer_expired && (
-                        <span title={t('sub.offerExpiredOn', { date: formatDate(r.offer_valid_until) })}><AlertTriangle className="size-4 text-warning-600" /></span>
-                      )}
-                      <span className="w-24 shrink-0 text-right"><AgingBadge days={Math.max(days, 1)} label={t('ui.daysWaiting', { count: days })} /></span>
-                      <span className="w-20 shrink-0 text-right"><Amount value={r.our_gross_premium_usd} human /></span>
+                      <StatusBadge status={r.status} className="hidden 2xl:inline-flex" />
+                      <span className="hidden items-center justify-end gap-2 md:inline-flex">
+                        {r.offer_expired && (
+                          <span title={t('sub.offerExpiredOn', { date: formatDate(r.offer_valid_until) })}><AlertTriangle className="size-4 text-warning-600" /></span>
+                        )}
+                        <AgingBadge days={Math.max(days, 1)} label={t('ui.daysWaiting', { count: days })} />
+                      </span>
+                      <span className="text-right"><Amount value={r.our_gross_premium_usd} human /></span>
                     </Link>
                   </li>
                 )

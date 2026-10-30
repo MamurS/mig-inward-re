@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
+import { registerLink } from '@/features/submissions/filters'
+import { quoteValue } from '@/features/search/query'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Clock, FileStack, Loader2, Mail, Pencil, Phone, Plus, Save, Trash2 } from 'lucide-react'
+import { Clock, FileStack, Loader2, Mail, Pencil, Phone, Plus, Save, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/PageHeader'
 import { Button } from '@/components/ui/button'
@@ -29,6 +31,7 @@ import type { Enums, Json } from '@/lib/database.types'
 import { useCountries, useLocalName } from '@/hooks/useReference'
 import { SavedCheck, useFlash } from '@/components/SavedCheck'
 import type { SubmissionRow } from '@/features/submissions/api'
+import { CounterpartyPremium } from '@/features/premium/CounterpartyPremium'
 
 type Contact = { name: string; role: string; email: string; phone: string }
 
@@ -130,7 +133,7 @@ export function CounterpartyDetailPage() {
   if (!party.data || !form) return <p className="p-6 text-body text-muted-foreground">{t('cp.notFound')}</p>
 
   const p = party.data
-  const registerLink = p.type === 'mga' ? `/submissions?mga=${p.id}` : p.type === 'broker' ? `/submissions?broker=${p.id}` : '/submissions'
+  const listLink = p.type === 'mga' || p.type === 'broker' ? registerLink(`${p.type}:${quoteValue(p.name)}`) : '/submissions'
   const setContact = (i: number, patch: Partial<Contact>) =>
     setForm((f) => f && { ...f, contacts: f.contacts.map((c, j) => (j === i ? { ...c, ...patch } : c)) })
 
@@ -195,20 +198,15 @@ export function CounterpartyDetailPage() {
 
   return (
     <>
-      <div className="mb-2">
-        <Link to="/counterparties" className="inline-flex items-center gap-1 text-body text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="size-4" />
-          {t('pages.counterparties.title')}
-        </Link>
-      </div>
       <PageHeader
+        breadcrumbs={[{ label: t('pages.counterparties.title'), to: '/counterparties' }, { label: p.name }]}
         title={p.name}
         subtitle={[t(`counterpartyType.${p.type}`), localName(countries.data?.find((c) => c.code === p.country_code))].filter(Boolean).join(' · ')}
         actions={
           <>
             <SavedCheck show={savedShown} />
             <Button variant="outline" asChild>
-              <Link to={registerLink}><FileStack />{t('cp.openInRegister')}</Link>
+              <Link to={listLink}><FileStack />{t('cp.openInRegister')}</Link>
             </Button>
             {editable && (
               <Button onClick={() => setEditing(true)}>
@@ -273,6 +271,9 @@ export function CounterpartyDetailPage() {
         </Card>
 
         <div className="grid content-start gap-4">
+          {(p.type === 'mga' || p.type === 'broker') && (
+            <CounterpartyPremium party={{ id: p.id, name: p.name, type: p.type }} />
+          )}
           <Card>
             <CardHeader><CardTitle>{t('cp.contacts')}</CardTitle></CardHeader>
             <CardContent className="grid gap-2">
@@ -326,7 +327,7 @@ export function CounterpartyDetailPage() {
               <Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
             </Field>
             <label className="flex items-center gap-2 text-body">
-              <input type="checkbox" className="size-4 accent-navy-600" checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} />
+              <input type="checkbox" className="size-4 accent-brand-600" checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} />
               {t('common.active')}
             </label>
 

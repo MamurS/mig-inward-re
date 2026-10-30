@@ -50,13 +50,16 @@ test('five actions answer within 100 ms', async ({ browser }) => {
 
   const results: Record<string, number> = {}
 
-  // 1. Command palette opens
-  results.palette = await timeTo(page, { key: { key: 'k', ctrl: true } }, `Boolean(document.querySelector('[role="combobox"]'))`)
+  // 1. The search suggestions open (Ctrl K)
+  results.search = await timeTo(page, { key: { key: 'k', ctrl: true } }, `Boolean(document.querySelector('#search-suggestions'))`)
   await page.keyboard.press('Escape')
   await page.waitForTimeout(200)
 
-  // 2. A status chip toggles (pressed state shown before the data reloads)
-  results.statusChip = await timeTo(page, { click: 'main button[aria-pressed]' }, `document.querySelector('main button[aria-pressed]').getAttribute('aria-pressed') === 'true'`)
+  // 2. A search chip is removed (gone before the data reloads)
+  await page.goto('/submissions?q=bound')
+  await page.locator('main [data-chip]').first().waitFor()
+  await page.waitForLoadState('networkidle')
+  results.chip = await timeTo(page, { click: 'main [data-chip] button' }, `!document.querySelector('main [data-chip]')`)
   await page.waitForLoadState('networkidle')
 
   // 3. A row is selected and the bulk bar appears

@@ -1,14 +1,17 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { PageHeader } from '@/components/PageHeader'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { NativeSelect } from '@/components/ui/native-select'
 import { useAuth } from '@/auth/AuthProvider'
 import { supabase } from '@/lib/supabase'
 import { errorMessage } from '@/lib/errors'
-import { useUsers, userName } from '@/hooks/useReference'
+import { norm } from '@/features/search/normalize'
+import { fieldValues, matchesQuery, type ClientSpec } from '@/features/search/client'
+import { AGENDA_PAGE } from '@/features/search/pages'
+import { useListSearch } from '@/features/search/useSearch'
+import { SearchChips } from '@/features/search/SearchChips'
 import { EmptyState } from '@/components/EmptyState'
 import { Skeleton } from '@/components/Skeleton'
 import { SubmissionQuickView } from '@/features/submissions/SubmissionQuickView'
@@ -30,10 +33,11 @@ function bucketOf(due: string): Bucket {
 export function AgendaPage() {
   const { t } = useTranslation()
   const { profile, role } = useAuth()
-  const users = useUsers()
-  // Admin / management can look at anyone's agenda
+  // Admin / management can look at anyone's agenda: «assignee:…» in the search bar (default: your own)
   const canSeeOthers = role === 'admin' || role === 'management'
-  const [who, setWho] = useState<string>(profile?.id ?? '')
+  const { parsed, setQ } = useListSearch(AGENDA_PAGE)
+  const askedFor = fieldValues(parsed, 'assignee')
+  const who = canSeeOthers && askedFor.length ? '' : (profile?.id ?? '')
   const [closing, setClosing] = useState<FollowUp | null>(null)
   const [rescheduling, setRescheduling] = useState<FollowUp | null>(null)
   const [peekId, setPeekId] = useState<string | null>(null)
@@ -48,11 +52,13 @@ export function AgendaPage() {
     },
   })
 
+  // your own agenda includes your team's follow-ups (assigned to a role, e.g. overdue premium for every finance user)
+  const team = who && role ? role : ''
   const open = useQuery({
-    queryKey: ['agenda', 'open', who],
+    queryKey: ['agenda', 'open', who, team],
     queryFn: async () => {
       let q = supabase.from('follow_ups_v').select('*').is('done_at', null).order('due_at', { ascending: true }).limit(1000)
-      if (who) q = q.eq('assigned_to', who)
+      if (who) q = q.or(`assigned_to.eq.${who}${team ? `,assigned_role.eq.${team}` : ''}`)
       const { data, error } = await q
       if (error) throw error
       return data as FollowUp[]
@@ -60,11 +66,11 @@ export function AgendaPage() {
   })
 
   const done = useQuery({
-    queryKey: ['agenda', 'done', who],
+    queryKey: ['agenda', 'done', who, team],
     queryFn: async () => {
       const since = new Date(Date.now() - 30 * 86_400_000).toISOString()
       let q = supabase.from('follow_ups_v').select('*').not('done_at', 'is', null).gte('done_at', since).order('done_at', { ascending: false }).limit(500)
-      if (who) q = q.or(`assigned_to.eq.${who},done_by.eq.${who}`)
+      if (who) q = q.or(`assigned_to.eq.${who},done_by.eq.${who}${team ? `,assigned_role.eq.${team}` : ''}`)
       const { data, error } = await q
       if (error) throw error
       return data as FollowUp[]
@@ -82,7 +88,23 @@ export function AgendaPage() {
       return new Map((data ?? []).map((r) => [r.id as string, r.our_gross_premium_usd as number | null]))
     },
   })
-  const amountOf = (f: FollowUp) => (f.entity_type === 'submission' ? { value: amounts.data?.get(f.entity_id) ?? null, currency: 'USD' } : undefined)
+  // …and what is still owed on an overdue installment
+  const installmentIds = [...new Set((open.data ?? []).filter((f) => f.entity_type === 'premium').map((f) => f.entity_id))]
+  const owed = useQuery({
+    queryKey: ['agenda', 'owed', installmentIds],
+    enabled: installmentIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase.from('premium_installments_v').select('id, outstanding_amount, currency').in('id', installmentIds)
+      if (error) throw error
+      return new Map((data ?? []).map((r) => [r.id as string, { value: r.outstanding_amount as number | null, currency: r.currency as string | null }]))
+    },
+  })
+  const amountOf = (f: FollowUp) =>
+    f.entity_type === 'submission'
+      ? { value: amounts.data?.get(f.entity_id) ?? null, currency: 'USD' }
+      : f.entity_type === 'premium'
+        ? owed.data?.get(f.entity_id)
+        : undefined
 
   // Completion moment: the list was emptied in this visit
   const lastCount = useRef<number | null>(null)
@@ -94,8 +116,19 @@ export function AgendaPage() {
     lastCount.current = n
   }, [open.data?.length])
 
+  const spec: ClientSpec<FollowUp> = useMemo(
+    () => ({
+      text: (f) => norm([f.title, f.entity_ref, f.entity_label, f.mga_name, f.outcome, f.assigned_to_name, f.type ? t(`fuType.${f.type}`) : ''].filter(Boolean).join(' ')),
+      list: { assignee: (f) => [f.assigned_to ?? '', 'all'], type: (f) => f.type },
+      date: { due: (f) => f.due_at },
+      flags: { overdue: (f) => Boolean(f.is_overdue) },
+    }),
+    [t],
+  )
+  const openRows = (open.data ?? []).filter((f) => matchesQuery(parsed, f, spec))
+  const doneRows = (done.data ?? []).filter((f) => matchesQuery(parsed, f, spec))
   const groups: Record<Bucket, FollowUp[]> = { overdue: [], today: [], week: [], later: [] }
-  for (const f of open.data ?? []) groups[bucketOf(f.due_at)].push(f)
+  for (const f of openRows) groups[bucketOf(f.due_at)].push(f)
   // Overdue first, most overdue at the top
   const order: Bucket[] = ['overdue', 'today', 'week', 'later']
 
@@ -104,25 +137,14 @@ export function AgendaPage() {
       <PageHeader
         title={t('pages.agenda.title')}
         subtitle={t('pages.agenda.subtitle')}
-        actions={
-          canSeeOthers && (
-            <div className="w-64">
-              <NativeSelect value={who} onChange={(e) => setWho(e.target.value)} aria-label={t('fu.assignedTo')}>
-                <option value={profile?.id ?? ''}>{t('agenda.mine')}</option>
-                <option value="">{t('agenda.everyone')}</option>
-                {users.data?.filter((u) => u.role && u.active && u.id !== profile?.id).map((u) => (
-                  <option key={u.id} value={u.id}>{userName(u)}</option>
-                ))}
-              </NativeSelect>
-            </div>
-          )
-        }
       />
+
+      {parsed && <SearchChips query={parsed} scope={AGENDA_PAGE.scope} onChange={setQ} count={t('ui.rows', { count: openRows.length })} />}
 
       <Tabs defaultValue="open">
         <TabsList>
           <TabsTrigger value="open">
-            {t('agenda.open')} ({open.data?.length ?? 0})
+            {t('agenda.open')} ({openRows.length})
           </TabsTrigger>
           <TabsTrigger value="done">{t('agenda.done30')}</TabsTrigger>
         </TabsList>
@@ -136,6 +158,11 @@ export function AgendaPage() {
             </Card>
           )}
           {open.error && <p className="text-body text-destructive">{errorMessage(open.error)}</p>}
+          {open.data && open.data.length > 0 && openRows.length === 0 && (
+            <Card>
+              <EmptyState pictogram="search" title={t('search.noMatch')}>{t('ui.emptyFiltered')}</EmptyState>
+            </Card>
+          )}
           {open.data && open.data.length === 0 && (
             <Card>
               <EmptyState
@@ -157,7 +184,7 @@ export function AgendaPage() {
                 </CardHeader>
                 <CardContent className="grid gap-2">
                   {groups[b].map((f) => (
-                    <FollowUpItem key={f.id} followUp={f} showEntity amount={amountOf(f)} onDone={setClosing} onReschedule={setRescheduling} onPeek={(x) => setPeekId(x.entity_id)} />
+                    <FollowUpItem key={f.id} followUp={f} showEntity amount={amountOf(f)} onDone={setClosing} onReschedule={setRescheduling} onPeek={(x) => setPeekId(x.submission_id ?? x.entity_id)} />
                   ))}
                 </CardContent>
               </Card>
@@ -166,8 +193,8 @@ export function AgendaPage() {
         </TabsContent>
 
         <TabsContent value="done" className="grid gap-2">
-          {done.data?.length === 0 && <Card><EmptyState pictogram="inbox" title={t('agenda.nothingDone')} /></Card>}
-          {done.data?.map((f) => <FollowUpItem key={f.id} followUp={f} showEntity onPeek={(x) => setPeekId(x.entity_id)} />)}
+          {done.data && doneRows.length === 0 && <Card><EmptyState pictogram="inbox" title={t('agenda.nothingDone')} /></Card>}
+          {doneRows.map((f) => <FollowUpItem key={f.id} followUp={f} showEntity onPeek={(x) => setPeekId(x.submission_id ?? x.entity_id)} />)}
         </TabsContent>
       </Tabs>
 

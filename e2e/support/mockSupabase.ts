@@ -2,13 +2,16 @@
  * A small in-memory stand-in for the Supabase REST / auth API, so the browser
  * checks and screenshots run the real app with no database (and never touch
  * production). It understands the PostgREST subset the app uses: eq, neq, in,
- * is, gt/gte/lt/lte, ilike, not.is, or=(…), order, limit / offset, exact counts,
+ * is, gt/gte/lt/lte, ilike, not.<op>, or=(…) with nested and(…) / or(…) / not.and(…)
+ * and quoted values (the search bar's filters), order, limit / offset, exact counts,
  * single-object responses, the fx_rate_to_usd RPC, and simple writes.
  */
 import type { BrowserContext, Route } from '@playwright/test'
 import { TABLES, USERS, fxRate, type FixtureRole } from './fixtures'
+import { createReceipt, generateSchedule, normalizePremium, premiumSeed, premiumViews } from './premium'
 
 const PROJECT_REF = 'jltrtqwaxvsrnqmjemzc'
+const n = (v: unknown) => Number(v ?? 0)
 type Row = Record<string, unknown>
 
 function b64url(obj: unknown) {
@@ -29,15 +32,17 @@ function authUser(role: FixtureRole) {
   }
 }
 
-/** Splits `a,b(c,d),e` on top-level commas. */
+/** Splits `a,b(c,d),e` on top-level commas (not inside quotes). */
 function splitTop(s: string): string[] {
   const out: string[] = []
   let depth = 0
   let cur = ''
+  let inQ = false
   for (const ch of s) {
-    if (ch === '(') depth++
-    if (ch === ')') depth--
-    if (ch === ',' && depth === 0) {
+    if (ch === '"') inQ = !inQ
+    if (!inQ && ch === '(') depth++
+    if (!inQ && ch === ')') depth--
+    if (ch === ',' && depth === 0 && !inQ) {
       out.push(cur)
       cur = ''
     } else cur += ch
@@ -53,10 +58,15 @@ function cmp(a: unknown, b: string): number {
 
 /** One `column=op.value` condition. */
 function test(row: Row, col: string, expr: string): boolean {
-  if (expr.startsWith('not.')) return !test(row, col, expr.slice(4))
+  if (expr.startsWith('not.')) {
+    // SQL: NOT on a NULL value is still NULL (the row is not returned)
+    const v = row[col]
+    if ((v === null || v === undefined) && !expr.startsWith('not.is.')) return false
+    return !test(row, col, expr.slice(4))
+  }
   const dot = expr.indexOf('.')
   const op = expr.slice(0, dot)
-  const raw = expr.slice(dot + 1)
+  const raw = expr.slice(dot + 1).replace(/^"(.*)"$/s, '$1')
   const v = row[col]
   switch (op) {
     case 'eq':
@@ -86,21 +96,27 @@ function test(row: Row, col: string, expr: string): boolean {
 
 const RESERVED = new Set(['select', 'order', 'limit', 'offset', 'or', 'and', 'on_conflict', 'columns'])
 
+/** One node of a PostgREST logic tree: and(…), or(…), not.and(…), not.or(…) or col.[not.]op.value. */
+function evalNode(row: Row, node: string): boolean {
+  const m = /^(not\.)?(and|or)\((.*)\)$/s.exec(node)
+  if (m) {
+    const kids = splitTop(m[3])
+    const v = m[2] === 'and' ? kids.every((k) => evalNode(row, k)) : kids.some((k) => evalNode(row, k))
+    return m[1] ? !v : v
+  }
+  const i = node.indexOf('.')
+  return test(row, node.slice(0, i), node.slice(i + 1))
+}
+
 function filterRows(rows: Row[], params: URLSearchParams): Row[] {
   let out = rows
   for (const [key, value] of params) {
     if (RESERVED.has(key)) continue
     out = out.filter((r) => test(r, key, value))
   }
-  const or = params.get('or')
-  if (or) {
-    const parts = splitTop(or.replace(/^\(|\)$/g, ''))
-    out = out.filter((r) =>
-      parts.some((p) => {
-        const i = p.indexOf('.')
-        return test(r, p.slice(0, i), p.slice(i + 1))
-      }),
-    )
+  for (const or of params.getAll('or')) {
+    const parts = splitTop(or.replace(/^\(/, '').replace(/\)$/, ''))
+    out = out.filter((r) => parts.some((p) => evalNode(r, p)))
   }
   return out
 }
@@ -126,16 +142,63 @@ function sortRows(rows: Row[], order: string | null): Row[] {
 }
 
 /** Installs the mock and a signed-in session for `role` on a browser context. */
-export async function installMock(context: BrowserContext, role: FixtureRole | null = 'admin', lang: 'en' | 'ru' | 'uz' = 'en') {
+export async function installMock(
+  context: BrowserContext,
+  role: FixtureRole | null = 'admin',
+  lang: 'en' | 'ru' | 'uz' = 'en',
+  appearance: { theme?: 'grey' | 'blue' | 'green' | 'orange'; textSize?: 'normal' | 'large'; demoMode?: boolean } = {},
+) {
   const db: Record<string, Row[]> = Object.fromEntries(Object.entries(TABLES).map(([k, v]) => [k, structuredClone(v)]))
+  // the signed-in user's saved appearance (profiles.ui_theme / ui_text_size)
+  const look = { theme: appearance.theme ?? 'grey', textSize: appearance.textSize ?? 'normal' }
+  if (role) {
+    const me = db.profiles?.find((p) => p.id === authUser(role).id)
+    if (me) Object.assign(me, { ui_theme: look.theme, ui_text_size: look.textSize, ui_demo_mode: Boolean(appearance.demoMode) })
+  }
+  Object.assign(db, premiumSeed(db.submissions_v))
+  normalizePremium(db, null)
+  // the daily premium job: one finance-team follow-up per overdue installment
+  for (const i of premiumViews(db, fxRate).premium_installments_v) {
+    if (i.type === 'return' || !(n(i.days_overdue) > 0) || !(n(i.outstanding_amount) > 0)) continue
+    const due = new Date(Date.now() - Math.min(n(i.days_overdue), 3) * 86_400_000).toISOString()
+    const fu: Row = {
+      id: crypto.randomUUID(), entity_type: 'premium', entity_id: i.id, type: 'premium_overdue', title: 'Premium overdue', due_at: due,
+      assigned_to: null, assigned_role: 'finance', done_at: null, done_by: null, outcome: null, created_at: due, created_by: null, updated_at: due,
+    }
+    db.follow_ups.push(fu)
+    db.follow_ups_v.push({
+      ...fu, entity_ref: `${i.ref_no} #${i.installment_no}`, entity_label: i.insured_name, submission_id: i.submission_id, submission_status: i.submission_status,
+      mga_id: i.mga_id, mga_name: i.mga_name, assigned_to_name: null, done_by_name: null, is_overdue: true, days_overdue: Math.min(n(i.days_overdue), 3),
+    })
+  }
+  const PREMIUM_VIEWS = new Set(['premium_installments_v', 'premium_receipts_v', 'premium_schedule_check_v'])
+
+  // demo data: the restrictive RLS policy is_demo = demo_mode() — a user sees only their own world
+  const DEMO_TABLES = new Set([
+    'counterparties', 'submissions', 'submissions_v', 'submission_status_history', 'follow_ups', 'follow_ups_v', 'documents',
+    'premium_installments', 'premium_installments_v', 'premium_receipts', 'premium_receipts_v', 'premium_allocations', 'premium_schedule_check_v',
+  ])
+  const demoMode = () => Boolean(role && db.profiles.find((p) => p.id === authUser(role).id)?.ui_demo_mode)
+  const byId = (table: string, id: unknown) => (db[table] ?? []).find((x) => x.id === id)
+  const isDemo = (r: Row): boolean => {
+    if (typeof r.is_demo === 'boolean') return r.is_demo
+    if (r.submission_id) return Boolean(byId('submissions', r.submission_id)?.is_demo)
+    if (r.entity_type === 'premium') return isDemo(byId('premium_installments', r.entity_id) ?? {})
+    if (r.entity_id) return Boolean(byId('submissions', r.entity_id)?.is_demo)
+    if (r.payer_id) return Boolean(byId('counterparties', r.payer_id)?.is_demo)
+    if (r.receipt_id) return isDemo(byId('premium_receipts', r.receipt_id) ?? {})
+    return false
+  }
+  const DEMO_SNAPSHOT = Object.fromEntries([...DEMO_TABLES].map((t) => [t, structuredClone((db[t] ?? []).filter(isDemo))]))
 
   const user = role ? authUser(role) : null
   await context.addInitScript(
-    ([key, session, language]) => {
+    ([key, session, language, cached]) => {
       try {
         if (session) localStorage.setItem(key as string, session as string)
         else localStorage.removeItem(key as string)
         localStorage.setItem('mig.lang', language as string)
+        localStorage.setItem('mig.appearance', cached as string)
       } catch {
         /* ignore */
       }
@@ -149,6 +212,7 @@ export async function installMock(context: BrowserContext, role: FixtureRole | n
           })
         : null,
       lang,
+      JSON.stringify(look),
     ],
   )
 
@@ -173,17 +237,73 @@ export async function installMock(context: BrowserContext, role: FixtureRole | n
     if (rpc) {
       const args = (req.postDataJSON() ?? {}) as Record<string, string>
       if (rpc[1] === 'fx_rate_to_usd') return json(fxRate(args.p_currency, args.p_date))
+      if (rpc[1] === 'change_submission_status') {
+        const a = args as unknown as { p_submission_id: string; p_to_status: string; p_signed_share_pct?: string; p_written_share_pct?: string; p_offer_valid_until?: string }
+        const now = new Date().toISOString()
+        for (const t of ['submissions', 'submissions_v']) {
+          const r = db[t].find((x) => x.id === a.p_submission_id)
+          if (!r) continue
+          r.status = a.p_to_status
+          r.status_changed_at = now
+          if (a.p_written_share_pct) r.written_share_pct = Number(a.p_written_share_pct)
+          if (a.p_offer_valid_until) r.offer_valid_until = a.p_offer_valid_until
+          if (a.p_to_status === 'bound') {
+            r.signed_share_pct = Number(a.p_signed_share_pct ?? r.written_share_pct)
+            r.share_pct = r.signed_share_pct
+            r.bound_at = now
+          }
+        }
+        return json(db.submissions.find((x) => x.id === a.p_submission_id) ?? {})
+      }
+      if (rpc[1] === 'create_premium_receipt') {
+        const out = createReceipt(db, args as unknown as { p_receipt: Row; p_allocations?: Row[] }, role)
+        normalizePremium(db, user?.id ?? null)
+        return out.error ? json({ message: out.error, code: out.code }, out.code === '42501' ? 403 : 400) : json(out.data)
+      }
+      if (rpc[1] === 'generate_premium_schedule') {
+        const out = generateSchedule(db, args.p_submission_id, (args as unknown as { p_installments?: { due_date: string; gross_amount: string }[] }).p_installments ?? null)
+        normalizePremium(db, user?.id ?? null)
+        return out.error ? json({ message: out.error, code: '23514' }, 400) : json(out.data)
+      }
+      if (rpc[1] === 'demo_data_counts' || rpc[1] === 'delete_demo_data') {
+        if (role !== 'admin') return json({ message: 'Only an admin can manage demo data', code: '42501' }, 403)
+        const counts = {
+          counterparties: db.counterparties.filter(isDemo).length, submissions: db.submissions.filter(isDemo).length,
+          installments: (db.premium_installments ?? []).filter(isDemo).length, receipts: (db.premium_receipts ?? []).filter(isDemo).length,
+          allocations: (db.premium_allocations ?? []).filter(isDemo).length, follow_ups: db.follow_ups.filter(isDemo).length,
+          documents: (db.documents ?? []).filter(isDemo).length,
+        }
+        if (rpc[1] === 'delete_demo_data') {
+          const paths = (db.documents ?? []).filter(isDemo).map((d) => d.storage_path)
+          for (const t of DEMO_TABLES) if (db[t]) db[t] = db[t].filter((r) => !isDemo(r))
+          return json({ ...counts, document_paths: paths })
+        }
+        return json(counts)
+      }
+      if (rpc[1] === 'seed_demo_data') {
+        if (role !== 'admin') return json({ message: 'Only an admin can load demo data', code: '42501' }, 403)
+        if (db.submissions.some(isDemo)) return json({ message: 'Demo data is already loaded — delete it first', code: '23505' }, 409)
+        for (const [t, rows] of Object.entries(DEMO_SNAPSHOT)) (db[t] ??= []).push(...structuredClone(rows))
+        return json({ submissions: DEMO_SNAPSHOT.submissions.length })
+      }
+      if (rpc[1] === 'demo_link_violations') return json([])
       return json({})
     }
 
     const m = /^\/rest\/v1\/([a-z_]+)$/.exec(url.pathname)
     if (!m) return json({ message: 'not found' }, 404)
     const table = m[1]
+    if (PREMIUM_VIEWS.has(table)) Object.assign(db, premiumViews(db, fxRate))
     const rows = (db[table] ??= [])
     const params = url.searchParams
 
     if (method === 'GET' || method === 'HEAD') {
-      let out = sortRows(filterRows(rows, params), params.get('order'))
+      const visible = DEMO_TABLES.has(table) ? rows.filter((r) => isDemo(r) === demoMode()) : rows
+      let out = sortRows(filterRows(visible, params), params.get('order'))
+      // embedded receipt on allocations: select=*,premium_receipts(...)
+      if (table === 'premium_allocations' && (params.get('select') ?? '').includes('premium_receipts(')) {
+        out = out.map((a) => ({ ...a, premium_receipts: (db.premium_receipts ?? []).find((r) => r.id === a.receipt_id) ?? null }))
+      }
       const total = out.length
       const offset = Number(params.get('offset') ?? 0)
       const limit = params.get('limit') ? Number(params.get('limit')) : undefined
@@ -199,18 +319,37 @@ export async function installMock(context: BrowserContext, role: FixtureRole | n
       const body = req.postDataJSON()
       const items = (Array.isArray(body) ? body : [body]) as Row[]
       const created = items.map((i) => ({ id: crypto.randomUUID(), created_at: new Date().toISOString(), ...i }))
+      if (['counterparties', 'submissions', 'premium_receipts'].includes(table)) {
+        for (const c of created) {
+          c.is_demo = demoMode()
+          const key = table === 'counterparties' ? 'name' : 'insured_name'
+          if (c.is_demo && c[key] && !String(c[key]).startsWith('DEMO ')) c[key] = `DEMO ${c[key]}`
+        }
+      }
       rows.push(...created)
+      if (table.startsWith('premium_')) normalizePremium(db, user?.id ?? null)
       return json((req.headers()['accept'] ?? '').includes('vnd.pgrst.object') ? created[0] : created, 201)
     }
     if (method === 'PATCH') {
       const patch = req.postDataJSON() as Row
       const hit = filterRows(rows, params)
       for (const r of hit) Object.assign(r, patch)
+      if (table === 'follow_ups') {
+        // the trigger records who closed it; the view follows the table
+        const me = user ? db.profiles.find((p) => p.id === user.id) : null
+        for (const r of hit) {
+          if (patch.done_at) Object.assign(r, { done_by: user?.id ?? null })
+          const v = db.follow_ups_v.find((x) => x.id === r.id)
+          if (v) Object.assign(v, patch, patch.done_at ? { done_by: user?.id ?? null, done_by_name: me?.full_name ?? null, is_overdue: false } : {})
+        }
+      }
+      if (table.startsWith('premium_')) normalizePremium(db, user?.id ?? null)
       return json((req.headers()['accept'] ?? '').includes('vnd.pgrst.object') ? hit[0] ?? null : hit)
     }
     if (method === 'DELETE') {
       const hit = filterRows(rows, params)
       db[table] = rows.filter((r) => !hit.includes(r))
+      if (table.startsWith('premium_')) normalizePremium(db, user?.id ?? null)
       return json(hit)
     }
     return json({}, 405)

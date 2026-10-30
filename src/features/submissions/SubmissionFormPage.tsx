@@ -177,7 +177,7 @@ function SubmissionForm({ existing }: { existing: SubmissionRow | null }) {
             received_at: isoDate(),
             currency: 'USD',
             underwriter_id: profile?.id ?? '',
-            payment_terms_days: '90',
+            payment_terms_days: '60', // docs/decisions.md: premium due inception + 60 days
           },
     [existing, profile?.id],
   )
@@ -267,6 +267,11 @@ function SubmissionForm({ existing }: { existing: SubmissionRow | null }) {
   return (
     <form onSubmit={onSubmit} noValidate>
       <PageHeader
+        breadcrumbs={[
+          { label: t('pages.submissions.title'), to: '/submissions' },
+          ...(existing ? [{ label: existing.ref_no ?? '', to: `/submissions/${existing.id}` }] : []),
+          { label: existing ? t('common.edit') : t('sub.newTitle') },
+        ]}
         title={existing ? t('sub.editTitle', { ref: existing.ref_no }) : t('sub.newTitle')}
         subtitle={existing ? existing.insured_name ?? undefined : t('sub.newSubtitle')}
       />

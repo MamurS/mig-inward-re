@@ -7,24 +7,13 @@ import { expect, test } from '@playwright/test'
 import { installMock } from './support/mockSupabase'
 
 test.describe('table v2 on the register', () => {
-  test('density is remembered per user across reloads', async ({ browser }) => {
-    const context = await browser.newContext()
-    await installMock(context, 'underwriter', 'en')
-    const page = await context.newPage()
+  test('rows are regular height (48 px); there is no density switch', async ({ page }) => {
+    await installMock(page.context(), 'underwriter', 'en')
     await page.goto('/submissions')
     const row = page.locator('main tbody tr').first()
     await row.waitFor()
     expect(Math.round((await row.boundingBox())!.height)).toBe(48)
-
-    await page.getByRole('button', { name: 'Density' }).click()
-    await page.getByRole('menuitemradio', { name: /Compact/ }).click()
-    await page.keyboard.press('Escape')
-    expect(Math.round((await row.boundingBox())!.height)).toBe(40)
-
-    await page.reload()
-    await page.locator('main tbody tr').first().waitFor()
-    expect(Math.round((await page.locator('main tbody tr').first().boundingBox())!.height)).toBe(40)
-    await context.close()
+    await expect(page.getByRole('button', { name: 'Density' })).toHaveCount(0)
   })
 
   test('columns can be hidden, and stay hidden', async ({ browser }) => {
@@ -55,8 +44,19 @@ test.describe('table v2 on the register', () => {
     const first = page.locator('main tbody tr').first().locator('td').first()
     const h0 = (await head.boundingBox())!
     const f0 = (await first.boundingBox())!
+    // at rest the first header cell looks like the others: same bottom line, no divider
+    const style = (i: number) => page.locator('main thead th').nth(i).evaluate((el) => {
+      const cs = getComputedStyle(el)
+      return { border: `${cs.borderBottomWidth} ${cs.borderBottomColor}`, shadow: cs.boxShadow }
+    })
+    const [s0, s1] = [await style(0), await style(1)]
+    expect(s0.border).toBe(s1.border)
+    expect(s0.shadow).toBe('none')
     await scroller.evaluate((el) => el.scrollBy(400, 200))
     await page.waitForTimeout(100)
+    // scrolled sideways: the frozen column shows its divider
+    expect((await style(0)).shadow).not.toBe('none')
+    expect(await first.evaluate((el) => getComputedStyle(el).boxShadow)).not.toBe('none')
     expect((await page.locator('main thead th').first().boundingBox())!.y).toBeCloseTo(h0.y, 0)
     expect((await page.locator('main tbody tr').nth(5).locator('td').first().boundingBox())!.x).toBeCloseTo(f0.x, 0)
     await context.close()
@@ -132,7 +132,7 @@ test('quick view on the agenda and the counterparties list', async ({ browser })
   await context.close()
 })
 
-test('command palette: Ctrl K finds a submission and goes there', async ({ browser }) => {
+test('search bar: Ctrl K, a direct hit opens the record, pages are reachable', async ({ browser }) => {
   const context = await browser.newContext()
   await installMock(context, 'underwriter', 'en')
   const page = await context.newPage()
@@ -142,15 +142,19 @@ test('command palette: Ctrl K finds a submission and goes there', async ({ brows
   const box = page.getByRole('combobox')
   await expect(box).toBeFocused()
   await box.fill('SUB-2026-0002')
-  await expect(page.getByRole('option', { name: /SUB-2026-0002/ })).toBeVisible()
+  const hit = page.getByRole('option', { name: /SUB-2026-0002/ })
+  await expect(hit).toBeVisible()
+  await page.keyboard.press('ArrowDown')
+  await expect(hit).toHaveAttribute('aria-selected', 'true')
   await page.keyboard.press('Enter')
   await expect(page).toHaveURL(/\/submissions\/[0-9a-f-]{36}$/)
   await expect(page.locator('main')).toContainText('SUB-2026-0002')
 
   await page.keyboard.press('Control+k')
-  await page.getByRole('combobox').fill('count')
-  await expect(page.getByRole('option', { name: 'Counterparties' })).toBeVisible()
-  await page.keyboard.press('Enter')
+  await page.getByRole('combobox').fill('counterp')
+  const nav = page.getByRole('option', { name: /Counterparties/ })
+  await expect(nav).toBeVisible()
+  await nav.click()
   await expect(page).toHaveURL(/\/counterparties$/)
   await context.close()
 })
