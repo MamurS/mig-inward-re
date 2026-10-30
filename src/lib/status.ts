@@ -41,3 +41,19 @@ export const STATUS_SOLID: Record<SubmissionStatus, string> = {
 export const DOC_TYPES: Enums<'doc_type'>[] = [
   'submission', 'slip', 'correspondence', 'bordereau', 'invoice', 'debit_note', 'credit_note', 'claim_notice', 'loss_advice', 'other',
 ]
+
+/** Documents a claim carries. */
+export const CLAIM_DOC_TYPES: Enums<'doc_type'>[] = [
+  'loss_advice', 'claim_notice', 'adjuster_report', 'proof_of_loss', 'cash_call_request', 'payment_proof', 'correspondence', 'other',
+]
+
+export type ClaimStatus = Enums<'claim_status'>
+export const CLAIM_STATUSES: ClaimStatus[] = ['notified', 'open', 'reopened', 'closed', 'declined']
+/** Mirrors the claims_before_write transitions — the database is the source of truth. */
+export const CLAIM_NEXT: Record<ClaimStatus, ClaimStatus[]> = {
+  notified: ['open', 'declined'],
+  open: ['closed', 'declined'],
+  reopened: ['closed', 'declined'],
+  closed: ['reopened'],
+  declined: ['reopened'],
+}

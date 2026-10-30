@@ -625,6 +625,13 @@ export const SETTING_GROUPS: { id: string; settings: SettingDef[] }[] = [
       { key: 'premium_grace_days', kind: 'days', min: 0, max: 365 },
     ],
   },
+  {
+    id: 'claims',
+    settings: [
+      { key: 'large_loss_threshold_usd', kind: 'number', min: 0, max: 10_000_000_000 },
+      { key: 'claim_review_days', kind: 'days', min: 1, max: 365 },
+    ],
+  },
 ]
 const ALL_SETTINGS = SETTING_GROUPS.flatMap((g) => g.settings)
 
@@ -781,7 +788,7 @@ function JobsTab() {
   )
 }
 
-const DEMO_KINDS = ['counterparties', 'submissions', 'installments', 'receipts', 'follow_ups'] as const
+const DEMO_KINDS = ['counterparties', 'submissions', 'installments', 'receipts', 'claims', 'follow_ups'] as const
 
 /**
  * Demo data: load it, check that it never links to real data, delete it all.
@@ -863,7 +870,7 @@ function DemoTab() {
         </div>
       </CardHeader>
       <CardContent className="grid gap-4 border-t py-4">
-        <dl className="grid grid-cols-2 gap-4 sm:grid-cols-5" data-demo-counts>
+        <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6" data-demo-counts>
           {DEMO_KINDS.map((k) => (
             <div key={k}>
               <dt className="text-caption text-muted-foreground">{t(`admin.demo.kinds.${k}`)}</dt>

@@ -37,6 +37,7 @@ export function DocumentsPanel({
   documents,
   canWrite,
   evidenceIds,
+  docTypes = DOC_TYPES,
 }: {
   entityType: Enums<'entity_type'>
   entityId: string
@@ -44,6 +45,8 @@ export function DocumentsPanel({
   canWrite: boolean
   /** Documents referenced as confirmation evidence in the status history — cannot be deleted. */
   evidenceIds?: Set<string>
+  /** the kinds offered for this entity (claims have their own) */
+  docTypes?: Enums<'doc_type'>[]
 }) {
   const { t } = useTranslation()
   const qc = useQueryClient()
@@ -64,7 +67,8 @@ export function DocumentsPanel({
         toast.error(t('docs.tooLarge', { name: file.name }))
         continue
       }
-      next.push({ key: crypto.randomUUID(), file, docType: guessType(file.name) })
+      const guess = guessType(file.name)
+      next.push({ key: crypto.randomUUID(), file, docType: docTypes.includes(guess) ? guess : docTypes[0] })
     }
     setStaged((s) => [...s, ...next])
   }
@@ -135,7 +139,7 @@ export function DocumentsPanel({
                   aria-label={t('fields.docType')}
                   onChange={(e) => setStaged((all) => all.map((x) => (x.key === s.key ? { ...x, docType: e.target.value as Enums<'doc_type'> } : x)))}
                 >
-                  {DOC_TYPES.map((d) => <option key={d} value={d}>{t(`docType.${d}`)}</option>)}
+                  {docTypes.map((d) => <option key={d} value={d}>{t(`docType.${d}`)}</option>)}
                 </NativeSelect>
               </div>
               <Button variant="ghost" size="icon" onClick={() => setStaged((all) => all.filter((x) => x.key !== s.key))} disabled={uploading} aria-label={t('common.remove')}>

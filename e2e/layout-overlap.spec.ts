@@ -11,6 +11,8 @@ import { installMock } from './support/mockSupabase'
 import type { FixtureRole } from './support/fixtures'
 
 type Hit = { a: string; b: string }
+/** the demo claim's id number in the mock seed (after the four real claims and their movements) */
+const DEMO_CLAIM_SEQ = 17
 
 /** Text boxes that overlap another element's text (charts excluded: their labels are drawn, not laid out). */
 function overlaps(page: Page) {
@@ -77,6 +79,9 @@ const PAGES: { name: string; path: string; role: FixtureRole; ready: string }[] 
   { name: 'receipts', path: '/receipts', role: 'finance', ready: 'main h1' },
   { name: 'agenda', path: '/agenda', role: 'finance', ready: 'main h1' },
   { name: 'counterparty', path: '/counterparties/20000000-0000-4000-8000-000000000001', role: 'finance', ready: '[data-counterparty-premium] dl' },
+  { name: 'claims', path: '/claims', role: 'claims', ready: 'main tbody tr' },
+  { name: 'claim', path: '/claims/80000000-0000-4000-8000-000000000001', role: 'claims', ready: '[data-claim-header]' },
+  { name: 'claims dashboard', path: '/dashboard', role: 'claims', ready: '[data-claims-dashboard] [data-ratio-table]' },
 ]
 
 for (const demoMode of [false, true]) {
@@ -87,7 +92,8 @@ for (const demoMode of [false, true]) {
         const problems: string[] = []
         for (const p of PAGES) {
           // the demo world has no counterparty with that id; use the demo MGA there
-          const path = demoMode && p.name === 'counterparty' ? '/counterparties/20000000-0000-4000-8000-000000000007' : p.path
+          const path = demoMode && p.name === 'counterparty' ? '/counterparties/20000000-0000-4000-8000-000000000007'
+            : demoMode && p.name === 'claim' ? `/claims/80000000-0000-4000-8000-${String(DEMO_CLAIM_SEQ).padStart(12, '0')}` : p.path
           await installMock(context, p.role, lang, { textSize, demoMode })
           const page = await context.newPage()
           await page.goto(path)

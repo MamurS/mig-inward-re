@@ -10,7 +10,8 @@
     "counterparties": "Counterparties",
     "admin": "Admin",
     "receipts": "Receipts",
-    "receivables": "Receivables"
+    "receivables": "Receivables",
+    "claims": "Claims"
   },
   "roles": {
     "admin": "Admin",
@@ -85,6 +86,10 @@
     "receivables": {
       "title": "Receivables",
       "subtitle": "What MGAs owe us, by due date and age — and return premium we owe them"
+    },
+    "claims": {
+      "title": "Claims",
+      "subtitle": "Claims on our bound risks — our share of reserves, payments and recoveries"
     }
   },
   "errors": {
@@ -130,13 +135,21 @@
     "claim_notice": "Claim notice",
     "loss_advice": "Loss advice",
     "correspondence": "Correspondence",
-    "other": "Other"
+    "other": "Other",
+    "adjuster_report": "Adjuster report",
+    "proof_of_loss": "Proof of loss",
+    "cash_call_request": "Cash call request",
+    "payment_proof": "Payment proof"
   },
   "fuType": {
     "request_update": "Request update",
     "offer_expiry": "Offer expiry",
     "other": "Other",
-    "premium_overdue": "Premium overdue"
+    "premium_overdue": "Premium overdue",
+    "awaiting_documents": "Awaiting documents",
+    "cash_call_due": "Cash call due",
+    "claim_review": "Reserve review",
+    "large_loss": "Large loss"
   },
   "audit": {
     "INSERT": "created",
@@ -512,7 +525,8 @@
     "settings": {
       "groups": {
         "followUps": "Follow-ups on offers",
-        "premium": "Premium"
+        "premium": "Premium",
+        "claims": "Claims"
       },
       "follow_up_first_days": "First follow-up after an offer (days)",
       "follow_up_first_daysHint": "Created automatically when a submission is offered.",
@@ -525,7 +539,11 @@
       "premium_default_terms_daysHint": "Used when a submission has no PPW date and no payment terms of its own.",
       "premium_grace_days": "Grace before the first overdue-premium follow-up (days)",
       "premium_grace_daysHint": "0 = the day after the due date.",
-      "invalid": "{{label}}: enter a number from {{min}} to {{max}}."
+      "invalid": "{{label}}: enter a number from {{min}} to {{max}}.",
+      "large_loss_threshold_usd": "Large-loss threshold, USD (our share)",
+      "large_loss_threshold_usdHint": "At or above it (estimate or reserves), the claim is marked and management and admin get a follow-up.",
+      "claim_review_days": "Remind the handler after no reserve movement for (days)",
+      "claim_review_daysHint": "The daily job adds a review follow-up to open claims."
     },
     "jobs": {
       "title": "Daily follow-up job",
@@ -558,7 +576,8 @@
         "submissions": "Submissions",
         "installments": "Installments",
         "receipts": "Receipts",
-        "follow_ups": "Follow-ups"
+        "follow_ups": "Follow-ups",
+        "claims": "Claims"
       }
     }
   },
@@ -810,7 +829,11 @@
       "unallocated": "Not fully allocated",
       "allocated": "Fully allocated",
       "premOverdue": "Overdue",
-      "payable": "Payable to MGAs (return premium)"
+      "payable": "Payable to MGAs (return premium)",
+      "largeLoss": "Large losses",
+      "cashCall": "Cash call due",
+      "claimReview": "Reserve not reviewed for 90+ days",
+      "myClaims": "My claims"
     },
     "kw": {
       "today": "Received today",
@@ -891,6 +914,17 @@
         "payable": "Return premium we owe MGAs (kept apart from receivables)",
         "notes": "Without status: or payable, the list shows what is still owed. A bare MGA, broker, currency or bucket filters by it.",
         "languages": "Words work in English, Russian and Uzbek: просрочено>45, корзина:61-90, qaytarish."
+      },
+      "claims": {
+        "text": "Text anywhere: claim no., cedent ref., risk ref., insured, MGA, broker, cause, location, line",
+        "status": "Open and reopened claims",
+        "large": "Large losses only",
+        "cashcall": "Claims with a cash call due",
+        "dol": "Losses in the first half of 2026",
+        "outstanding": "Outstanding over USD 50,000 (our share)",
+        "mga": "One MGA and line of business",
+        "notes": "A bare status, MGA, line or currency filters by it.",
+        "languages": "Words work in English, Russian and Uzbek: статус:открыт, крупный, убыток:2026."
       }
     },
     "count_one": "{{count}} submission",
@@ -936,6 +970,11 @@
         "placeholder": "Search or filter: insured, MGA, overdue>45, bucket:61-90…",
         "label": "Search or filter receivables",
         "words": "ref no., insured, MGA, broker…"
+      },
+      "claims": {
+        "placeholder": "Search or filter: claim no., insured, cause, MGA, status, large…",
+        "label": "Search or filter claims",
+        "words": "claim no., insured, cause, MGA…"
       }
     },
     "filters": "Filters",
@@ -1051,5 +1090,160 @@
     "missingRate_other": "{{count}} without an FX rate are not in the USD totals",
     "none": "Nothing outstanding",
     "noneHint": "Installments appear here once a bound submission has a premium schedule."
+  },
+  "claim": {
+    "status": {
+      "notified": "Notified",
+      "open": "Open",
+      "reopened": "Reopened",
+      "closed": "Closed",
+      "declined": "Declined"
+    },
+    "to": {
+      "open": "Open the claim",
+      "closed": "Close the claim",
+      "declined": "Decline the claim",
+      "reopened": "Reopen the claim"
+    },
+    "handler": "Claims handler",
+    "claimNo": "Claim no.",
+    "dateOfLoss": "Date of loss",
+    "notifiedDate": "Notified on",
+    "outstandingUsd": "Outstanding, USD",
+    "incurredUsd": "Incurred, USD",
+    "paidUsd": "Paid, USD",
+    "largeLoss": "Large loss",
+    "largeLossHint": "Our share at or above the large-loss threshold (Admin › Settings)",
+    "new": "New claim",
+    "newHint": "Start from the bound risk. The coverage check runs as you type; a failed check needs a comment.",
+    "risk": "Risk",
+    "riskHint": "Search bound submissions by ref no., insured or MGA.",
+    "riskPlaceholder": "Ref no., insured or MGA…",
+    "noRisk": "No bound risk matches.",
+    "changeRisk": "Another risk",
+    "estimate100": "Estimate (100 %), {{ccy}}",
+    "ourShareIs": "Our share: {{amount}} {{ccy}} (signed line)",
+    "cause": "Cause / peril",
+    "location": "Location",
+    "cedentRef": "Cedent's claim ref.",
+    "description": "Description",
+    "checking": "Checking cover…",
+    "coverageOk": "Cover checks out: bound, loss inside the period, same currency.",
+    "coverageWarn": "The coverage check found something. You can continue with a comment.",
+    "coverage": {
+      "no_submission": "The risk was not found",
+      "not_bound": "The risk is not bound",
+      "no_period": "The risk has no period",
+      "before_inception": "The loss is before inception ({{from}})",
+      "after_expiry": "The loss is after expiry ({{to}})",
+      "future_loss": "The date of loss is in the future",
+      "currency": "The currency differs from the risk's ({{ccy}})"
+    },
+    "coverageComment": "Why the claim goes ahead anyway",
+    "coverageAccepted": "Coverage check: accepted with a comment",
+    "create": "Create claim",
+    "created": "Claim {{no}} created",
+    "outstanding": "Outstanding",
+    "paid": "Paid",
+    "incurred": "Incurred",
+    "cashCallDue": "Cash call due",
+    "count_one": "{{count}} claim",
+    "count_other": "{{count}} claims",
+    "none": "No claims yet",
+    "noneHint": "Notified claims appear here. Start one with «New claim».",
+    "exported_one": "{{count}} claim exported",
+    "exported_other": "{{count}} claims exported",
+    "ourSharePct": "Our share",
+    "estimateOurShare": "Estimate, our share",
+    "reserves": "Reserves",
+    "recoveries": "Recoveries",
+    "notFound": "Claim not found, or not visible to you.",
+    "signedLineAtDol": "signed line on the date of loss",
+    "of100": "of {{amount}} at 100 %",
+    "cashCallDueOn": "Cash call due {{date}}",
+    "noRateBadge": "No {{ccy}} rate yet: no USD figures",
+    "declineReason": "Reason for declining",
+    "closeComment": "Closing comment",
+    "addReserve": "Reserve movement",
+    "reserveHistory": "Reserve history",
+    "noReserves": "No reserve yet.",
+    "movementDate": "Date",
+    "reason": "Reason",
+    "amountCcy": "Amount, {{ccy}}",
+    "enteredBy": "Entered by",
+    "payments": "Payments",
+    "recordPayment": "Record payment",
+    "noPayments": "Nothing paid yet.",
+    "paymentDate": "Payment date",
+    "paymentType": "Type",
+    "paymentMethod": "Paid by",
+    "payee": "Payee",
+    "method": {
+      "cash": "Bank transfer",
+      "offset_against_premium": "Offset against premium"
+    },
+    "paymentTypes": {
+      "indemnity": "Indemnity",
+      "expense": "Expense",
+      "cash_call": "Cash call"
+    },
+    "addRecovery": "Add recovery",
+    "noRecoveries": "No recoveries.",
+    "recoveryDate": "Date",
+    "recoveryType": "Kind",
+    "recovery": {
+      "salvage": "Salvage",
+      "subrogation": "Subrogation",
+      "other": "Other"
+    },
+    "edit": "Edit details",
+    "closeWithOutstanding": "Outstanding is {{amount}} {{ccy}}. Close anyway with a comment, or bring it to zero with a reserve movement first.",
+    "statusChanged": "Claim is now {{status}}",
+    "reserveHint": "Reserves are never edited: an increase or a decrease is a new movement, kept in the history.",
+    "movement": "Movement",
+    "increase": "Increase",
+    "decrease": "Decrease",
+    "outstandingAfter": "Outstanding after: {{amount}} {{ccy}}",
+    "reserveSaved": "Reserve movement saved",
+    "saveMovement": "Save movement",
+    "recoverySaved": "Recovery saved",
+    "saveRecovery": "Save recovery",
+    "paymentHint": "Our share, in {{ccy}}. Outstanding now: {{outstanding}}.",
+    "offsetHint": "The amount is set against {{mga}}'s open premium: a receipt from the MGA is recorded and allocated, with the usual rules (a rate across currencies).",
+    "offsetAmountFirst": "Enter the amount first, then choose the installments.",
+    "offsetInFull": "An offset must be allocated in full.",
+    "paymentSaved": "Payment saved",
+    "savePayment": "Save payment",
+    "saved": "Claim saved",
+    "tab": "Claims",
+    "totals": {
+      "outstanding": "Outstanding",
+      "paid_total": "Paid",
+      "recoveries_total": "Recoveries",
+      "incurred": "Incurred"
+    },
+    "otherCurrencyNote": "Some claims are in another currency and are not in these totals.",
+    "noneOnRisk": "No claims on this risk",
+    "cpTitle": "Claims",
+    "openInClaims": "Open in Claims",
+    "openClaims": "Open claims",
+    "largeLosses": "Large losses",
+    "lrWritten": "Loss ratio, incurred / written",
+    "lrEarned": "Loss ratio, incurred / earned",
+    "lrExplain": "Our share, USD. Incurred = paid + outstanding − recoveries. Written = our signed net premium of bound risks; earned = written × the part of the period that has run (pro rata by day).",
+    "dashTitle": "Claims",
+    "outstandingReserves": "Outstanding reserves",
+    "paidYear": "Paid in {{year}}",
+    "incurredYear": "Incurred {{year}}",
+    "byDolNote": "losses in the year",
+    "cashCallsDue": "Cash calls due",
+    "lossRatios": "Loss ratios",
+    "lossRatiosBy": "Group loss ratios by",
+    "uwYear": "Underwriting year",
+    "noRatios": "No bound premium or claims yet",
+    "writtenUsd": "Written, USD",
+    "earnedUsd": "Earned, USD",
+    "noLarge": "No large losses",
+    "noCashCalls": "No cash calls due"
   }
 }

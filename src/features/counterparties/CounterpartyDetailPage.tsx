@@ -32,6 +32,7 @@ import { useCountries, useLocalName } from '@/hooks/useReference'
 import { SavedCheck, useFlash } from '@/components/SavedCheck'
 import type { SubmissionRow } from '@/features/submissions/api'
 import { CounterpartyPremium } from '@/features/premium/CounterpartyPremium'
+import { CounterpartyClaims } from '@/features/claims/CounterpartyClaims'
 
 type Contact = { name: string; role: string; email: string; phone: string }
 
@@ -274,6 +275,7 @@ export function CounterpartyDetailPage() {
           {(p.type === 'mga' || p.type === 'broker') && (
             <CounterpartyPremium party={{ id: p.id, name: p.name, type: p.type }} />
           )}
+          {(p.type === 'mga' || p.type === 'broker') && <CounterpartyClaims party={{ id: p.id, name: p.name, type: p.type }} />}
           <Card>
             <CardHeader><CardTitle>{t('cp.contacts')}</CardTitle></CardHeader>
             <CardContent className="grid gap-2">

@@ -9,6 +9,7 @@
 import type { BrowserContext, Route } from '@playwright/test'
 import { TABLES, USERS, fxRate, type FixtureRole } from './fixtures'
 import { createReceipt, generateSchedule, normalizePremium, premiumSeed, premiumViews } from './premium'
+import { checkLargeLoss, claimStatusError, claimViews, claimsSeed, coverageIssues, createClaimPayment, followUpView, insertClaim } from './claims'
 
 const PROJECT_REF = 'jltrtqwaxvsrnqmjemzc'
 const n = (v: unknown) => Number(v ?? 0)
@@ -172,11 +173,18 @@ export async function installMock(
     })
   }
   const PREMIUM_VIEWS = new Set(['premium_installments_v', 'premium_receipts_v', 'premium_schedule_check_v'])
+  // claims: seed, their follow-ups, and the two views computed on read
+  const cs = claimsSeed(db.submissions_v)
+  Object.assign(db, { claims: cs.claims, claim_reserves: cs.claim_reserves, claim_payments: cs.claim_payments, claim_recoveries: cs.claim_recoveries })
+  db.follow_ups.push(...cs.claimFollowUps)
+  db.follow_ups_v.push(...cs.claimFollowUps.map((f) => followUpView(db, f)))
+  const CLAIM_VIEWS = new Set(['claims_v', 'claim_payments_v'])
 
   // demo data: the restrictive RLS policy is_demo = demo_mode() — a user sees only their own world
   const DEMO_TABLES = new Set([
     'counterparties', 'submissions', 'submissions_v', 'submission_status_history', 'follow_ups', 'follow_ups_v', 'documents',
     'premium_installments', 'premium_installments_v', 'premium_receipts', 'premium_receipts_v', 'premium_allocations', 'premium_schedule_check_v',
+    'claims', 'claims_v', 'claim_reserves', 'claim_payments', 'claim_payments_v', 'claim_recoveries',
   ])
   const demoMode = () => Boolean(role && db.profiles.find((p) => p.id === authUser(role).id)?.ui_demo_mode)
   const byId = (table: string, id: unknown) => (db[table] ?? []).find((x) => x.id === id)
@@ -184,6 +192,8 @@ export async function installMock(
     if (typeof r.is_demo === 'boolean') return r.is_demo
     if (r.submission_id) return Boolean(byId('submissions', r.submission_id)?.is_demo)
     if (r.entity_type === 'premium') return isDemo(byId('premium_installments', r.entity_id) ?? {})
+    if (r.entity_type === 'claim') return isDemo(byId('claims', r.entity_id) ?? {})
+    if (r.claim_id) return isDemo(byId('claims', r.claim_id) ?? {})
     if (r.entity_id) return Boolean(byId('submissions', r.entity_id)?.is_demo)
     if (r.payer_id) return Boolean(byId('counterparties', r.payer_id)?.is_demo)
     if (r.receipt_id) return isDemo(byId('premium_receipts', r.receipt_id) ?? {})
@@ -287,6 +297,12 @@ export async function installMock(
         return json({ submissions: DEMO_SNAPSHOT.submissions.length })
       }
       if (rpc[1] === 'demo_link_violations') return json([])
+      if (rpc[1] === 'claim_coverage_issues') return json(coverageIssues(db, args.p_submission_id, args.p_date_of_loss, args.p_currency))
+      if (rpc[1] === 'create_claim_payment') {
+        const out = createClaimPayment(db, args as unknown as { p_payment: Row; p_allocations?: Row[] }, role)
+        normalizePremium(db, user?.id ?? null)
+        return out.error ? json({ message: out.error, code: out.code }, out.code === '42501' ? 403 : 400) : json(out.data)
+      }
       return json({})
     }
 
@@ -294,6 +310,7 @@ export async function installMock(
     if (!m) return json({ message: 'not found' }, 404)
     const table = m[1]
     if (PREMIUM_VIEWS.has(table)) Object.assign(db, premiumViews(db, fxRate))
+    if (CLAIM_VIEWS.has(table)) Object.assign(db, claimViews(db, fxRate))
     const rows = (db[table] ??= [])
     const params = url.searchParams
 
@@ -314,6 +331,29 @@ export async function installMock(
         return out.length ? json(out[0], 200, headers) : json({ message: 'no rows' }, 406)
       }
       return json(method === 'HEAD' ? null : out, 200, headers)
+    }
+    if (method === 'POST' && table === 'claims') {
+      if (role !== 'claims' && role !== 'admin') return json({ message: 'new row violates row-level security policy for table "claims"', code: '42501' }, 403)
+      const out = insertClaim(db, req.postDataJSON() as Row, user?.id ?? null, demoMode())
+      if (out.error) return json({ message: out.error, code: out.code }, 400)
+      return json((req.headers()['accept'] ?? '').includes('vnd.pgrst.object') ? out.row : [out.row], 201)
+    }
+    if (method === 'POST' && (table === 'claim_reserves' || table === 'claim_recoveries')) {
+      const body = req.postDataJSON() as Row
+      const c = byId('claims', body.claim_id)
+      if (!c) return json({ message: 'Claim not found', code: 'P0002' }, 400)
+      if (table === 'claim_reserves' && (c.status === 'closed' || c.status === 'declined')) return json({ message: `Claim ${c.claim_no} is ${c.status}: reopen it first`, code: '23514' }, 400)
+      const row = { id: crypto.randomUUID(), created_at: new Date().toISOString(), entered_by: user?.id ?? null, ...body, amount: Number(body.amount) }
+      rows.push(row)
+      if (table === 'claim_reserves') checkLargeLoss(db, c)
+      return json([row], 201)
+    }
+    if (method === 'PATCH' && table === 'claims') {
+      const patch = req.postDataJSON() as Row
+      for (const c of filterRows(rows, params)) {
+        const problem = claimStatusError(db, c, patch)
+        if (problem) return json({ message: problem, code: '23514' }, 400)
+      }
     }
     if (method === 'POST') {
       const body = req.postDataJSON()

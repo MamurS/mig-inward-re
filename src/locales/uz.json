@@ -10,7 +10,8 @@
     "counterparties": "Kontragentlar",
     "admin": "Boshqaruv",
     "receipts": "Tushumlar",
-    "receivables": "Debitorlik"
+    "receivables": "Debitorlik",
+    "claims": "Zararlar"
   },
   "roles": {
     "admin": "Administrator",
@@ -85,6 +86,10 @@
     "receivables": {
       "title": "Debitorlik qarzi",
       "subtitle": "MGA bizga qarzdor bo'lgan summalar — muddati va yoshi bo'yicha, hamda biz qaytarishimiz kerak bo'lgan mukofotlar"
+    },
+    "claims": {
+      "title": "Zararlar",
+      "subtitle": "Tasdiqlangan xavflar bo'yicha zararlar — zaxira, to'lov va qoplamalardagi ulushimiz"
     }
   },
   "errors": {
@@ -130,13 +135,21 @@
     "claim_notice": "Zarar haqida xabarnoma",
     "loss_advice": "Zarar haqida bildirishnoma",
     "correspondence": "Yozishmalar",
-    "other": "Boshqa"
+    "other": "Boshqa",
+    "adjuster_report": "Adjaster hisoboti",
+    "proof_of_loss": "Zarar tasdig'i",
+    "cash_call_request": "Keshkol so'rovi",
+    "payment_proof": "To'lov tasdig'i"
   },
   "fuType": {
     "request_update": "Holat soʻrash",
     "offer_expiry": "Taklif muddati tugashi",
     "other": "Boshqa",
-    "premium_overdue": "Mukofot muddati oʻtgan"
+    "premium_overdue": "Mukofot muddati oʻtgan",
+    "awaiting_documents": "Hujjatlar kutilmoqda",
+    "cash_call_due": "Keshkol muddati",
+    "claim_review": "Zaxirani ko'rib chiqish",
+    "large_loss": "Yirik zarar"
   },
   "audit": {
     "INSERT": "yaratildi",
@@ -512,7 +525,8 @@
     "settings": {
       "groups": {
         "followUps": "Takliflar bo'yicha eslatmalar",
-        "premium": "Mukofotlar"
+        "premium": "Mukofotlar",
+        "claims": "Zararlar"
       },
       "follow_up_first_days": "Taklifdan keyingi birinchi eslatma (kun)",
       "follow_up_first_daysHint": "Ariza «Taklif» holatiga o'tganda avtomatik yaratiladi.",
@@ -525,7 +539,11 @@
       "premium_default_terms_daysHint": "Arizada PPW sanasi va o'z to'lov muddati bo'lmasa.",
       "premium_grace_days": "Birinchi kechikish eslatmasigacha imtiyoz (kun)",
       "premium_grace_daysHint": "0 = muddatdan keyingi kun.",
-      "invalid": "{{label}}: {{min}} dan {{max}} gacha son kiriting."
+      "invalid": "{{label}}: {{min}} dan {{max}} gacha son kiriting.",
+      "large_loss_threshold_usd": "Yirik zarar chegarasi, USD (ulushimiz)",
+      "large_loss_threshold_usdHint": "Baho yoki zaxira shu darajada va undan yuqori bo'lsa, zarar belgilanadi, rahbariyat va administrator vazifa oladi.",
+      "claim_review_days": "Zaxira o'zgarmasa mas'ulga eslatish (kun)",
+      "claim_review_daysHint": "Kunlik vazifa ochiq zararlarga ko'rib chiqish vazifasini qo'shadi."
     },
     "jobs": {
       "title": "Kundalik eslatma vazifasi",
@@ -558,7 +576,8 @@
         "submissions": "Arizalar",
         "installments": "To'lovlar",
         "receipts": "Tushumlar",
-        "follow_ups": "Vazifalar"
+        "follow_ups": "Vazifalar",
+        "claims": "Zararlar"
       }
     }
   },
@@ -810,7 +829,11 @@
       "unallocated": "Toʻliq taqsimlanmagan",
       "allocated": "Toʻliq taqsimlangan",
       "premOverdue": "Kechikkan",
-      "payable": "MGA ga to'lanadigan (qaytarish)"
+      "payable": "MGA ga to'lanadigan (qaytarish)",
+      "largeLoss": "Yirik zararlar",
+      "cashCall": "Keshkol muddati",
+      "claimReview": "Zaxira 90+ kun ko'rilmagan",
+      "myClaims": "Mening zararlarim"
     },
     "kw": {
       "today": "Bugun qabul qilingan",
@@ -891,6 +914,17 @@
         "payable": "MGA ga qaytariladigan mukofotlar (debitorlikdan alohida)",
         "notes": "Holat yoki qaytarish ko'rsatilmasa, hali to'lanmagan summalar ko'rinadi. MGA, broker, valyuta yoki yosh guruhi nomining o'zi filtrlaydi.",
         "languages": "So'zlar ingliz, rus va o'zbek tillarida ishlaydi: просрочено>45, корзина:61-90, qaytarish."
+      },
+      "claims": {
+        "text": "Istalgan joyda matn: zarar №, tsedent raqami, xavf raqami, sug'urtalanuvchi, MGA, broker, sabab, joy, yo'nalish",
+        "status": "Ochiq va qayta ochilgan zararlar",
+        "large": "Faqat yirik zararlar",
+        "cashcall": "Keshkol to'lanadigan zararlar",
+        "dol": "2026 yil birinchi yarmidagi zararlar",
+        "outstanding": "Zaxira qoldig'i USD 50 000 dan ortiq (ulushimiz)",
+        "mga": "Bitta MGA va yo'nalish",
+        "notes": "Holat, MGA, yo'nalish yoki valyuta nomining o'zi filtrlaydi.",
+        "languages": "So'zlar ingliz, rus va o'zbek tillarida ishlaydi: статус:открыт, yirik, zarar:2026."
       }
     },
     "count_one": "{{count}} ta ariza",
@@ -936,6 +970,11 @@
         "placeholder": "Qidirish yoki filtr: sug'urtalanuvchi, MGA, overdue>45, bucket:61-90…",
         "label": "Debitorlik bo'yicha qidirish",
         "words": "raqam, sug'urtalanuvchi, MGA, broker…"
+      },
+      "claims": {
+        "placeholder": "Qidirish yoki filtr: zarar №, sug'urtalanuvchi, sabab, MGA, holat…",
+        "label": "Zararlar bo'yicha qidirish",
+        "words": "zarar №, sug'urtalanuvchi, sabab, MGA…"
       }
     },
     "filters": "Filtrlar",
@@ -1051,5 +1090,160 @@
     "missingRate_other": "{{count}} ta kurssiz USD jamiga kirmaydi",
     "none": "Qarz yo'q",
     "noneHint": "Tasdiqlangan arizada mukofot jadvali bo'lganda to'lovlar shu yerda ko'rinadi."
+  },
+  "claim": {
+    "status": {
+      "notified": "Xabar qilingan",
+      "open": "Ochiq",
+      "reopened": "Qayta ochilgan",
+      "closed": "Yopilgan",
+      "declined": "Rad etilgan"
+    },
+    "to": {
+      "open": "Zararni ochish",
+      "closed": "Zararni yopish",
+      "declined": "Zararni rad etish",
+      "reopened": "Zararni qayta ochish"
+    },
+    "handler": "Zarar bo'yicha mas'ul",
+    "claimNo": "Zarar №",
+    "dateOfLoss": "Zarar sanasi",
+    "notifiedDate": "Xabar sanasi",
+    "outstandingUsd": "Zaxira qoldig'i, USD",
+    "incurredUsd": "Ko'rilgan zarar, USD",
+    "paidUsd": "To'langan, USD",
+    "largeLoss": "Yirik zarar",
+    "largeLossHint": "Ulushimiz yirik zarar chegarasida yoki undan yuqori (Ma'muriyat › Sozlamalar)",
+    "new": "Yangi zarar",
+    "newHint": "Tasdiqlangan xavfdan boshlang. Qoplama tekshiruvi yozish bilan ishlaydi; muammo bo'lsa izoh kerak.",
+    "risk": "Xavf",
+    "riskHint": "Tasdiqlangan arizalarni raqam, sug'urtalanuvchi yoki MGA bo'yicha qidiring.",
+    "riskPlaceholder": "Raqam, sug'urtalanuvchi yoki MGA…",
+    "noRisk": "Mos tasdiqlangan xavf yo'q.",
+    "changeRisk": "Boshqa xavf",
+    "estimate100": "Baho (100 %), {{ccy}}",
+    "ourShareIs": "Ulushimiz: {{amount}} {{ccy}} (imzolangan ulush)",
+    "cause": "Sabab / xavf",
+    "location": "Joy",
+    "cedentRef": "Tsedent zarar raqami",
+    "description": "Tavsif",
+    "checking": "Qoplama tekshirilmoqda…",
+    "coverageOk": "Qoplama joyida: xavf tasdiqlangan, zarar davr ichida, valyuta bir xil.",
+    "coverageWarn": "Qoplama tekshiruvi muammo topdi. Izoh bilan davom etish mumkin.",
+    "coverage": {
+      "no_submission": "Xavf topilmadi",
+      "not_bound": "Xavf tasdiqlanmagan",
+      "no_period": "Xavfda davr yo'q",
+      "before_inception": "Zarar davr boshlanishidan oldin ({{from}})",
+      "after_expiry": "Zarar davr tugaganidan keyin ({{to}})",
+      "future_loss": "Zarar sanasi kelajakda",
+      "currency": "Valyuta xavf valyutasidan farq qiladi ({{ccy}})"
+    },
+    "coverageComment": "Zarar nega baribir qabul qilinmoqda",
+    "coverageAccepted": "Qoplama tekshiruvi: izoh bilan qabul qilingan",
+    "create": "Zararni yaratish",
+    "created": "{{no}} zarar yaratildi",
+    "outstanding": "Zaxira qoldig'i",
+    "paid": "To'langan",
+    "incurred": "Ko'rilgan",
+    "cashCallDue": "Keshkol muddati",
+    "count_one": "{{count}} ta zarar",
+    "count_other": "{{count}} ta zarar",
+    "none": "Hali zararlar yo'q",
+    "noneHint": "Xabar qilingan zararlar shu yerda ko'rinadi. «Yangi zarar» bilan boshlang.",
+    "exported_one": "{{count}} ta zarar eksport qilindi",
+    "exported_other": "{{count}} ta zarar eksport qilindi",
+    "ourSharePct": "Ulushimiz",
+    "estimateOurShare": "Baho, ulushimiz",
+    "reserves": "Zaxiralar",
+    "recoveries": "Qoplamalar",
+    "notFound": "Zarar topilmadi yoki sizga ko'rinmaydi.",
+    "signedLineAtDol": "zarar sanasidagi imzolangan ulush",
+    "of100": "100 % da {{amount}} dan",
+    "cashCallDueOn": "Keshkol {{date}} gacha",
+    "noRateBadge": "{{ccy}} kursi hali yo'q: USD summalar yo'q",
+    "declineReason": "Rad etish sababi",
+    "closeComment": "Yopish izohi",
+    "addReserve": "Zaxira o'zgarishi",
+    "reserveHistory": "Zaxira tarixi",
+    "noReserves": "Hali zaxira yo'q.",
+    "movementDate": "Sana",
+    "reason": "Sabab",
+    "amountCcy": "Summa, {{ccy}}",
+    "enteredBy": "Kiritgan",
+    "payments": "To'lovlar",
+    "recordPayment": "To'lovni yozish",
+    "noPayments": "Hali to'lov yo'q.",
+    "paymentDate": "To'lov sanasi",
+    "paymentType": "Turi",
+    "paymentMethod": "Usul",
+    "payee": "Oluvchi",
+    "method": {
+      "cash": "Bank o'tkazmasi",
+      "offset_against_premium": "Mukofotga hisob"
+    },
+    "paymentTypes": {
+      "indemnity": "Qoplash",
+      "expense": "Xarajat",
+      "cash_call": "Keshkol"
+    },
+    "addRecovery": "Qoplama qo'shish",
+    "noRecoveries": "Qoplamalar yo'q.",
+    "recoveryDate": "Sana",
+    "recoveryType": "Turi",
+    "recovery": {
+      "salvage": "Yaroqli qoldiq",
+      "subrogation": "Subrogatsiya",
+      "other": "Boshqa"
+    },
+    "edit": "Ma'lumotlarni o'zgartirish",
+    "closeWithOutstanding": "Zaxira qoldig'i {{amount}} {{ccy}}. Izoh bilan yoping yoki avval zaxirani nolga keltiring.",
+    "statusChanged": "Zarar holati: {{status}}",
+    "reserveHint": "Zaxira hech qachon tahrirlanmaydi: oshirish yoki kamaytirish — tarixdagi yangi yozuv.",
+    "movement": "O'zgarish",
+    "increase": "Oshirish",
+    "decrease": "Kamaytirish",
+    "outstandingAfter": "Keyingi qoldiq: {{amount}} {{ccy}}",
+    "reserveSaved": "Zaxira o'zgarishi saqlandi",
+    "saveMovement": "Saqlash",
+    "recoverySaved": "Qoplama saqlandi",
+    "saveRecovery": "Qoplamani saqlash",
+    "paymentHint": "Ulushimiz, {{ccy}} da. Hozirgi qoldiq: {{outstanding}}.",
+    "offsetHint": "Summa {{mga}} ning ochiq mukofotiga hisoblanadi: MGA dan tushum yoziladi va odatdagi qoidalar bilan taqsimlanadi (valyutalar orasida kurs).",
+    "offsetAmountFirst": "Avval summani kiriting, keyin to'lovlarni tanlang.",
+    "offsetInFull": "Hisob to'liq taqsimlanishi kerak.",
+    "paymentSaved": "To'lov saqlandi",
+    "savePayment": "To'lovni saqlash",
+    "saved": "Zarar saqlandi",
+    "tab": "Zararlar",
+    "totals": {
+      "outstanding": "Zaxira qoldig'i",
+      "paid_total": "To'langan",
+      "recoveries_total": "Qoplamalar",
+      "incurred": "Ko'rilgan"
+    },
+    "otherCurrencyNote": "Ba'zi zararlar boshqa valyutada va bu jamlarga kirmaydi.",
+    "noneOnRisk": "Bu xavf bo'yicha zarar yo'q",
+    "cpTitle": "Zararlar",
+    "openInClaims": "Zararlarda ochish",
+    "openClaims": "Ochiq zararlar",
+    "largeLosses": "Yirik zararlar",
+    "lrWritten": "Zararlilik, ko'rilgan / yozilgan mukofot",
+    "lrEarned": "Zararlilik, ko'rilgan / ishlangan mukofot",
+    "lrExplain": "Ulushimiz, USD. Ko'rilgan = to'langan + zaxira qoldig'i − qoplamalar. Yozilgan = tasdiqlangan xavflar bo'yicha netto mukofotimiz; ishlangan = yozilgan × davrning o'tgan qismi (kunlar bo'yicha).",
+    "dashTitle": "Zararlar",
+    "outstandingReserves": "Zaxira qoldiqlari",
+    "paidYear": "{{year}} yilda to'langan",
+    "incurredYear": "{{year}} yil ko'rilgan",
+    "byDolNote": "yil zararlari",
+    "cashCallsDue": "To'lanadigan keshkollar",
+    "lossRatios": "Zararlilik",
+    "lossRatiosBy": "Zararlilikni guruhlash",
+    "uwYear": "Anderrayting yili",
+    "noRatios": "Hali mukofot yoki zarar yo'q",
+    "writtenUsd": "Yozilgan, USD",
+    "earnedUsd": "Ishlangan, USD",
+    "noLarge": "Yirik zararlar yo'q",
+    "noCashCalls": "To'lanadigan keshkollar yo'q"
   }
 }

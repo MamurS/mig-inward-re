@@ -21,6 +21,7 @@ import { formatAmount, formatDate, formatLongDate, formatMonthShort, isoDate, lo
 import { errorMessage } from '@/lib/errors'
 import { STATUS_SOLID, type SubmissionStatus } from '@/lib/status'
 import { PremiumDashboard } from '@/features/premium/PremiumDashboard'
+import { ClaimsDashboard } from '@/features/claims/ClaimsDashboard'
 
 type Row = {
   id: string
@@ -74,6 +75,7 @@ export function DashboardPage() {
   const { profile, role } = useAuth()
   const { data, isLoading, error } = useDashboardRows()
   const seesPremium = role === 'admin' || role === 'management' || role === 'finance'
+  const seesClaims = role === 'admin' || role === 'management' || role === 'finance' || role === 'claims'
   const thisYear = new Date().getFullYear()
   const [year, setYear] = useState<string>(String(thisYear))
 
@@ -227,6 +229,7 @@ export function DashboardPage() {
       </div>
 
       {seesPremium && <PremiumDashboard />}
+      {seesClaims && <ClaimsDashboard />}
 
       {/* What needs an answer first, then how we are doing */}
       <div className="mb-4 grid gap-4 xl:grid-cols-3">
