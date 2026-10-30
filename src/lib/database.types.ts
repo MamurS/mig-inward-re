@@ -53,6 +53,367 @@ export type Database = {
         }
         Relationships: []
       }
+      claim_payments: {
+        Row: {
+          amount: number
+          bank_reference: string | null
+          claim_id: string
+          created_at: string
+          currency: string
+          entered_by: string | null
+          id: string
+          is_demo: boolean
+          method: Database["public"]["Enums"]["claim_payment_method"]
+          notes: string | null
+          offset_receipt_id: string | null
+          payee_id: string | null
+          payment_date: string
+          type: Database["public"]["Enums"]["claim_payment_type"]
+        }
+        Insert: {
+          amount: number
+          bank_reference?: string | null
+          claim_id: string
+          created_at?: string
+          currency: string
+          entered_by?: string | null
+          id?: string
+          is_demo?: boolean
+          method?: Database["public"]["Enums"]["claim_payment_method"]
+          notes?: string | null
+          offset_receipt_id?: string | null
+          payee_id?: string | null
+          payment_date?: string
+          type?: Database["public"]["Enums"]["claim_payment_type"]
+        }
+        Update: {
+          amount?: number
+          bank_reference?: string | null
+          claim_id?: string
+          created_at?: string
+          currency?: string
+          entered_by?: string | null
+          id?: string
+          is_demo?: boolean
+          method?: Database["public"]["Enums"]["claim_payment_method"]
+          notes?: string | null
+          offset_receipt_id?: string | null
+          payee_id?: string | null
+          payment_date?: string
+          type?: Database["public"]["Enums"]["claim_payment_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "claim_payments_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "claims"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claim_payments_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "claims_v"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claim_payments_currency_fkey"
+            columns: ["currency"]
+            isOneToOne: false
+            referencedRelation: "currencies"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "claim_payments_entered_by_fkey"
+            columns: ["entered_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claim_payments_offset_receipt_id_fkey"
+            columns: ["offset_receipt_id"]
+            isOneToOne: false
+            referencedRelation: "premium_receipts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claim_payments_offset_receipt_id_fkey"
+            columns: ["offset_receipt_id"]
+            isOneToOne: false
+            referencedRelation: "premium_receipts_v"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claim_payments_payee_id_fkey"
+            columns: ["payee_id"]
+            isOneToOne: false
+            referencedRelation: "counterparties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      claim_recoveries: {
+        Row: {
+          amount: number
+          claim_id: string
+          created_at: string
+          entered_by: string | null
+          id: string
+          is_demo: boolean
+          notes: string | null
+          recovery_date: string
+          type: Database["public"]["Enums"]["claim_recovery_type"]
+        }
+        Insert: {
+          amount: number
+          claim_id: string
+          created_at?: string
+          entered_by?: string | null
+          id?: string
+          is_demo?: boolean
+          notes?: string | null
+          recovery_date?: string
+          type: Database["public"]["Enums"]["claim_recovery_type"]
+        }
+        Update: {
+          amount?: number
+          claim_id?: string
+          created_at?: string
+          entered_by?: string | null
+          id?: string
+          is_demo?: boolean
+          notes?: string | null
+          recovery_date?: string
+          type?: Database["public"]["Enums"]["claim_recovery_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "claim_recoveries_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "claims"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claim_recoveries_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "claims_v"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claim_recoveries_entered_by_fkey"
+            columns: ["entered_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      claim_reserves: {
+        Row: {
+          amount: number
+          claim_id: string
+          created_at: string
+          entered_by: string | null
+          id: string
+          is_demo: boolean
+          movement_date: string
+          reason: string
+        }
+        Insert: {
+          amount: number
+          claim_id: string
+          created_at?: string
+          entered_by?: string | null
+          id?: string
+          is_demo?: boolean
+          movement_date?: string
+          reason: string
+        }
+        Update: {
+          amount?: number
+          claim_id?: string
+          created_at?: string
+          entered_by?: string | null
+          id?: string
+          is_demo?: boolean
+          movement_date?: string
+          reason?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "claim_reserves_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "claims"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claim_reserves_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "claims_v"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claim_reserves_entered_by_fkey"
+            columns: ["entered_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      claims: {
+        Row: {
+          cause: string | null
+          cedent_claim_ref: string | null
+          claim_no: string
+          close_comment: string | null
+          coverage_comment: string | null
+          coverage_issues: string[]
+          created_at: string
+          created_by: string | null
+          currency: string
+          date_of_loss: string
+          decline_reason: string | null
+          description: string | null
+          estimate_100: number | null
+          handler_id: string | null
+          id: string
+          is_demo: boolean
+          large_loss: boolean
+          large_loss_at: string | null
+          location: string | null
+          notes: string | null
+          notified_date: string
+          signed_share_pct: number
+          status: Database["public"]["Enums"]["claim_status"]
+          status_changed_at: string
+          submission_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          cause?: string | null
+          cedent_claim_ref?: string | null
+          claim_no: string
+          close_comment?: string | null
+          coverage_comment?: string | null
+          coverage_issues?: string[]
+          created_at?: string
+          created_by?: string | null
+          currency: string
+          date_of_loss: string
+          decline_reason?: string | null
+          description?: string | null
+          estimate_100?: number | null
+          handler_id?: string | null
+          id?: string
+          is_demo?: boolean
+          large_loss?: boolean
+          large_loss_at?: string | null
+          location?: string | null
+          notes?: string | null
+          notified_date?: string
+          signed_share_pct: number
+          status?: Database["public"]["Enums"]["claim_status"]
+          status_changed_at?: string
+          submission_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          cause?: string | null
+          cedent_claim_ref?: string | null
+          claim_no?: string
+          close_comment?: string | null
+          coverage_comment?: string | null
+          coverage_issues?: string[]
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          date_of_loss?: string
+          decline_reason?: string | null
+          description?: string | null
+          estimate_100?: number | null
+          handler_id?: string | null
+          id?: string
+          is_demo?: boolean
+          large_loss?: boolean
+          large_loss_at?: string | null
+          location?: string | null
+          notes?: string | null
+          notified_date?: string
+          signed_share_pct?: number
+          status?: Database["public"]["Enums"]["claim_status"]
+          status_changed_at?: string
+          submission_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "claims_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claims_currency_fkey"
+            columns: ["currency"]
+            isOneToOne: false
+            referencedRelation: "currencies"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "claims_handler_id_fkey"
+            columns: ["handler_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claims_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "follow_ups_v"
+            referencedColumns: ["submission_id"]
+          },
+          {
+            foreignKeyName: "claims_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "premium_schedule_check_v"
+            referencedColumns: ["submission_id"]
+          },
+          {
+            foreignKeyName: "claims_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "submissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claims_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "submissions_v"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claims_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       counterparties: {
         Row: {
           active: boolean
@@ -1064,6 +1425,237 @@ export type Database = {
       }
     }
     Views: {
+      claim_payments_v: {
+        Row: {
+          amount: number | null
+          amount_usd: number | null
+          bank_reference: string | null
+          claim_id: string | null
+          claim_no: string | null
+          created_at: string | null
+          currency: string | null
+          entered_by: string | null
+          entered_by_name: string | null
+          fx_rate_to_usd: number | null
+          id: string | null
+          method: Database["public"]["Enums"]["claim_payment_method"] | null
+          mga_id: string | null
+          mga_name: string | null
+          notes: string | null
+          offset_receipt_id: string | null
+          offset_receipt_no: string | null
+          payee_id: string | null
+          payee_name: string | null
+          payment_date: string | null
+          type: Database["public"]["Enums"]["claim_payment_type"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "claim_payments_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "claims"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claim_payments_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "claims_v"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claim_payments_currency_fkey"
+            columns: ["currency"]
+            isOneToOne: false
+            referencedRelation: "currencies"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "claim_payments_entered_by_fkey"
+            columns: ["entered_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claim_payments_offset_receipt_id_fkey"
+            columns: ["offset_receipt_id"]
+            isOneToOne: false
+            referencedRelation: "premium_receipts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claim_payments_offset_receipt_id_fkey"
+            columns: ["offset_receipt_id"]
+            isOneToOne: false
+            referencedRelation: "premium_receipts_v"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claim_payments_payee_id_fkey"
+            columns: ["payee_id"]
+            isOneToOne: false
+            referencedRelation: "counterparties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submissions_mga_id_fkey"
+            columns: ["mga_id"]
+            isOneToOne: false
+            referencedRelation: "counterparties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      claims_v: {
+        Row: {
+          broker_id: string | null
+          broker_name: string | null
+          cash_call_due_at: string | null
+          cause: string | null
+          cedent_claim_ref: string | null
+          claim_no: string | null
+          close_comment: string | null
+          coverage_comment: string | null
+          coverage_issues: string[] | null
+          created_at: string | null
+          created_by: string | null
+          currency: string | null
+          date_of_loss: string | null
+          days_since_reserve: number | null
+          decline_reason: string | null
+          description: string | null
+          estimate_100: number | null
+          estimate_our_share: number | null
+          estimate_our_share_usd: number | null
+          fx_rate_to_usd: number | null
+          handler_id: string | null
+          handler_name: string | null
+          id: string | null
+          incurred: number | null
+          incurred_usd: number | null
+          insured_name: string | null
+          large_loss: boolean | null
+          large_loss_at: string | null
+          last_payment_date: string | null
+          last_reserve_date: string | null
+          lob_code: string | null
+          lob_id: string | null
+          lob_name: string | null
+          location: string | null
+          mga_id: string | null
+          mga_name: string | null
+          notes: string | null
+          notified_date: string | null
+          outstanding: number | null
+          outstanding_usd: number | null
+          paid_total: number | null
+          paid_usd: number | null
+          period_from: string | null
+          period_to: string | null
+          recoveries_total: number | null
+          recoveries_usd: number | null
+          ref_no: string | null
+          reserves_total: number | null
+          search_text: string | null
+          signed_share_pct: number | null
+          status: Database["public"]["Enums"]["claim_status"] | null
+          status_changed_at: string | null
+          submission_id: string | null
+          underwriter_id: string | null
+          underwriter_name: string | null
+          underwriting_year: number | null
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "claims_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claims_currency_fkey"
+            columns: ["currency"]
+            isOneToOne: false
+            referencedRelation: "currencies"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "claims_handler_id_fkey"
+            columns: ["handler_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claims_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "follow_ups_v"
+            referencedColumns: ["submission_id"]
+          },
+          {
+            foreignKeyName: "claims_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "premium_schedule_check_v"
+            referencedColumns: ["submission_id"]
+          },
+          {
+            foreignKeyName: "claims_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "submissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claims_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "submissions_v"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claims_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submissions_broker_id_fkey"
+            columns: ["broker_id"]
+            isOneToOne: false
+            referencedRelation: "counterparties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submissions_lob_id_fkey"
+            columns: ["lob_id"]
+            isOneToOne: false
+            referencedRelation: "lines_of_business"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submissions_mga_id_fkey"
+            columns: ["mga_id"]
+            isOneToOne: false
+            referencedRelation: "counterparties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submissions_underwriter_id_fkey"
+            columns: ["underwriter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       follow_ups_v: {
         Row: {
           assigned_role: Database["public"]["Enums"]["app_role"] | null
@@ -1468,6 +2060,7 @@ export type Database = {
       }
     }
     Functions: {
+      _seed_demo_claims: { Args: { p_actor: string }; Returns: Json }
       _seed_demo_data: { Args: { p_actor: string }; Returns: Json }
       admin_update_user: {
         Args: {
@@ -1562,6 +2155,10 @@ export type Database = {
         Args: { p_submission_id: string }
         Returns: boolean
       }
+      can_read_claims_of: {
+        Args: { p_submission_id: string }
+        Returns: boolean
+      }
       can_write_entity: { Args: { p_entity_type: string }; Returns: boolean }
       change_submission_status: {
         Args: {
@@ -1616,6 +2213,48 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "submissions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      claim_check_large_loss: {
+        Args: { p_claim_id: string }
+        Returns: undefined
+      }
+      claim_coverage_issues: {
+        Args: {
+          p_currency: string
+          p_date_of_loss: string
+          p_submission_id: string
+        }
+        Returns: string[]
+      }
+      claim_outstanding: { Args: { p_claim_id: string }; Returns: number }
+      claim_signed_share: {
+        Args: { p_date_of_loss: string; p_submission_id: string }
+        Returns: number
+      }
+      create_claim_payment: {
+        Args: { p_allocations?: Json; p_payment: Json }
+        Returns: {
+          amount: number
+          bank_reference: string | null
+          claim_id: string
+          created_at: string
+          currency: string
+          entered_by: string | null
+          id: string
+          is_demo: boolean
+          method: Database["public"]["Enums"]["claim_payment_method"]
+          notes: string | null
+          offset_receipt_id: string | null
+          payee_id: string | null
+          payment_date: string
+          type: Database["public"]["Enums"]["claim_payment_type"]
+        }
+        SetofOptions: {
+          from: "*"
+          to: "claim_payments"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -1735,6 +2374,8 @@ export type Database = {
         }
         Returns: undefined
       }
+      run_daily_claim_follow_ups: { Args: never; Returns: Json }
+      run_daily_claim_follow_ups_now: { Args: never; Returns: Json }
       run_daily_follow_ups: { Args: never; Returns: Json }
       run_daily_follow_ups_now: { Args: never; Returns: Json }
       run_daily_premium_follow_ups: { Args: never; Returns: Json }
@@ -1758,6 +2399,10 @@ export type Database = {
     Enums: {
       app_role: "admin" | "underwriter" | "finance" | "claims" | "management"
       business_type: "facultative" | "binder"
+      claim_payment_method: "cash" | "offset_against_premium"
+      claim_payment_type: "indemnity" | "expense" | "cash_call"
+      claim_recovery_type: "salvage" | "subrogation" | "other"
+      claim_status: "notified" | "open" | "closed" | "reopened" | "declined"
       counterparty_type: "mga" | "broker" | "cedent"
       doc_type:
         | "submission"
@@ -1771,12 +2416,20 @@ export type Database = {
         | "correspondence"
         | "other"
         | "remittance_advice"
+        | "adjuster_report"
+        | "proof_of_loss"
+        | "cash_call_request"
+        | "payment_proof"
       entity_type: "submission" | "premium" | "claim" | "bordereau" | "receipt"
       follow_up_type:
         | "request_update"
         | "offer_expiry"
         | "other"
         | "premium_overdue"
+        | "awaiting_documents"
+        | "cash_call_due"
+        | "claim_review"
+        | "large_loss"
       installment_status: "open" | "partially_paid" | "paid" | "written_off"
       installment_type: "original" | "additional" | "return"
       submission_status:
@@ -1916,6 +2569,10 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "underwriter", "finance", "claims", "management"],
       business_type: ["facultative", "binder"],
+      claim_payment_method: ["cash", "offset_against_premium"],
+      claim_payment_type: ["indemnity", "expense", "cash_call"],
+      claim_recovery_type: ["salvage", "subrogation", "other"],
+      claim_status: ["notified", "open", "closed", "reopened", "declined"],
       counterparty_type: ["mga", "broker", "cedent"],
       doc_type: [
         "submission",
@@ -1929,6 +2586,10 @@ export const Constants = {
         "correspondence",
         "other",
         "remittance_advice",
+        "adjuster_report",
+        "proof_of_loss",
+        "cash_call_request",
+        "payment_proof",
       ],
       entity_type: ["submission", "premium", "claim", "bordereau", "receipt"],
       follow_up_type: [
@@ -1936,6 +2597,10 @@ export const Constants = {
         "offer_expiry",
         "other",
         "premium_overdue",
+        "awaiting_documents",
+        "cash_call_due",
+        "claim_review",
+        "large_loss",
       ],
       installment_status: ["open", "partially_paid", "paid", "written_off"],
       installment_type: ["original", "additional", "return"],
