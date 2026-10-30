@@ -18,7 +18,7 @@ cannot fix, or an action only the owner can do.
 | A | Phase 2 premium: steps 5 (dashboard, counterparty) and 6 (self-review), merge | `claude/mga-inward-reinsurance-phase-0-1-otvuzf` / MamurS/mig-inward-re#4 | ✅ merged |
 | B | Phase 3 claims (spec) | same branch name, restarted from main / MamurS/mig-inward-re#5 | ✅ merged |
 | C | Binders and bordereaux | same branch name, restarted from main / MamurS/mig-inward-re#6 | ✅ merged |
-| D | AI-assisted data entry (pluggable provider) | same branch name, restarted from main / MamurS/mig-inward-re#7 | 🔄 in progress |
+| D | AI-assisted data entry (pluggable provider) | same branch name, restarted from main / MamurS/mig-inward-re#7 | ✅ merged |
 | E | Whole-system audit and polish | — | — |
 | F | Self-hosting runbook (prepare, do not execute) | — | — |
 
@@ -62,7 +62,8 @@ Branch: the session's branch name, restarted from `main` after #6 merged; PR Mam
 - [x] Edge Function `ai-extract` deployed (Anthropic `claude-haiku-5-5` default, Ollama / OpenAI-compatible alternative; strict JSON with value, confidence, source; caps, cache, daily limit, usage log).
 - [x] Submission form «Fill from document» (review panel, fuzzy counterparty match, duplicate warning, marked fields, nothing saved until Save); AI mapping in the bordereau wizard; Admin › AI.
 - [x] Unit tests (13), e2e `ai.spec.ts` (5), EN / RU / UZ.
-- [ ] Migration `demo_data_ai` (demo delete / counts cover the AI tables) — waiting for the owner to run it in the SQL editor.
-- [ ] Full suite, advisor, merge #7.
+- [x] Migration `demo_data_ai` (demo delete / counts cover the AI tables), run by the owner in the SQL editor (the MCP approval prompt did not reach them), verified and recorded in the history.
+- [x] Advisor: nothing new (the documented definer RPCs; `ai_available` is invoker). Full suite green (build, vitest 106/106, Playwright 172 + 76 screenshot specs skipped; `feedback.spec.ts` timing passes alone — 107 ms once under full-suite load on the dev container, CI green); PR #7 merged.
 - **Owner action:** set `ANTHROPIC_API_KEY` (optional `AI_PROVIDER`, `AI_MODEL`) in Supabase → Edge Functions → Secrets, then Admin › AI → switch on.
 
+Next: **E — Whole-system audit and polish**, on the same branch name restarted from `main`.
