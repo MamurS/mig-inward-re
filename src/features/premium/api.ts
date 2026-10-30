@@ -80,3 +80,107 @@ export function useCanEditSchedule() {
   return (underwriterId: string | null | undefined) =>
     role === 'admin' || role === 'finance' || (role === 'underwriter' && Boolean(profile?.id) && underwriterId === profile?.id)
 }
+
+// ---------------------------------------------------------------------------
+// Receipts (step 3)
+// ---------------------------------------------------------------------------
+
+export type ReceiptRow = Tables<'premium_receipts_v'>
+export const MAX_RECEIPTS = 2000
+
+/** The receipts register: the search bar's database filter, newest first. */
+export function useReceipts(filter: string | null, enabled = true) {
+  return useQuery({
+    queryKey: ['premium', 'receipts', filter],
+    enabled,
+    placeholderData: (prev) => prev,
+    queryFn: async () => {
+      let q = supabase.from('premium_receipts_v').select('*', { count: 'exact' })
+      if (filter) q = q.or(filter)
+      const { data, error, count } = await q.order('received_date', { ascending: false }).order('ref_no', { ascending: false }).limit(MAX_RECEIPTS)
+      if (error) throw error
+      return { rows: data as ReceiptRow[], count: count ?? 0 }
+    },
+  })
+}
+
+/** One receipt's allocations, with the installment and submission each one pays. */
+export function useReceiptAllocations(receiptId: string | null) {
+  return useQuery({
+    queryKey: ['premium', 'receipt-allocations', receiptId],
+    enabled: Boolean(receiptId),
+    queryFn: async () => {
+      const { data, error } = await supabase.from('premium_allocations').select('*').eq('receipt_id', receiptId!).order('created_at')
+      if (error) throw error
+      const allocations = data as Tables<'premium_allocations'>[]
+      const ids = allocations.map((a) => a.installment_id)
+      const inst = ids.length ? await supabase.from('premium_installments_v').select('*').in('id', ids) : { data: [], error: null }
+      if (inst.error) throw inst.error
+      const byId = new Map((inst.data as InstallmentRow[]).map((i) => [i.id, i]))
+      return allocations.map((a) => ({ ...a, installment: byId.get(a.installment_id) ?? null }))
+    },
+  })
+}
+
+/** Installments that can still take money: receivable, not paid or written off — oldest due first. */
+export function useOpenInstallments(enabled = true) {
+  return useQuery({
+    queryKey: ['premium', 'open-installments'],
+    enabled,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('premium_installments_v')
+        .select('*')
+        .neq('type', 'return')
+        .in('status', ['open', 'partially_paid'])
+        .gt('outstanding_amount', 0)
+        .order('due_date', { ascending: true })
+        .limit(2000)
+      if (error) throw error
+      return data as InstallmentRow[]
+    },
+  })
+}
+
+/** USD rates on a date for the given currencies (for the reference cross rate). */
+export function useUsdRates(currencies: string[], date: string) {
+  const list = [...new Set(currencies.filter((c) => c && c !== 'USD'))].sort()
+  return useQuery({
+    queryKey: ['fx', 'usd', list, date],
+    enabled: list.length > 0 && Boolean(date),
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const out: Record<string, number | null> = { USD: 1 }
+      for (const c of list) {
+        const { data, error } = await supabase.rpc('fx_rate_to_usd', { p_currency: c, p_date: date })
+        if (error) throw error
+        out[c] = (data as number | null) ?? null
+      }
+      return out
+    },
+  })
+}
+
+export type NewAllocation = { installment_id: string; amount: string; fx_rate: string | null }
+
+/** Records a receipt and its allocations in one transaction (create_premium_receipt). */
+export async function createReceipt(
+  receipt: { received_date: string; payer_id: string; currency: string; amount: string; bank_reference: string; notes: string },
+  allocations: NewAllocation[],
+) {
+  const { data, error } = await supabase.rpc('create_premium_receipt', { p_receipt: receipt, p_allocations: allocations })
+  if (error) throw error
+  return data as unknown as Tables<'premium_receipts'>
+}
+
+/** Allocates more of an existing receipt (one insert: all or nothing). */
+export async function addAllocations(receiptId: string, allocations: NewAllocation[]) {
+  // installment_amount is set by the trigger (amount × fx_rate); amounts go as exact decimal strings
+  const { error } = await supabase.from('premium_allocations').insert(allocations.map((a) => ({ receipt_id: receiptId, ...a })) as never)
+  if (error) throw error
+}
+
+export async function removeAllocation(id: string) {
+  const { error } = await supabase.from('premium_allocations').delete().eq('id', id)
+  if (error) throw error
+}

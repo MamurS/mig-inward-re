@@ -8,7 +8,8 @@
     "submissions": "Submissions",
     "agenda": "My agenda",
     "counterparties": "Counterparties",
-    "admin": "Admin"
+    "admin": "Admin",
+    "receipts": "Receipts"
   },
   "roles": {
     "admin": "Admin",
@@ -75,6 +76,10 @@
     "admin": {
       "title": "Administration",
       "subtitle": "Users and roles, reference data, settings"
+    },
+    "receipts": {
+      "title": "Receipts",
+      "subtitle": "Premium received from MGAs and brokers, and what each receipt paid"
     }
   },
   "errors": {
@@ -746,7 +751,9 @@
       "inactive": "Including inactive",
       "fuOverdue": "Overdue",
       "active": "Active only",
-      "onlyInactive": "Inactive only"
+      "onlyInactive": "Inactive only",
+      "unallocated": "Not fully allocated",
+      "allocated": "Fully allocated"
     },
     "kw": {
       "today": "Received today",
@@ -808,6 +815,15 @@
         "source": "Where the rate came from: manual or cbu",
         "notes": "Searches all stored rates, not only the latest shown.",
         "languages": "Words work in English, Russian and Uzbek: валюта:EUR, дата>=2026-10-01."
+      },
+      "receipts": {
+        "text": "Text anywhere: ref no., bank reference, payer, notes",
+        "unallocated": "Receipts with money still to allocate",
+        "payer": "Payer and currency",
+        "dates": "Received from a date, amount over 10,000",
+        "ref": "One receipt by its number",
+        "notes": "A bare currency code or payer name filters by it.",
+        "languages": "Words work in English, Russian and Uzbek: нераспределено, валюта:EUR, taqsimlanmagan."
       }
     },
     "count_one": "{{count}} submission",
@@ -843,6 +859,11 @@
         "placeholder": "Search or filter: currency, date, source…",
         "label": "Search or filter FX rates",
         "words": "currency…"
+      },
+      "receipts": {
+        "placeholder": "Search or filter: payer, bank reference, currency…",
+        "label": "Search or filter receipts",
+        "words": "ref no., bank reference, payer…"
       }
     },
     "filters": "Filters",
@@ -869,5 +890,65 @@
       "startOver": "Start a new filter"
     },
     "noMatch": "Nothing matches this search"
+  },
+  "rcp": {
+    "payer": "Payer",
+    "bankReference": "Bank reference",
+    "receivedDate": "Received",
+    "amount": "Amount",
+    "amountIn": "Amount, {{ccy}}",
+    "amountUsd": "Amount (USD)",
+    "allocated": "Allocated",
+    "unallocated": "Unallocated",
+    "fully": "Fully allocated",
+    "exported": "Exported {{count}} receipts",
+    "new": "New receipt",
+    "count_one": "{{count}} receipt",
+    "count_other": "{{count}} receipts",
+    "totalUsd": "Total (USD)",
+    "none": "No receipts yet",
+    "noneHint": "Record money as it arrives — New receipt.",
+    "newHint": "Record the money received, then say which installments it pays. Anything left stays unallocated until you allocate it.",
+    "fillFirst": "Fill in the payer, currency and amount to allocate the receipt.",
+    "recorded": "{{ref}} recorded",
+    "saveWithAllocations_one": "Record receipt and {{count}} allocation",
+    "saveWithAllocations_other": "Record receipt and {{count}} allocations",
+    "saveUnallocated": "Record receipt (unallocated)",
+    "allocatedMore": "{{ref}}: allocations saved",
+    "confirmRemove": "Remove this allocation? The installment becomes unpaid by this amount again.",
+    "removed": "Allocation removed",
+    "paysFor": "Pays for",
+    "allocAmount": "Amount, {{ccy}}",
+    "onInstallment": "On the installment",
+    "nothingAllocated": "Nothing allocated yet",
+    "removeAllocation": "Remove allocation",
+    "allocateRest": "Allocate the remaining {{amount}}",
+    "saveAllocations_one": "Save {{count}} allocation",
+    "saveAllocations_other": "Save {{count}} allocations",
+    "allocate": "Allocate to installments",
+    "allocateHint": "The payer’s open installments are suggested, oldest due first. Across currencies, enter the rate — the preview shows what lands on the installment.",
+    "autoAllocate": "Auto-allocate oldest first",
+    "noneYet": "Add an installment below, or auto-allocate.",
+    "noOpenForPayer": "This payer has no open installments — add one from another payer below, or record the receipt unallocated.",
+    "outstanding": "Outstanding",
+    "removeRow": "Remove",
+    "max": "Max",
+    "rate": "Rate: {{to}} per 1 {{from}}",
+    "useReference": "Use the stored rate on the received date",
+    "useReferenceShort": "Use stored",
+    "reference": "Stored rate: {{rate}}",
+    "inverted": "This looks inverted: it is close to 1 ÷ the stored rate. Enter {{to}} per 1 {{from}}.",
+    "far": "More than 10 % away from the stored rate — check it.",
+    "err": {
+      "gone": "This installment can no longer take money.",
+      "amount": "Enter an amount above zero.",
+      "rate": "Enter the rate.",
+      "overInstallment": "More than is outstanding ({{max}} {{ccy}})."
+    },
+    "addOther": "Add an installment from another payer…",
+    "leftUnallocated": "{{amount}} left unallocated",
+    "overReceipt": "{{amount}} more than the receipt",
+    "fullyAllocated": "Fully allocated",
+    "noReference": "No stored rate for this date — enter the rate yourself."
   }
 }

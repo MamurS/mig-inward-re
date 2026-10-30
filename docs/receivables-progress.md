@@ -8,7 +8,7 @@ Approved plan: 6 steps, stop for review after each. Target Supabase project:
 |---|---|---|
 | 1 | migrations and logic | ✅ applied and tested |
 | 2 | schedule on bind + Premium tab on submission detail | ✅ |
-| 3 | receipts register + new receipt with allocation | — |
+| 3 | receipts register + new receipt with allocation | ✅ |
 | 4 | receivables register, ageing, follow-ups on the agenda | — |
 | 5 | dashboard and counterparty additions | — |
 | 6 | self-review | — |
@@ -102,6 +102,50 @@ Screens:
   schedule is flagged, binding opens the schedule step, write-off needs a reason
   and shows «Written off by Nodira Saidova», return premium settles, underwriter
   and management see no finance actions. Totals: vitest 13, Playwright 39.
+
+## Step 3 — receipts and allocation
+
+Migration `20261030061745_create_premium_receipt` (additive):
+- **`create_premium_receipt(p_receipt jsonb, p_allocations jsonb)`**: records a receipt and its allocations in one transaction.
+  - It runs as the caller (SECURITY INVOKER), so RLS and the column grants apply exactly as for direct inserts: finance and admin only.
+  - Every rule stays in the step-1 triggers.
+  - `execute` is granted to `authenticated` only; `public` and `anon` are revoked.
+- **Tested in a rolled-back transaction (11 checks):**
+  - the underwriter is refused by RLS;
+  - `RCP-2026-0001` is created; the bank reference is trimmed and empty notes become null;
+  - USD 3,500.00 lands on a USD installment, and USD 7,604.56 at 0.9205 lands as EUR 7,000.00; both installments become paid, with 895.44 left unallocated;
+  - refused, leaving no receipt behind: a duplicate installment, more than is outstanding, a missing FX rate, and allocations that are not a list;
+  - a receipt without allocations is accepted, dated today by default.
+
+Screens:
+- **Receipts** (nav: admin, finance, management; underwriters see receipts on the Premium tab).
+  - **Register:**
+    - columns: ref, received, payer with its type, currency, amount, allocated, unallocated (a badge) or "fully allocated", USD, bank reference;
+    - **search bar** (in the database): text over ref / bank reference / payer / notes, `payer:`, `ccy:`, `ref:`, `bank:`, `received` dates, `amount`, `unallocated` / `allocated`, in EN/RU/UZ;
+    - count and total USD; export = what is shown.
+  - **New receipt** (finance / admin):
+    - Fields: date, payer (grouped MGA / broker / cedent), currency, amount, bank reference, notes.
+    - **Allocate to installments:**
+      - The payer's open installments are suggested, oldest due first; any other open installment can be added.
+      - **Auto-allocate oldest first** fills each installment up to what fits.
+      - **Max** fills one row.
+      - A running total shows what is allocated, what is left unallocated, or how much it is over the receipt.
+    - All saved in one transaction.
+  - **Across currencies (review item 3):**
+    - The rate field (installment currency per 1 receipt currency) is prefilled with the stored rate on the received date.
+    - A live preview shows the converted amount, rounded as the database rounds, and **the rate both ways** (`1 USD = 0.9205 EUR · 1 EUR = 1.0863661054 USD`), plus the stored rate.
+    - **«This looks inverted»** appears when the rate is close to 1 ÷ the stored one; a "more than 10 % away" warning appears otherwise; **Use stored** restores the stored rate.
+    - More than is outstanding cannot be saved.
+  - **Receipt panel:**
+    - shows what the receipt paid (submission, installment, receipt amount, the amount on the installment and its rate);
+    - finance can remove an allocation and **Allocate the remaining …**.
+- **Premium tab:** each allocated receipt links to it in the register (finance, admin, management).
+- **Maths:** `src/features/premium/receipts.ts` (convert, rate both ways, stored cross rate, inverted / far check, max that fits, auto-allocate). 6 unit tests, using the database test's figures.
+- **Offline mock:** `create_premium_receipt` with the triggers' rules (all or nothing).
+- **Tests:**
+  - `e2e/receipts.spec.ts` (7): register and search; record with auto-allocate (due dates in order, RCP-2026-0003, Premium tab link back); cross-currency preview, rate both ways, inverted warning, Use stored, cap and Max; panel remove and allocate the rest; export = shown; management read-only, no page for underwriters; RU/UZ;
+  - receipts scope unit tests;
+  - Receipts added to the Large-text fit check.
 
 ## Review items (asked with step 2)
 

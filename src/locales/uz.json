@@ -8,7 +8,8 @@
     "submissions": "Arizalar",
     "agenda": "Mening vazifalarim",
     "counterparties": "Kontragentlar",
-    "admin": "Boshqaruv"
+    "admin": "Boshqaruv",
+    "receipts": "Tushumlar"
   },
   "roles": {
     "admin": "Administrator",
@@ -75,6 +76,10 @@
     "admin": {
       "title": "Boshqaruv",
       "subtitle": "Foydalanuvchilar va rollar, ma’lumotnomalar, sozlamalar"
+    },
+    "receipts": {
+      "title": "Tushumlar",
+      "subtitle": "MGA va brokerlardan olingan mukofot va har bir tushum nimani toʻlagani"
     }
   },
   "errors": {
@@ -746,7 +751,9 @@
       "inactive": "Nofaollar bilan",
       "fuOverdue": "Muddati oʻtgan",
       "active": "Faqat faollar",
-      "onlyInactive": "Faqat nofaollar"
+      "onlyInactive": "Faqat nofaollar",
+      "unallocated": "Toʻliq taqsimlanmagan",
+      "allocated": "Toʻliq taqsimlangan"
     },
     "kw": {
       "today": "Bugun qabul qilingan",
@@ -808,6 +815,15 @@
         "source": "Kurs manbai: manual yoki cbu",
         "notes": "Faqat oxirgilarini emas, barcha saqlangan kurslarni qidiradi.",
         "languages": "Soʻzlar ingliz, rus va oʻzbek tillarida tushuniladi: valyuta:EUR, sana>=2026-10-01."
+      },
+      "receipts": {
+        "text": "Hamma joyda matn: raqam, bank maʼlumotnomasi, toʻlovchi, izohlar",
+        "unallocated": "Taqsimlanmagan qoldigʻi bor tushumlar",
+        "payer": "Toʻlovchi va valyuta",
+        "dates": "Sanadan beri qabul qilingan, summa 10 000 dan koʻp",
+        "ref": "Raqami boʻyicha bitta tushum",
+        "notes": "Maydonsiz valyuta kodi yoki toʻlovchi nomi ham saralaydi.",
+        "languages": "Soʻzlar ingliz, rus va oʻzbek tillarida tushuniladi: taqsimlanmagan, valyuta:EUR, нераспределено."
       }
     },
     "count_one": "{{count}} ta ariza",
@@ -843,6 +859,11 @@
         "placeholder": "Qidiruv yoki filtr: valyuta, sana, manba…",
         "label": "Valyuta kurslarini qidirish va saralash",
         "words": "valyuta…"
+      },
+      "receipts": {
+        "placeholder": "Qidiruv yoki filtr: toʻlovchi, bank maʼlumotnomasi, valyuta…",
+        "label": "Tushumlarni qidirish va saralash",
+        "words": "raqam, maʼlumotnoma, toʻlovchi…"
       }
     },
     "filters": "Filtrlar",
@@ -869,5 +890,65 @@
       "startOver": "Yangi filtr"
     },
     "noMatch": "Bu qidiruv boʻyicha hech narsa yoʻq"
+  },
+  "rcp": {
+    "payer": "Toʻlovchi",
+    "bankReference": "Bank maʼlumotnomasi",
+    "receivedDate": "Qabul qilingan",
+    "amount": "Summa",
+    "amountIn": "Summa, {{ccy}}",
+    "amountUsd": "Summa (USD)",
+    "allocated": "Taqsimlangan",
+    "unallocated": "Taqsimlanmagan",
+    "fully": "Toʻliq taqsimlangan",
+    "exported": "{{count}} ta tushum eksport qilindi",
+    "new": "Yangi tushum",
+    "count_one": "{{count}} ta tushum",
+    "count_other": "{{count}} ta tushum",
+    "totalUsd": "Jami (USD)",
+    "none": "Hali tushumlar yoʻq",
+    "noneHint": "Pul kelishi bilan yozing — «Yangi tushum».",
+    "newHint": "Olingan summani yozing, soʻng u qaysi badallarni toʻlashini koʻrsating. Qoldiq siz taqsimlamaguningizcha taqsimlanmagan boʻlib qoladi.",
+    "fillFirst": "Tushumni taqsimlash uchun toʻlovchi, valyuta va summani kiriting.",
+    "recorded": "{{ref}} yozildi",
+    "saveWithAllocations_one": "Tushum va {{count}} ta taqsimotni yozish",
+    "saveWithAllocations_other": "Tushum va {{count}} ta taqsimotni yozish",
+    "saveUnallocated": "Tushumni yozish (taqsimlanmagan)",
+    "allocatedMore": "{{ref}}: taqsimotlar saqlandi",
+    "confirmRemove": "Bu taqsimot oʻchirilsinmi? Badal yana shu summaga toʻlanmagan boʻladi.",
+    "removed": "Taqsimot oʻchirildi",
+    "paysFor": "Toʻlaydi",
+    "allocAmount": "Summa, {{ccy}}",
+    "onInstallment": "Badalga",
+    "nothingAllocated": "Hali hech narsa taqsimlanmagan",
+    "removeAllocation": "Taqsimotni oʻchirish",
+    "allocateRest": "Qolgan {{amount}}ni taqsimlash",
+    "saveAllocations_one": "{{count}} ta taqsimotni saqlash",
+    "saveAllocations_other": "{{count}} ta taqsimotni saqlash",
+    "allocate": "Badallarga taqsimlash",
+    "allocateHint": "Toʻlovchining ochiq badallari taklif qilinadi, eng erta muddatlilari birinchi. Turli valyutalarda kursni kiriting — oldindan koʻrish badalga nima tushishini koʻrsatadi.",
+    "autoAllocate": "Avtomatik taqsimlash",
+    "noneYet": "Quyida badal qoʻshing yoki avtomatik taqsimlang.",
+    "noOpenForPayer": "Bu toʻlovchida ochiq badallar yoʻq — quyida boshqa toʻlovchining badalini qoʻshing yoki tushumni taqsimlamasdan yozing.",
+    "outstanding": "Qoldiq",
+    "removeRow": "Olib tashlash",
+    "max": "Maks.",
+    "rate": "Kurs: 1 {{from}} uchun {{to}}",
+    "useReference": "Qabul sanasidagi saqlangan kursni olish",
+    "useReferenceShort": "Saqlangan",
+    "reference": "Saqlangan kurs: {{rate}}",
+    "inverted": "Kurs teskari koʻrinadi: u 1 ÷ saqlangan kursga yaqin. 1 {{from}} uchun {{to}} kiriting.",
+    "far": "Saqlangan kursdan 10 % dan koʻproq farq qiladi — tekshiring.",
+    "err": {
+      "gone": "Bu badal endi pul qabul qila olmaydi.",
+      "amount": "Noldan katta summa kiriting.",
+      "rate": "Kursni kiriting.",
+      "overInstallment": "Qoldiqdan koʻp ({{max}} {{ccy}})."
+    },
+    "addOther": "Boshqa toʻlovchining badalini qoʻshish…",
+    "leftUnallocated": "Taqsimlanmagan: {{amount}}",
+    "overReceipt": "Tushumdan {{amount}} koʻp",
+    "fullyAllocated": "Toʻliq taqsimlangan",
+    "noReference": "Bu sana uchun saqlangan kurs yoʻq — kursni oʻzingiz kiriting."
   }
 }

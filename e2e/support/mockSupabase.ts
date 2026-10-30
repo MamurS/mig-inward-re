@@ -8,7 +8,7 @@
  */
 import type { BrowserContext, Route } from '@playwright/test'
 import { TABLES, USERS, fxRate, type FixtureRole } from './fixtures'
-import { generateSchedule, normalizePremium, premiumSeed, premiumViews } from './premium'
+import { createReceipt, generateSchedule, normalizePremium, premiumSeed, premiumViews } from './premium'
 
 const PROJECT_REF = 'jltrtqwaxvsrnqmjemzc'
 type Row = Record<string, unknown>
@@ -222,6 +222,11 @@ export async function installMock(
         }
         return json(db.submissions.find((x) => x.id === a.p_submission_id) ?? {})
       }
+      if (rpc[1] === 'create_premium_receipt') {
+        const out = createReceipt(db, args as unknown as { p_receipt: Row; p_allocations?: Row[] }, role)
+        normalizePremium(db, user?.id ?? null)
+        return out.error ? json({ message: out.error, code: out.code }, out.code === '42501' ? 403 : 400) : json(out.data)
+      }
       if (rpc[1] === 'generate_premium_schedule') {
         const out = generateSchedule(db, args.p_submission_id, (args as unknown as { p_installments?: { due_date: string; gross_amount: string }[] }).p_installments ?? null)
         normalizePremium(db, user?.id ?? null)
@@ -272,6 +277,7 @@ export async function installMock(
     if (method === 'DELETE') {
       const hit = filterRows(rows, params)
       db[table] = rows.filter((r) => !hit.includes(r))
+      if (table.startsWith('premium_')) normalizePremium(db, user?.id ?? null)
       return json(hit)
     }
     return json({}, 405)

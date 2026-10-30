@@ -3,7 +3,7 @@ import { norm } from './normalize'
 import { parseQuery, type SearchContext, type Term } from './query'
 import { hasFlag, matchesQuery, type ClientSpec } from './client'
 import { toPostgrestFilter } from './postgrest'
-import { AGENDA, COUNTERPARTIES, FX, FX_SERVER, REFERENCE, USERS } from './scopes'
+import { AGENDA, COUNTERPARTIES, FX, FX_SERVER, RECEIPTS, RECEIPTS_SERVER, REFERENCE, USERS } from './scopes'
 
 const ctx: SearchContext = {
   today: '2026-10-30',
@@ -97,5 +97,24 @@ describe('admin lists', () => {
     expect(f('source:manual')).toBe('and(source.ilike."*manual*")')
     expect(f('валюта:uzs; дата:2026-10')).toBe('and(currency.in.("UZS")),and(rate_date.gte.2026-10-01,rate_date.lt.2026-11-01)')
     expect(f('ccy:USD')).toBe('and(currency.ilike."*usd*")') // USD has no rate to itself: searched as text
+  })
+})
+
+describe('receipts', () => {
+  const rctx = { ...ctx, counterparties: [{ id: 'm1', name: 'Meridian Risk Partners', type: 'mga' }, { id: 'b1', name: 'Tashkent Re Brokers', type: 'broker' }] }
+  const f = (text: string) => toPostgrestFilter(parseQuery(text, rctx, RECEIPTS), RECEIPTS_SERVER, 'u1')
+  it('payer, currency, dates, amounts and allocation state in the database', () => {
+    expect(f('payer:meridian, ccy:USD')).toBe('and(payer_id.in.("m1"),currency.in.("USD"))')
+    expect(f('received>=2026-10-01, amount>10k')).toBe('and(received_date.gte.2026-10-01,amount.gt.10000)')
+    expect(f('unallocated')).toBe('and(unallocated_amount.gt.0)')
+    expect(f('-unallocated')).toBe('and(unallocated_amount.lte.0)')
+    for (const w of ['нераспределено', 'taqsimlanmagan']) expect(f(w), w).toBe('and(unallocated_amount.gt.0)')
+    expect(f('Tashkent Re Brokers')).toBe('and(payer_id.in.("b1"))') // a payer named exactly
+  })
+  it('free text looks at ref no., bank reference, payer and notes', () => {
+    expect(f('mt103')).toBe('and(or(ref_no.ilike."*mt103*",bank_reference.ilike."*mt103*",payer_name.ilike."*mt103*",notes.ilike."*mt103*"))')
+    expect(f('-mt103')).toBe(
+      'and(or(ref_no.is.null,ref_no.not.ilike."*mt103*"),or(bank_reference.is.null,bank_reference.not.ilike."*mt103*"),or(payer_name.is.null,payer_name.not.ilike."*mt103*"),or(notes.is.null,notes.not.ilike."*mt103*"))',
+    )
   })
 })

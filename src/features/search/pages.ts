@@ -8,7 +8,7 @@
 import type { BuilderSpec } from './builder'
 import type { Scope } from './query'
 import type { ServerSpec } from './postgrest'
-import { AGENDA, COUNTERPARTIES, FX, FX_SERVER, REFERENCE, SUBMISSIONS, SUBMISSIONS_SERVER, USERS } from './scopes'
+import { AGENDA, COUNTERPARTIES, FX, FX_SERVER, RECEIPTS, RECEIPTS_SERVER, REFERENCE, SUBMISSIONS, SUBMISSIONS_SERVER, USERS } from './scopes'
 
 export type PageSearch = {
   scope: Scope
@@ -129,7 +129,25 @@ export const FX_PAGE: PageSearch = {
   ],
 }
 
-export const PAGE_SEARCHES: PageSearch[] = [SUBMISSIONS_PAGE, COUNTERPARTIES_PAGE, AGENDA_PAGE, USERS_PAGE, REFERENCE_PAGE, FX_PAGE]
+export const RECEIPTS_PAGE: PageSearch = {
+  scope: RECEIPTS,
+  server: RECEIPTS_SERVER,
+  path: '/receipts',
+  builder: {
+    items: [{ kind: 'multi', field: 'payer' }, { kind: 'chips', field: 'ccy' }, { kind: 'dates', field: 'received' }, { kind: 'range', field: 'amount' }],
+    toggles: [{ flag: 'unallocated' }, { flag: 'allocated' }],
+  },
+  suggest: ['payer', 'ccy'],
+  examples: [
+    { q: 'MT103', key: 'text' },
+    { q: 'unallocated', key: 'unallocated' },
+    { q: 'payer:"Silk Road", ccy:USD', key: 'payer' },
+    { q: 'received>=2026-10-01, amount>10k', key: 'dates' },
+    { q: 'RCP-2026-0001', key: 'ref' },
+  ],
+}
+
+export const PAGE_SEARCHES: PageSearch[] = [SUBMISSIONS_PAGE, COUNTERPARTIES_PAGE, AGENDA_PAGE, USERS_PAGE, REFERENCE_PAGE, FX_PAGE, RECEIPTS_PAGE]
 
 /** The search for this location: the page's own list, or (here: false) the register. */
 export function pageSearchFor(pathname: string, search: string): { page: PageSearch; here: boolean } {

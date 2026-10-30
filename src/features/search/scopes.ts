@@ -214,3 +214,46 @@ export const FX_SERVER: ServerSpec = {
   flags: {},
   textColumn: (w, neg) => `currency.${neg ? 'not.' : ''}ilike."*${w.replace(/["\\*%]/g, '')}*"`,
 }
+
+// ---------------------------------------------------------------------------
+// Receipts (premium received)
+// ---------------------------------------------------------------------------
+
+const anyPartyOptions = (ctx: SearchContext): Option[] =>
+  ctx.counterparties.map((c) => ({ value: c.id, label: c.name, insert: c.name, names: [c.name] }))
+
+export const RECEIPTS: Scope = {
+  id: 'receipts',
+  fields: [
+    { key: 'payer', kind: 'list', aliases: ['from', 'mga', 'broker', 'плательщик', 'от', 'tolovchi'], labelKey: 'rcp.payer', options: anyPartyOptions, partial: 'contains' },
+    { key: 'ccy', kind: 'list', aliases: ['currency', 'cur', 'валюта', 'вал', 'valyuta'], labelKey: 'fields.currency', options: currencyOptions, partial: 'none' },
+    { key: 'ref', kind: 'like', aliases: ['refno', 'номер', 'raqam'], labelKey: 'fields.refNo' },
+    { key: 'bank', kind: 'like', aliases: ['bankref', 'swift', 'банк', 'bank_reference'], labelKey: 'rcp.bankReference' },
+    { key: 'received', kind: 'date', looksBack: true, aliases: ['date', 'recv', 'получен', 'дата', 'sana', 'qabul'], labelKey: 'rcp.receivedDate' },
+    { key: 'amount', kind: 'num', aliases: ['сумма', 'summa'], labelKey: 'rcp.amount' },
+  ],
+  flags: [
+    { flag: 'unallocated', words: ['open', 'нераспределено', 'нераспределённые', 'taqsimlanmagan'], labelKey: 'search.flag.unallocated' },
+    { flag: 'allocated', words: ['fully', 'распределено', 'taqsimlangan'], labelKey: 'search.flag.allocated' },
+  ],
+  dateKeywordField: 'received',
+  exactFields: ['ccy', 'payer'],
+  weak: ['open', 'fully', 'from', 'от'],
+}
+
+/** Receipts have no single normalised text column: free text looks at ref no., bank reference, payer and notes. */
+const RECEIPT_TEXT = ['ref_no', 'bank_reference', 'payer_name', 'notes']
+export const RECEIPTS_SERVER: ServerSpec = {
+  list: { payer: 'payer_id', ccy: 'currency' },
+  like: { ref: 'ref_no', bank: 'bank_reference' },
+  num: { amount: 'amount' },
+  date: { received: 'received_date' },
+  flags: {
+    unallocated: (neg) => `unallocated_amount.${neg ? 'lte' : 'gt'}.0`,
+    allocated: (neg) => `unallocated_amount.${neg ? 'gt' : 'lte'}.0`,
+  },
+  textColumn: (w, neg) => {
+    const v = `"*${w.replace(/["\\*%]/g, '')}*"`
+    return neg ? `and(${RECEIPT_TEXT.map((c) => `or(${c}.is.null,${c}.not.ilike.${v})`).join(',')})` : `or(${RECEIPT_TEXT.map((c) => `${c}.ilike.${v}`).join(',')})`
+  },
+}

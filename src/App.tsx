@@ -16,6 +16,7 @@ const CounterpartiesPage = lazy(() => import('@/features/counterparties/Counterp
 const CounterpartyDetailPage = lazy(() => import('@/features/counterparties/CounterpartyDetailPage').then((m) => ({ default: m.CounterpartyDetailPage })))
 const AdminPage = lazy(() => import('@/features/admin/AdminPage').then((m) => ({ default: m.AdminPage })))
 const TokensPage = lazy(() => import('@/features/admin/TokensPage').then((m) => ({ default: m.TokensPage })))
+const ReceiptsPage = lazy(() => import('@/features/premium/ReceiptsPage').then((m) => ({ default: m.ReceiptsPage })))
 const SubmissionDetailPage = lazy(() => import('@/features/submissions/SubmissionDetailPage').then((m) => ({ default: m.SubmissionDetailPage })))
 
 function HomeRedirect() {
@@ -50,6 +51,7 @@ export default function App() {
             element={<RequireRole roles={['admin', 'underwriter']}>{page(<SubmissionFormPage />)}</RequireRole>}
           />
           <Route path="agenda" element={page(<AgendaPage />)} />
+          <Route path="receipts" element={<RequireRole roles={['admin', 'finance', 'management']}>{page(<ReceiptsPage />)}</RequireRole>} />
           <Route path="counterparties" element={page(<CounterpartiesPage />)} />
           <Route path="counterparties/:id" element={page(<CounterpartyDetailPage />)} />
           <Route

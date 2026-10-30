@@ -6,6 +6,7 @@
  * mirrors the SQL exactly.
  */
 import { rowDeductions, splitEqual, subMoney, sumMoney, addMonthsIso, addDaysIso } from '../../src/features/premium/schedule'
+import { convert } from '../../src/features/premium/receipts'
 import { USERS } from './fixtures'
 
 type Row = Record<string, unknown>
@@ -92,7 +93,8 @@ export function normalizePremium(db: Record<string, Row[]>, actorId: string | nu
       : paid >= n(i.net_amount) ? 'paid' : paid > 0 ? 'partially_paid' : 'open'
   }
   for (const a of db.premium_allocations ?? []) {
-    a.installment_amount ??= Math.round(n(a.amount) * n(a.fx_rate ?? 1) * 100) / 100
+    a.fx_rate ??= 1 // the trigger sets 1 when the currencies match
+    a.installment_amount ??= n(convert(String(a.amount), String(a.fx_rate)))
   }
 }
 
@@ -168,4 +170,39 @@ export function generateSchedule(db: Record<string, Row[]>, submissionId: string
   const created = scheduleRows(s, list, start)
   db.premium_installments.push(...created)
   return { data: created }
+}
+
+/** create_premium_receipt(): the receipt and its allocations, all or nothing, with the triggers' rules. */
+export function createReceipt(db: Record<string, Row[]>, args: { p_receipt: Row; p_allocations?: Row[] }, role: string | null) {
+  if (role !== 'finance' && role !== 'admin') return { error: 'new row violates row-level security policy for table "premium_receipts"', code: '42501' }
+  const r = args.p_receipt
+  const date = String(r.received_date || today())
+  const year = date.slice(0, 4)
+  const seqNo = (db.premium_receipts ?? []).filter((x) => String(x.ref_no).startsWith(`RCP-${year}-`)).length + 1
+  const receipt: Row = {
+    id: uid('60000000'), ref_no: `RCP-${year}-${String(seqNo).padStart(4, '0')}`, received_date: date, payer_id: r.payer_id, currency: r.currency,
+    amount: n(r.amount), bank_reference: String(r.bank_reference ?? '').trim() || null, notes: String(r.notes ?? '').trim() || null,
+    created_at: new Date().toISOString(), created_by: null, updated_at: new Date().toISOString(), updated_by: null,
+  }
+  const allocations: Row[] = []
+  let used = 0
+  for (const a of args.p_allocations ?? []) {
+    const inst = (db.premium_installments ?? []).find((i) => i.id === a.installment_id)
+    if (!inst) return { error: 'Receipt or installment not found', code: '23503' }
+    if (inst.type === 'return') return { error: 'Return premium is settled, not paid through receipts', code: '23514' }
+    if (inst.status === 'written_off') return { error: `Installment ${inst.installment_no} is written off`, code: '23514' }
+    if (allocations.some((x) => x.installment_id === inst.id)) return { error: 'duplicate key value violates unique constraint "premium_allocations_receipt_id_installment_id_key"', code: '23505' }
+    const same = inst.currency === receipt.currency
+    if (!same && !a.fx_rate) return { error: `Exchange rate required: ${inst.currency} per 1 ${receipt.currency}`, code: '23502' }
+    const rate = same ? '1' : String(a.fx_rate)
+    const instAmount = convert(String(a.amount), rate)!
+    used += n(a.amount)
+    if (used > n(receipt.amount) + 1e-9) return { error: `Allocation exceeds the receipt`, code: '23514' }
+    const outstanding = n(subMoney(String(inst.net_amount), paidOf(db, inst.id)))
+    if (n(instAmount) > outstanding + 1e-9) return { error: `Allocation exceeds the installment: ${outstanding.toFixed(2)} ${inst.currency} outstanding`, code: '23514' }
+    allocations.push({ id: uid('70000000'), receipt_id: receipt.id, installment_id: inst.id, amount: n(a.amount), fx_rate: n(rate), installment_amount: n(instAmount), created_at: receipt.created_at })
+  }
+  ;(db.premium_receipts ??= []).push(receipt)
+  ;(db.premium_allocations ??= []).push(...allocations)
+  return { data: receipt }
 }

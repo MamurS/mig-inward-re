@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { AlertTriangle, Ban, CalendarPlus, CheckCircle2, MoreHorizontal, RefreshCw, Undo2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -38,6 +39,7 @@ export function PremiumTab({ submission: s, startEditor = false, onEditorStarted
   const { role } = useAuth()
   const canEdit = useCanEditSchedule()(s.underwriter_id)
   const finance = can.manageFinance(role)
+  const canSeeReceipts = finance || role === 'management'
   const invalidate = useInvalidatePremium()
   const installments = usePremiumInstallments(s.id ?? undefined)
   const check = useScheduleCheck(s.id ?? undefined, s.status === 'bound')
@@ -250,7 +252,11 @@ export function PremiumTab({ submission: s, startEditor = false, onEditorStarted
                   const fx = a.premium_receipts && a.premium_receipts.currency !== inst?.currency
                   return (
                     <li key={a.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-3 py-2 text-body">
-                      <span className="font-medium num">{a.premium_receipts?.ref_no}</span>
+                      {canSeeReceipts ? (
+                        <Link to={`/receipts?q=${encodeURIComponent(a.premium_receipts?.ref_no ?? '')}`} className="font-medium text-link hover:underline num">{a.premium_receipts?.ref_no}</Link>
+                      ) : (
+                        <span className="font-medium num">{a.premium_receipts?.ref_no}</span>
+                      )}
                       <span className="text-muted-foreground">{formatDate(a.premium_receipts?.received_date)}</span>
                       <span className="text-muted-foreground">→ #{inst?.installment_no}</span>
                       <span className="ml-auto num">

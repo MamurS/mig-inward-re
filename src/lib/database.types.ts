@@ -1592,6 +1592,29 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      create_premium_receipt: {
+        Args: { p_allocations?: Json; p_receipt: Json }
+        Returns: {
+          amount: number
+          bank_reference: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          id: string
+          notes: string | null
+          payer_id: string
+          received_date: string
+          ref_no: string
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "premium_receipts"
+          isOneToOne: true
+          isSetofOptions: false
+        }
+      }
       fx_rate_to_usd: {
         Args: { p_currency: string; p_date: string }
         Returns: number
