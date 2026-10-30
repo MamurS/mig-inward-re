@@ -30,7 +30,7 @@ import { errorMessage } from '@/lib/errors'
 import type { Enums, Json } from '@/lib/database.types'
 import { useCountries, useLocalName } from '@/hooks/useReference'
 import { SavedCheck, useFlash } from '@/components/SavedCheck'
-import type { SubmissionRow } from '@/features/submissions/api'
+import { LIST_COLUMNS, type SubmissionRow } from '@/features/submissions/api'
 import { CounterpartyPremium } from '@/features/premium/CounterpartyPremium'
 import { CounterpartyClaims } from '@/features/claims/CounterpartyClaims'
 
@@ -70,12 +70,12 @@ export function CounterpartyDetailPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('submissions_v')
-        .select('*')
+        .select(LIST_COLUMNS)
         .or(`mga_id.eq.${id},broker_id.eq.${id},source_party_id.eq.${id}`)
         .order('received_at', { ascending: false })
         .limit(5000)
       if (error) throw error
-      return data as SubmissionRow[]
+      return data as unknown as SubmissionRow[]
     },
   })
 
