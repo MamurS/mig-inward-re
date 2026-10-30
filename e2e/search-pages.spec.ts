@@ -118,7 +118,9 @@ test.describe('agenda', () => {
     const premium = page.locator('main [role="tabpanel"] a').filter({ hasText: /#\d+$/ })
     // …and the overdue claim follow-ups (large loss → management and admin)
     const claimItems = page.locator('main [role="tabpanel"] a[href^="/claims/"]')
-    await expect.poll(async () => (await shownOf()) - (await premium.count()) - (await claimItems.count())).toBe(overdueOpen)
+    // …and the binders' capacity alerts
+    const binderItems = page.locator('main [role="tabpanel"] a[href^="/binders/"]')
+    await expect.poll(async () => (await shownOf()) - (await premium.count()) - (await claimItems.count()) - (await binderItems.count())).toBe(overdueOpen)
     expect(await premium.count()).toBeGreaterThan(0)
     await search(page, 'assignee:all, zzzz-nothing')
     await expect(page.getByText('Nothing matches this search')).toBeVisible()

@@ -1362,12 +1362,12 @@
     "dueAfter_one": "срок — {{count}} день после периода",
     "dueAfter_other": "срок — {{count}} дней после периода",
     "kindsOwed": "Какие бордеро",
-    "deductions": "комиссия {{commission}} %, брокерская {{brokerage}} %",
+    "deductions": "комиссия {{commission}}, брокерская {{brokerage}}",
     "premium": "Премия",
     "premiumCcy": "Премия (наша доля), {{ccy}}",
     "premiumSub": "нетто {{net}} · оплачено {{paid}}",
-    "premiumNeedsBound": "Премия из бордеро учитывается на подтверждённой заявке биндера.",
-    "noPremium": "Премии из бордеро пока нет",
+    "premiumNeedsBound": "Премия учитывается на подтверждённой заявке биндера: её график и все бордеро премий.",
+    "noPremium": "Премии пока нет",
     "instNo": "№",
     "netCcy": "Нетто, {{ccy}}",
     "lossRatio": "Коэффициент убыточности",
@@ -1416,7 +1416,17 @@
       "risk": "Риски",
       "premium": "Премии",
       "claims": "Убытки"
-    }
+    },
+    "missingN_few": "{{count}} нет",
+    "missingN_many": "{{count}} нет",
+    "lateN_few": "{{count}} с опозданием",
+    "lateN_many": "{{count}} с опозданием",
+    "count_few": "{{count}} биндера",
+    "count_many": "{{count}} биндеров",
+    "dueAfter_few": "срок — {{count}} дня после периода",
+    "dueAfter_many": "срок — {{count}} дней после периода",
+    "onBinders_few": "по {{count}} биндерам",
+    "onBinders_many": "по {{count}} биндерам"
   },
   "bdx": {
     "upload": "Загрузить бордеро",
@@ -1540,6 +1550,24 @@
       "noAmounts": "Нет оплаченной суммы и остатка",
       "duplicateEarlier": "Уже загружено с прежним бордеро",
       "duplicateInFile": "Совпадает со строкой {{line}}"
-    }
+    },
+    "okN_few": "{{count}} готовы",
+    "okN_many": "{{count}} готовы",
+    "warningN_few": "{{count}} предупреждения",
+    "warningN_many": "{{count}} предупреждений",
+    "errorN_few": "{{count}} ошибки",
+    "errorN_many": "{{count}} ошибок",
+    "rejectedN_few": "{{count}} не загружены",
+    "rejectedN_many": "{{count}} не загружено",
+    "needComments_few": "Ещё {{count}} предупреждения без комментария",
+    "needComments_many": "Ещё {{count}} предупреждений без комментария",
+    "importN_few": "Загрузить {{count}} строки",
+    "importN_many": "Загрузить {{count}} строк",
+    "importedLines_few": "Загружено {{count}} строки",
+    "importedLines_many": "Загружено {{count}} строк",
+    "importedInstallments_few": "Создано {{count}} записи премии",
+    "importedInstallments_many": "Создано {{count}} записей премии",
+    "importedRejected_few": "{{count}} строки с ошибками не загружены",
+    "importedRejected_many": "{{count}} строк с ошибками не загружено"
   }
 }

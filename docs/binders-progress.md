@@ -68,7 +68,7 @@ history), `20261030114539_seed_demo_binders`.
   - territories;
   - which bordereaux are owed, how often, and how many days after the period.
 - **Binder page**:
-  - Header: status, capacity alerts, missing / late counts. Our share and deductions, limit per risk, aggregate, capacity used (amount and bar), premium from bordereaux (gross, net, paid) and the **loss ratio** (incurred / premium).
+  - Header: status, capacity alerts, missing / late counts. Our share and deductions, limit per risk, aggregate, capacity used (amount and bar), premium of the binder submission — its schedule and every premium bordereau (gross, net, paid) and the **loss ratio** (incurred / premium).
   - Linked submission, broker, underwriter, frequency, lines with their limits, territories.
   - **Bordereaux by period**: a grid of periods × kinds showing received / late / missing / upcoming. Each cell links to its bordereau, or to «Upload» when missing.
   - Tabs:
@@ -151,6 +151,8 @@ Browser: `e2e/binders.spec.ts` (8).
 - Demo isolation; RU / UZ.
 
 Binder pages are in the overlap and large-text checks.
+
+Screenshots: `docs/binders/screenshots/` (register, binder page, the wizard's mapping and check steps, the dashboard section, the binder page in RU and UZ large text).
 
 Security advisor (30 Oct): the one new definer function it lists is
 `binder_capacity_alert(binder)`. It is callable so that the invoker-rights

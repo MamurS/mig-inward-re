@@ -17,7 +17,7 @@ cannot fix, or an action only the owner can do.
 |---|---|---|---|
 | A | Phase 2 premium: steps 5 (dashboard, counterparty) and 6 (self-review), merge | `claude/mga-inward-reinsurance-phase-0-1-otvuzf` / MamurS/mig-inward-re#4 | ✅ merged |
 | B | Phase 3 claims (spec) | same branch name, restarted from main / MamurS/mig-inward-re#5 | ✅ merged |
-| C | Binders and bordereaux | same branch name, restarted from main / MamurS/mig-inward-re#6 | 🔄 finishing (self-review, full suite) |
+| C | Binders and bordereaux | same branch name, restarted from main / MamurS/mig-inward-re#6 | ✅ merged |
 | D | AI-assisted data entry (pluggable provider) | — | — |
 | E | Whole-system audit and polish | — | — |
 | F | Self-hosting runbook (prepare, do not execute) | — | — |
@@ -52,5 +52,7 @@ Branch: the session's branch name, restarted from `main` after #5 merged; PR Mam
 - [x] Demo seed: the Almalyk cargo binder at 85 % capacity (4 risk months, one late; 3 premium months → installments; a claims bordereau → 2 claims), the Aktau draft binder, Caspian's saved mappings.
 - [x] Screens: binders register (search words, export), binder page (terms, capacity, periods grid received / late / missing, bordereaux with their lines in a side panel, premium, claims, loss ratio, follow-ups, documents, change log), binder form, upload wizard (file → mapping with saved template → line checks with comments and totals → import, original file kept), dashboard section, binder picker on the submission form.
 - [x] Unit tests (`validate.test.ts`, 13), e2e `binders.spec.ts` (8), binder pages in the overlap and large-text checks.
-- [ ] Full suite, screenshots, advisor, merge.
+- [x] Screenshots `docs/binders/screenshots/`; advisor reviewed; full suite green (build, vitest 93/93, Playwright 168 + 76 screenshot specs skipped); PR #6 merged.
+
+Next: **D — AI-assisted data entry**, on the same branch name restarted from `main`.
 

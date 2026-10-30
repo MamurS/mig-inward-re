@@ -71,7 +71,7 @@ export function BinderDetailPage() {
   const canUpload = role === 'admin' || role === 'underwriter' || role === 'finance' || role === 'claims'
   const canEdit = can.editSubmissions(role)
 
-  // premium from bordereaux (our share, gross, binder currency) and claims incurred → loss ratio
+  // the binder submission's premium (schedule + premium bordereaux; our share, gross, binder currency) and claims incurred → loss ratio
   const bdxInstallments = (installments.data ?? []).filter((i) => i.currency === ccy)
   const premiumGross = bdxInstallments.reduce((s, i) => s + Number(i.gross_amount ?? 0), 0)
   const premiumNet = bdxInstallments.reduce((s, i) => s + Number(i.net_amount ?? 0), 0)
