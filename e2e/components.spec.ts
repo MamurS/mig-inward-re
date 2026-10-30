@@ -7,24 +7,13 @@ import { expect, test } from '@playwright/test'
 import { installMock } from './support/mockSupabase'
 
 test.describe('table v2 on the register', () => {
-  test('density is remembered per user across reloads', async ({ browser }) => {
-    const context = await browser.newContext()
-    await installMock(context, 'underwriter', 'en')
-    const page = await context.newPage()
+  test('rows are regular height (48 px); there is no density switch', async ({ page }) => {
+    await installMock(page.context(), 'underwriter', 'en')
     await page.goto('/submissions')
     const row = page.locator('main tbody tr').first()
     await row.waitFor()
     expect(Math.round((await row.boundingBox())!.height)).toBe(48)
-
-    await page.getByRole('button', { name: 'Density' }).click()
-    await page.getByRole('menuitemradio', { name: /Compact/ }).click()
-    await page.keyboard.press('Escape')
-    expect(Math.round((await row.boundingBox())!.height)).toBe(40)
-
-    await page.reload()
-    await page.locator('main tbody tr').first().waitFor()
-    expect(Math.round((await page.locator('main tbody tr').first().boundingBox())!.height)).toBe(40)
-    await context.close()
+    await expect(page.getByRole('button', { name: 'Density' })).toHaveCount(0)
   })
 
   test('columns can be hidden, and stay hidden', async ({ browser }) => {

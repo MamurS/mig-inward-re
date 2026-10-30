@@ -1,6 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ArrowDown, ArrowUp, ChevronsUpDown, Columns3, RotateCcw, Rows3, X } from 'lucide-react'
+import { ArrowDown, ArrowUp, ChevronsUpDown, Columns3, RotateCcw, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -8,8 +8,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
@@ -18,15 +16,13 @@ import { usePref } from '@/lib/prefs'
 import { cn } from '@/lib/utils'
 
 /**
- * Table v2 (DESIGN.md «Tables»): density 40 / 48 / 56 px remembered per
- * user, sticky header, frozen first column, column show / hide, row actions
+ * Table v2 (DESIGN.md «Tables»): regular rows of 48 px, sticky header, frozen first column, column show / hide, row actions
  * on hover, a bulk bar for selected rows, search highlight (columns call
  * `ctx.hl(text)`), skeleton rows while loading. Sorting stays with the page
  * (it usually lives in the URL); the table only draws the headers.
  */
 
-export type Density = 'compact' | 'default' | 'comfortable'
-const ROW_H: Record<Density, string> = { compact: 'h-10', default: 'h-12', comfortable: 'h-14' }
+const ROW_H = 'h-12'
 
 export interface CellContext {
   /** Highlights the current search in `text`. */
@@ -65,7 +61,7 @@ export function DataTable<T>({
   maxHeight = 'max-h-[calc(100vh-14rem)]',
   className,
 }: {
-  /** Names the stored preferences (density, hidden columns). */
+  /** Names the stored preference (hidden columns). */
   id: string
   columns: Column<T>[]
   rows: T[]
@@ -85,7 +81,6 @@ export function DataTable<T>({
   className?: string
 }) {
   const { t } = useTranslation()
-  const [density, setDensity] = usePref<Density>('table.density', 'default')
   const defaultHidden = useMemo(() => columns.filter((c) => c.defaultHidden).map((c) => c.id), [columns])
   const [hidden, setHidden] = usePref<string[]>(`table.${id}.hidden`, defaultHidden)
   const [selected, setSelected] = useState<Set<string>>(new Set())
@@ -116,22 +111,6 @@ export function DataTable<T>({
       <div className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-2">
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 text-caption text-muted-foreground">{toolbar}</div>
         <div className="flex items-center gap-1">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" aria-label={t('ui.density')}>
-                <Rows3 />
-                <span className="hidden sm:inline">{t('ui.density')}</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>{t('ui.density')}</DropdownMenuLabel>
-              <DropdownMenuRadioGroup value={density} onValueChange={(v) => setDensity(v as Density)}>
-                <DropdownMenuRadioItem value="compact">{t('ui.densityCompact')}</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="default">{t('ui.densityDefault')}</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="comfortable">{t('ui.densityComfortable')}</DropdownMenuRadioItem>
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" aria-label={t('ui.columns')}>
@@ -216,7 +195,7 @@ export function DataTable<T>({
           </thead>
           <tbody>
             {loading ? (
-              <SkeletonRows rows={8} cols={visible.length + (rowActions ? 1 : 0)} rowClassName={ROW_H[density]} />
+              <SkeletonRows rows={8} cols={visible.length + (rowActions ? 1 : 0)} rowClassName={ROW_H} />
             ) : rows.length === 0 ? (
               <tr>
                 <td colSpan={visible.length + (rowActions ? 1 : 0)}>{empty}</td>
@@ -229,7 +208,7 @@ export function DataTable<T>({
                   <tr
                     key={rid}
                     data-selected={on}
-                    className={cn('group/row transition-colors hover:bg-slate-50 data-[selected=true]:bg-brand-50', ROW_H[density], onRowClick && 'cursor-pointer')}
+                    className={cn('group/row transition-colors hover:bg-slate-50 data-[selected=true]:bg-brand-50', ROW_H, onRowClick && 'cursor-pointer')}
                     onClick={onRowClick ? () => onRowClick(r) : undefined}
                   >
                     {visible.map((c, i) => (

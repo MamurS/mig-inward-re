@@ -237,8 +237,8 @@ data-1 `#468de4` (3.39 : 1 on white) · data-2 `#c37c00` (3.39 : 1 on white) · 
   buttons `rounded-control` at 40 px tall, badges md.
 - **Page padding** 16 / 24 / 32 px (mobile / md / lg).
 - **Tables.** No header bar: a quiet small-text header over hairline rows,
-  a subtle slate-50 hover; regular rows about 48 px (the density switch keeps
-  compact and comfortable). A table that cannot fit scrolls inside its own
+  a subtle slate-50 hover; regular rows of 48 px on every table (no density
+  switch). A table that cannot fit scrolls inside its own
   box with the first column frozen; the page itself never scrolls sideways
   and row actions stay visible (sticky right column on the Premium tab).
 - **Page header.** Quiet breadcrumbs, the title (headline), a subtitle, the
@@ -343,7 +343,7 @@ All under `src/components/`; screens compose them, never re-style them.
 
 | component | file | rules |
 |---|---|---|
-| **Table v2** | `data/DataTable.tsx` | Density 40 / 48 / 56 px (default 48), remembered per user (`usePref`, localStorage keyed by user id). Sticky header and frozen first column inside a scroll box. Column show / hide (first column always shown), remembered. Row actions appear on hover / focus in a pinned right cell — reserved space, no shift. Selecting rows shows a floating bulk bar (fixed, never pushes the page). Search matches are wrapped in `<mark>` (`highlight()`). Skeleton rows at the final row height while loading. Empty → `EmptyState`. |
+| **Table v2** | `data/DataTable.tsx` | Regular rows of 48 px everywhere (no density switch). Sticky header and frozen first column inside a scroll box. Column show / hide (first column always shown), remembered. Row actions appear on hover / focus in a pinned right cell — reserved space, no shift. Selecting rows shows a floating bulk bar (fixed, never pushes the page). Search matches are wrapped in `<mark>` (`highlight()`). Skeleton rows at the final row height while loading. Empty → `EmptyState`. |
 | **Quick view** | `features/*/…QuickView` | A right side panel with the essentials and the next actions (open, edit, open in register). Used by the register, the agenda and the counterparties list. |
 | **Side panel** | `ui/dialog.tsx` | Every task dialog opens docked right (max 512 px, full height, 240 ms expressive slide); the footer sticks to the bottom edge. `variant="center"` only for short confirmations. |
 | **KPI card** | `KpiCard.tsx` | Label, figure in the display face, change vs the previous comparable period (green = good direction, red = bad, grey = flat), 12-month sparkline, click-through to the rows behind it. `alert` puts the figure in danger ink. |
@@ -434,5 +434,5 @@ jokes, no codes.
 | contrast | `npm test` (`contrast.test.ts`) | palette pairing rule, every status/ageing pair, and every colour class pair in `src` ≥ 4.5 : 1 text / 3 : 1 icons |
 | layout stability | `npx playwright test layout-stability` | 7 screens × EN/RU/UZ: no landmark moves on load, hover, focus or menu open |
 | search | `npm test` (`query.test.ts`), `npx playwright test search` | the parser on every example in EN/RU/UZ and messy input; typing, chips, OR, URL / Back, Ctrl K, keyboard suggestions, export = results, the bar in 4 themes × 2 text sizes |
-| components | `npx playwright test components` | density / columns remembered, sticky header, frozen column, highlight, bulk bar, quick views, ⌘K, blur validation, sticky footer, side panels |
+| components | `npx playwright test components` | 48 px rows, columns remembered, sticky header, frozen column, highlight, bulk bar, quick views, ⌘K, blur validation, sticky footer, side panels |
 | screenshots | `SHOTS=<dir> npx playwright test screenshots` | before/after captures, offline mock data |

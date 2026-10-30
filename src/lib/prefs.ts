@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '@/auth/AuthProvider'
 
 /**
- * A small per-user, per-browser preference (table density, hidden columns).
+ * A small per-user, per-browser preference (hidden table columns).
  * Kept in localStorage under the signed-in user's id, so two people sharing a
  * computer keep their own settings. Purely visual — never business data.
  */
