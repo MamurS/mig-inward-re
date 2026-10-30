@@ -24,7 +24,7 @@ Toʻlovlarni moliya boʻlimi qayd etadi. Siz ularni zarar sahifasida koʻrasiz. 
 2. **Xavf** maydonida tasdiqlangan arizalarni raqam, sugʻurtalanuvchi yoki MGA boʻyicha qidiring va birini tanlang. Uni almashtirish uchun **Boshqa xavf** tugmasini bosing.
 3. **Xabar sanasi** (standart boʻyicha bugungi sana), **Zarar sanasi** va **Valyuta**ni toʻldiring.
 4. **Baho (100 %)** maydonini toʻldiring. Ilova imzolangan ulush boʻyicha ulushimizni koʻrsatadi.
-5. **Sabab / xavf**, **Joy**, **Tsedent zarar raqami**, **Tavsif** va **Zarar bo'yicha mas'ul**ni qoʻshing.
+5. **Sabab / xavf**, **Joy**, **Tsedent zarar raqami**, **Tavsif** va **Zarar boʻyicha masʼul**ni qoʻshing.
 6. Qoplama tekshiruvi siz yozayotganingizda ishlaydi:
    - "Qoplama joyida" — xavf tasdiqlangan, zarar davr ichida va valyuta bir xil degani.
    - Aks holda tekshiruv nimani topganini sanab beradi:
@@ -52,17 +52,17 @@ Ulushimiz — **zarar sanasidagi imzolangan ulush**.
 
 ### Zaxiralar
 
-1. **Zaxira o'zgarishi** tugmasini bosing. **Oshirish** yoki **Kamaytirish**ni tanlang, soʻng **Summa** (ulushimiz, zarar valyutasida), **Sana** va **Sabab**ni kiriting.
+1. **Zaxira oʻzgarishi** tugmasini bosing. **Oshirish** yoki **Kamaytirish**ni tanlang, soʻng **Summa** (ulushimiz, zarar valyutasida), **Sana** va **Sabab**ni kiriting.
 2. Oynada "Keyingi qoldiq" koʻrsatiladi. **Saqlash** tugmasini bosing.
 
 Zaxiralar hech qachon tahrirlanmaydi. Tuzatish — bu yangi oʻzgarish, toʻliq tarix esa **Zaxira tarixi** grafigi va roʻyxatida saqlanadi.
 
-- **Zaxira qoldig'i** = zaxiralar − toʻlovlar.
-- **Ko'rilgan** = toʻlangan + qoldiq − qoplamalar.
+- **Zaxira qoldigʻi** = zaxiralar − toʻlovlar.
+- **Koʻrilgan** = toʻlangan + qoldiq − qoplamalar.
 
 ### Qoplamalar
 
-**Qoplama qo'shish** tugmasini bosing. **Turi**ni (Yaroqli qoldiq, Subrogatsiya, Boshqa), soʻng summa, sana va izohlarni kiriting. **Qoplamani saqlash** tugmasini bosing. Qoplamalar koʻrilgan zararni kamaytiradi.
+**Qoplama qoʻshish** tugmasini bosing. **Turi**ni (Yaroqli qoldiq, Subrogatsiya, Boshqa), soʻng summa, sana va izohlarni kiriting. **Qoplamani saqlash** tugmasini bosing. Qoplamalar koʻrilgan zararni kamaytiradi.
 
 ### Yirik zararlar
 
@@ -70,17 +70,17 @@ Zaxiralar hech qachon tahrirlanmaydi. Tuzatish — bu yangi oʻzgarish, toʻliq 
 - Ulushimiz sifatida baho va zaxiralardan kattasi bugungi kurs boʻyicha olinadi.
 - Rahbariyat va administrator har biri eslatma oladi.
 - Hech kim bu belgini qoʻlda qoʻya yoki olib tashlay olmaydi.
-- Zarar valyutasi uchun kurs boʻlmasa, zararda "… kursi hali yo'q: USD summalar yo'q" yozuvi chiqadi va tekshiruvni bajarib boʻlmaydi.
+- Zarar valyutasi uchun kurs boʻlmasa, zararda "… kursi hali yoʻq: USD summalar yoʻq" yozuvi chiqadi va tekshiruvni bajarib boʻlmaydi.
 
 ### Eslatmalar
 
 - Zararda **Eslatma qoʻshish** tugmasini bosing. **Hujjatlar kutilmoqda**, **Keshkol muddati** yoki **Boshqa**ni tanlang. Uni xodimga, **Moliya jamoasi**ga yoki **Zararlar jamoasi**ga biriktiring.
 - Keshkol eslatmasi moliya boʻlimi keshkol toʻlovini qayd etganda oʻz-oʻzidan yopiladi.
-- Ochiq zarar boʻyicha **90 kun** davomida zaxira oʻzgarishi boʻlmasa, kundalik vazifa **Zaxirani ko'rib chiqish** eslatmasini qoʻshadi. U masʼul xodimga, masʼul boʻlmasa — zararlar jamoasiga yuboriladi.
+- Ochiq zarar boʻyicha **90 kun** davomida zaxira oʻzgarishi boʻlmasa, kundalik vazifa **Zaxirani koʻrib chiqish** eslatmasini qoʻshadi. U masʼul xodimga, masʼul boʻlmasa — zararlar jamoasiga yuboriladi.
 
 ### Hujjatlar
 
-Zararning **Hujjatlar** yorligʻida hujjat turlari: Zarar haqida bildirishnoma, Zarar haqida xabarnoma, Adjaster hisoboti, Zarar tasdig'i, Keshkol so'rovi, To'lov tasdig'i, Yozishmalar va Boshqa.
+Zararning **Hujjatlar** yorligʻida hujjat turlari: Zarar haqida bildirishnoma, Zarar haqida xabarnoma, Adjaster hisoboti, Zarar tasdigʻi, Keshkol soʻrovi, Toʻlov tasdigʻi, Yozishmalar va Boshqa.
 
 ### Zarar borderolari
 
@@ -98,12 +98,12 @@ Yuklash nima qiladi:
 
 **Dashboard** sahifasidagi **Zararlar** boʻlimida quyidagilar koʻrsatiladi:
 
-- **Ochiq zararlar**, **Zaxira qoldiqlari**, yil boʻyicha **… yilda to'langan** va **… yil ko'rilgan** (yil zararlari);
-- **Yirik zararlar** va **To'lanadigan keshkollar**.
+- **Ochiq zararlar**, **Zaxira qoldiqlari**, yil boʻyicha **… yilda toʻlangan** va **… yil koʻrilgan** (yil zararlari);
+- **Yirik zararlar** va **Toʻlanadigan keshkollar**.
 
 Har bir raqam filtrlangan reyestrni ochadi.
 
-**Zararlilik** boʻlimida **Zararlilikni guruhlash** orqali MGA, Sugʻurta turi yoki Anderrayting yilini tanlang. Ikkala koʻrsatkich ham koʻrsatiladi: **ko'rilgan / yozilgan mukofot** va **ko'rilgan / ishlangan mukofot**.
+**Zararlilik** boʻlimida **Zararlilikni guruhlash** orqali MGA, Sugʻurta turi yoki Anderrayting yilini tanlang. Ikkala koʻrsatkich ham koʻrsatiladi: **koʻrilgan / yozilgan mukofot** va **koʻrilgan / ishlangan mukofot**.
 
 ## 3. Maʼlumot qidirish
 

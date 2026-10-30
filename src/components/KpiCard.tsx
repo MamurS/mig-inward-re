@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, type ComponentType, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { ArrowDownRight, ArrowRight, ArrowUpRight } from 'lucide-react'
-import { locale } from '@/lib/format'
+import { formatNumber } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
 /** A tiny trend line, drawn to the card's width; the last point is marked. */
@@ -131,7 +131,7 @@ export function KpiCard({
         {hasDelta && (
           <span className={cn('inline-flex items-center gap-0.5 font-medium num', flat ? 'text-muted-foreground' : good ? 'text-success-700' : 'text-danger-700')}>
             <Icon className="size-3.5" />
-            {new Intl.NumberFormat(locale(), { style: 'percent', maximumFractionDigits: 0, signDisplay: 'exceptZero' }).format(delta)}
+            {formatNumber(delta, { style: 'percent', maximumFractionDigits: 0, signDisplay: 'exceptZero' })}
           </span>
         )}
         {hasDelta && deltaLabel && <span>{deltaLabel}</span>}

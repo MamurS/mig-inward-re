@@ -25,7 +25,7 @@ import { StatusBadge } from '@/components/StatusBadge'
 import { useAuth } from '@/auth/AuthProvider'
 import { can } from '@/lib/roles'
 import { supabase } from '@/lib/supabase'
-import { formatAmount, formatDate, formatPct, locale } from '@/lib/format'
+import { formatAmount, formatDate, formatNumber, formatPct } from '@/lib/format'
 import { errorMessage } from '@/lib/errors'
 import type { Enums, Json } from '@/lib/database.types'
 import { useCountries, useLocalName } from '@/hooks/useReference'
@@ -162,7 +162,7 @@ export function CounterpartyDetailPage() {
     flashSaved()
   }
 
-  const pct = (v: number | null) => (v === null ? '—' : `${new Intl.NumberFormat(locale(), { maximumFractionDigits: 0 }).format(v * 100)} %`)
+  const pct = (v: number | null) => (v === null ? '—' : `${formatNumber(v * 100, { maximumFractionDigits: 0 })} %`)
 
   const contacts = toContacts(p.contacts).filter((c) => c.name || c.email || c.phone)
   const rows = subs.data ?? []

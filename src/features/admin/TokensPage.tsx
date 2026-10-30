@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { STATUSES } from '@/lib/status'
+import { formatAmount } from '@/lib/format'
 import { cssOklch, hexToOklch } from '@/design/oklch'
 import {
   AGING_COLORS,
@@ -304,7 +305,7 @@ export function TokensPage() {
                 <TableRow key={s}>
                   <TableCell className="font-medium num">SUB-2026-{String(i + 1).padStart(4, '0')}</TableCell>
                   <TableCell><StatusBadge status={s} /></TableCell>
-                  <TableCell className="text-right num">{(125000 * (i + 1)).toLocaleString('en-US')}.00</TableCell>
+                  <TableCell className="text-right num">{formatAmount(125000 * (i + 1))}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

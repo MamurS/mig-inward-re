@@ -109,5 +109,5 @@ test('Russian and Uzbek: the banner and the switch', async ({ page }) => {
   await expect(page.getByRole('switch', { name: 'Демо-режим' })).toHaveAttribute('aria-checked', 'true')
   await installMock(page.context(), 'finance', 'uz', { demoMode: true })
   await page.goto('/receipts')
-  await expect(page.locator('[data-demo-banner]')).toContainText("Siz faqat demo ma'lumotlarni ko'ryapsiz")
+  await expect(page.locator('[data-demo-banner]')).toContainText("Siz faqat demo maʼlumotlarni koʻryapsiz")
 })

@@ -13,7 +13,7 @@ import { Amount } from '@/components/Amount'
 import { EmptyState } from '@/components/EmptyState'
 import { useAuth } from '@/auth/AuthProvider'
 import { can } from '@/lib/roles'
-import { formatAmount, formatDate, formatDateTime, formatPct } from '@/lib/format'
+import { formatAmount, formatDate, formatDateTime, formatNumber, formatPct } from '@/lib/format'
 import { errorMessage } from '@/lib/errors'
 import { useLocalName, useUsers, userName } from '@/hooks/useReference'
 import { useAuditLog, useEntityDocuments, useEntityFollowUps } from '@/features/submissions/api'
@@ -86,7 +86,7 @@ export function BinderDetailPage() {
     { label: t('binder.aggregateLimitCcy', { ccy }), value: b.aggregate_limit === null ? '—' : <Amount value={b.aggregate_limit} />, sub: t('binder.at100') },
     { label: t('binder.capacityUsedCcy', { ccy }), value: <Amount value={b.capacity_used_100} />, sub: <CapacityBar pct={b.capacity_pct} /> },
     { label: t('binder.premiumCcy', { ccy }), value: <Amount value={premiumGross} />, sub: t('binder.premiumSub', { net: formatAmount(premiumNet), paid: formatAmount(premiumPaid) }) },
-    { label: t('binder.lossRatio'), value: lossRatio === null ? '—' : `${lossRatio.toLocaleString(undefined, { maximumFractionDigits: 1 })} %`, sub: t('binder.lossRatioSub', { incurred: formatAmount(incurred), ccy }) },
+    { label: t('binder.lossRatio'), value: lossRatio === null ? '—' : `${formatNumber(lossRatio, { maximumFractionDigits: 1 })} %`, sub: t('binder.lossRatioSub', { incurred: formatAmount(incurred), ccy }) },
   ]
 
   return (

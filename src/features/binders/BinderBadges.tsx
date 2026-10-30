@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { Badge, type BadgeTone } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
+import { formatNumber } from '@/lib/format'
 import type { BinderStatus, PeriodRow } from './api'
 
 const TONE: Record<BinderStatus, BadgeTone> = { draft: 'neutral', active: 'success', expired: 'info', cancelled: 'danger' }
@@ -35,7 +36,7 @@ export function CapacityBar({ pct, className, showLabel = true }: { pct: number 
       >
         <span className={cn('absolute inset-y-0 left-0 rounded-full', tone)} style={{ width: `${Math.min(100, pct)}%` }} />
       </span>
-      {showLabel && <span className={cn('num whitespace-nowrap', pct >= 80 && 'font-medium text-warning-700', pct >= 100 && 'text-danger-700')}>{pct.toLocaleString(undefined, { maximumFractionDigits: 1 })} %</span>}
+      {showLabel && <span className={cn('num whitespace-nowrap', pct >= 80 && 'font-medium text-warning-700', pct >= 100 && 'text-danger-700')}>{formatNumber(pct, { maximumFractionDigits: 1 })} %</span>}
     </span>
   )
 }

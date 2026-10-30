@@ -110,10 +110,10 @@ for (const lang of ['en', 'ru', 'uz'] as const) {
       const report = await page.evaluate(() => {
         const doc = document.documentElement
         const pageOverflow = doc.scrollWidth - doc.clientWidth
-        // nav labels: either they fit, or they truncate and carry a tooltip
+        // nav labels are never cut: they fit, or wrap to a second line
         const nav = [...document.querySelectorAll('aside a span')].filter((el) => {
           const e = el as HTMLElement
-          return e.scrollWidth > e.clientWidth + 1 && !e.closest('[title]')
+          return e.scrollWidth > e.clientWidth + 1 || e.scrollHeight > e.clientHeight + 1 || getComputedStyle(e).textOverflow === 'ellipsis'
         }).map((e) => e.textContent)
         // nothing in main sticks out past the viewport (scrolling boxes clip their own content)
         const sticking = [...document.querySelectorAll('main button, main a, main h1, main input, main select')].filter((el) => {

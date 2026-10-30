@@ -51,7 +51,7 @@ Tushum va uning taqsimotlari birga saqlanadi yoki umuman saqlanmaydi. Tushumlar 
 - **Debitorlik** sahifasida MGA hali toʻlamagan barcha toʻlovlar roʻyxati, muddati eng eskisi birinchi, koʻrsatiladi.
 - Plitkalarda summalar USD da koʻrsatiladi: **Olinadigan qoldiq**, **Muddati kelmagan**, **0-30**, **31-60**, **61-90** va **90+ kun**. Roʻyxatni shu guruh boʻyicha filtrlash uchun plitkani bosing.
 - Kechikkan kunlar Toshkent vaqti boʻyicha hisoblanadi.
-- Qaytariladigan mukofot alohida, **MGA ga to'lanadigan** plitkasida koʻrsatiladi. U hech qachon MGA qarzidan ayirilmaydi.
+- Qaytariladigan mukofot alohida, **MGA ga toʻlanadigan** plitkasida koʻrsatiladi. U hech qachon MGA qarzidan ayirilmaydi.
 - Valyuta kursi yoʻq pozitsiyalar USD jamiga kirmaydi. Sahifada ularning soni koʻrsatiladi.
 
 ### Toʻlovni hisobdan chiqarish
@@ -73,11 +73,11 @@ Qaytariladigan mukofot MGA ga qaytarib toʻlangach, uning qator menyusida **MGA 
 
 ### Zararni toʻlash
 
-1. Zararni oching va **To'lovni yozish** tugmasini bosing.
-2. **Usul** maydonida **Bank o'tkazmasi** yoki **Mukofotga hisob**ni tanlang.
-3. **Turi** (Qoplash, Xarajat, Keshkol), **Summa** (ulushimiz, zarar valyutasida) va **To'lov sanasi**ni tanlang. Bank oʻtkazmasida **Oluvchi** va **Bank maʼlumotnomasi**ni ham kiriting.
+1. Zararni oching va **Toʻlovni yozish** tugmasini bosing.
+2. **Usul** maydonida **Bank oʻtkazmasi** yoki **Mukofotga hisob**ni tanlang.
+3. **Turi** (Qoplash, Xarajat, Keshkol), **Summa** (ulushimiz, zarar valyutasida) va **Toʻlov sanasi**ni tanlang. Bank oʻtkazmasida **Oluvchi** va **Bank maʼlumotnomasi**ni ham kiriting.
 4. **Mukofotga hisob**: avval summani kiriting, keyin MGA ning ochiq toʻlovlarini tanlang. Hisob toʻliq taqsimlanishi kerak. Ilova MGA dan shu summaga tushum qayd etadi.
-5. **To'lovni saqlash** tugmasini bosing. Keshkol toʻlovi ochiq keshkol eslatmasini yopadi.
+5. **Toʻlovni saqlash** tugmasini bosing. Keshkol toʻlovi ochiq keshkol eslatmasini yopadi.
 
 Yopilgan yoki rad etilgan zarar boʻyicha toʻlovni qayd etib boʻlmaydi.
 
@@ -94,7 +94,7 @@ Yopilgan yoki rad etilgan zarar boʻyicha toʻlovni qayd etib boʻlmaydi.
 - **Olinadigan mukofot** (muddati hali kelmagan summa bilan);
 - **Kechikkan mukofot**;
 - **Shu oyda olingan** va joriy yil uchun **… yilda olingan**;
-- **Kechikkan mukofot yoshi bo'yicha**, **Eng ko'p kechiktirgan MGA lar** va **Eng ko'p kechikkan to'lovlar**.
+- **Kechikkan mukofot yoshi boʻyicha**, **Eng koʻp kechiktirgan MGA lar** va **Eng koʻp kechikkan toʻlovlar**.
 
 Har bir raqam filtrlangan reyestrni ochadi. **Zararlar** va **Binderlar** boʻlimlari ham koʻrsatiladi.
 

@@ -31,14 +31,14 @@ Zararlarni faqat **oʻz** risklaringiz boʻyicha **koʻra** olasiz. Tushumlar, h
 
 ### Hujjatdan toʻldirish (SI)
 
-**Hujjatdan to‘ldirish** tugmasi faqat administrator rolingiz uchun SI (sunʼiy intellekt)ni yoqqan boʻlsa koʻrinadi.
+**Hujjatdan toʻldirish** tugmasi faqat administrator rolingiz uchun SI (sunʼiy intellekt)ni yoqqan boʻlsa koʻrinadi.
 
-1. **Hujjatdan to‘ldirish** tugmasini bosing. **Manba** boʻlimida **Fayl** (PDF, rasm yoki matn, 8 MB gacha) yoki **Joylangan matn**ni tanlang.
-2. **SI bilan o‘qish** tugmasini bosing. Har bir maydonda qiymat, ishonch belgisi ("SI … %") va qiymat olingan matn koʻrsatiladi.
+1. **Hujjatdan toʻldirish** tugmasini bosing. **Manba** boʻlimida **Fayl** (PDF, rasm yoki matn, 8 MB gacha) yoki **Joylangan matn**ni tanlang.
+2. **SI bilan oʻqish** tugmasini bosing. Har bir maydonda qiymat, ishonch belgisi ("SI … %") va qiymat olingan matn koʻrsatiladi.
 3. Ishonchi past qiymatlar belgilanmagan boʻladi. Faqat foydalanmoqchi boʻlgan qiymatlarni belgilang.
-4. "kontragentlarda yo‘q" deb belgilangan nom toʻldirilmaydi. Avval kontragentni qoʻshing, keyin uni tanlang.
-5. **Reyestrda bormi? O‘xshash arizalar:** roʻyxatini koʻrib chiqing. Bu faqat ogohlantirish. Qarorni oʻzingiz qabul qilasiz.
-6. **N maydonni to‘ldirish** tugmasini bosing. Toʻldirilgan maydonlar siz ularni oʻzgartirmaguningizcha belgilangan holda qoladi. **Belgilarni yashirish** belgilarni olib tashlaydi.
+4. "kontragentlarda yoʻq" deb belgilangan nom toʻldirilmaydi. Avval kontragentni qoʻshing, keyin uni tanlang.
+5. **Reyestrda bormi? Oʻxshash arizalar:** roʻyxatini koʻrib chiqing. Bu faqat ogohlantirish. Qarorni oʻzingiz qabul qilasiz.
+6. **N maydonni toʻldirish** tugmasini bosing. Toʻldirilgan maydonlar siz ularni oʻzgartirmaguningizcha belgilangan holda qoladi. **Belgilarni yashirish** belgilarni olib tashlaydi.
 7. **«Ariza yaratish» (yoki «Oʻzgarishlarni saqlash») tugmasi bosilmaguncha hech narsa saqlanmaydi.**
 
 ### Holatni oʻzgartirish
@@ -86,14 +86,14 @@ Faqat oʻzingiz yuklagan hujjatlarni oʻchira olasiz. **Tasdiqlovchi hujjat** de
 ### Binderlar va borderolar
 
 - **Yangi binder** (Binderlar sahifasi) yon panelni ochadi. **Binder raqami**, MGA, broker, anderrayter, boshlanish va tugash sanalari, valyuta, **Ulushimiz, %**, komissiya va brokerlik, **Har bir risk limiti** va **Agregat limit**ni kiriting.
-- Soʻng **Sug‘urta yo‘nalishlari**ni (har biri oʻz limitiga ega boʻlishi mumkin) va **Hududlar**ni (hech biri belgilanmasa — istalgan hudud) belgilang. **Borderolar** (Har oy yoki Har chorak), **Qaysi borderolar** va **Muddat, davrdan keyin kunlar** (30 = oy yoki chorak tugaganidan 30 kun keyin) maydonlarini toʻldiring. **Binder yaratish** tugmasini bosing.
-- Borderoni yuklash uchun binder sahifasida **Bordero yuklash** tugmasini yoki **Davrlar bo‘yicha borderolar** jadvalidagi yetishmayotgan katakda **Yuklash** tugmasini bosing:
+- Soʻng **Sugʻurta yoʻnalishlari**ni (har biri oʻz limitiga ega boʻlishi mumkin) va **Hududlar**ni (hech biri belgilanmasa — istalgan hudud) belgilang. **Borderolar** (Har oy yoki Har chorak), **Qaysi borderolar** va **Muddat, davrdan keyin kunlar** (30 = oy yoki chorak tugaganidan 30 kun keyin) maydonlarini toʻldiring. **Binder yaratish** tugmasini bosing.
+- Borderoni yuklash uchun binder sahifasida **Bordero yuklash** tugmasini yoki **Davrlar boʻyicha borderolar** jadvalidagi yetishmayotgan katakda **Yuklash** tugmasini bosing:
   1. **Fayl va davr**: **Turi**, **Davr** va **Olingan sana**ni tanlang, soʻng faylni tanlang (.xlsx yoki .csv, 10 MB va 5 000 qatorgacha).
   2. **Ustunlar**: MGA uchun **Saqlangan moslashtirish** boʻlsa, u qoʻllanadi. Har bir **Bizning maydon**ni **Fayldagi ustun** bilan solishtirib tekshiring. **SI bilan taklif qilish** va **Ushbu moslashtirishni MGA uchun saqlash** tugmalaridan foydalanishingiz mumkin.
-  3. **Tekshirish va yuklash**: xatoli qatorlar chiqarib tashlanadi. Har bir ogohlantirishga izoh kerak. **MGA ko‘rsatgan jami**ni kiriting; u qatorlar jamidan farq qilsa, sababini yozing.
+  3. **Tekshirish va yuklash**: xatoli qatorlar chiqarib tashlanadi. Har bir ogohlantirishga izoh kerak. **MGA koʻrsatgan jami**ni kiriting; u qatorlar jamidan farq qilsa, sababini yozing.
   4. **N qatorni yuklash** tugmasini bosing. Asl fayl bordero bilan birga saqlanadi.
 - Risk qatorlari binder sigʻimiga hisoblanadi. Agregatning 80 % va 100 % ishlatilganda rahbariyat va binder anderrayteriga eslatma keladi.
-- Bordero muddati oʻtib ketsa, kundalik vazifa binder anderrayteriga **Bordero yo‘q** eslatmasini yaratadi.
+- Bordero muddati oʻtib ketsa, kundalik vazifa binder anderrayteriga **Bordero yoʻq** eslatmasini yaratadi.
 
 ### Kontragentlar
 

@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { NativeSelect } from '@/components/ui/native-select'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/auth/AuthProvider'
-import { formatAmount, formatDate, formatHuman, formatLongDate, formatMonthShort, isoDate, locale } from '@/lib/format'
+import { formatAmount, formatDate, formatHuman, formatLongDate, formatMonthShort, formatNumber, isoDate } from '@/lib/format'
 import { errorMessage } from '@/lib/errors'
 import { STATUS_MARK, type SubmissionStatus } from '@/lib/status'
 import { AgeingBreakdown } from '@/components/AgeingBar'
@@ -199,7 +199,7 @@ export function DashboardPage() {
     )
   if (error) return <p className="p-6 text-body text-destructive">{errorMessage(error)}</p>
 
-  const pct = (v: number | null) => (v === null ? '—' : `${new Intl.NumberFormat(locale(), { maximumFractionDigits: 0 }).format(v * 100)} %`)
+  const pct = (v: number | null) => (v === null ? '—' : `${formatNumber(v * 100, { maximumFractionDigits: 0 })} %`)
   const daysSince = (iso: string | null) => (iso ? Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000) : null)
 
   return (

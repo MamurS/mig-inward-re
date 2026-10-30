@@ -49,7 +49,8 @@ export function AppLayout() {
           }
         >
           <Icon className="size-5 shrink-0" />
-          <span className="min-w-0 flex-1 truncate" title={t(labelKey)}>{t(labelKey)}</span>
+          {/* a long label (any language, either text size) wraps to a second line instead of being cut */}
+          <span className="min-w-0 flex-1 leading-snug break-words">{t(labelKey)}</span>
           {to === '/agenda' && (overdue.data ?? 0) > 0 && (
             <span className="rounded-full bg-danger-600 px-2 py-0.5 text-caption leading-none font-semibold text-white" title={t('agenda.bucket.overdue')}>
               {overdue.data}

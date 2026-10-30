@@ -14,7 +14,7 @@ import { EmptyState } from '@/components/EmptyState'
 import { supabase } from '@/lib/supabase'
 import { errorMessage } from '@/lib/errors'
 import { ALL_ROLES } from '@/lib/roles'
-import { formatAmount, formatBytes, formatDateTime } from '@/lib/format'
+import { formatAmount, formatBytes, formatDateTime, formatNumber } from '@/lib/format'
 import type { Tables } from '@/lib/database.types'
 import { textWords } from '@/features/search/query'
 import { AI_USAGE_PAGE } from '@/features/search/pages'
@@ -98,7 +98,7 @@ export function AiAdminTab() {
     { id: 'model', header: t('ai.model'), defaultHidden: true, cell: (r) => r.model ?? '—' },
     { id: 'in', header: t('ai.inputTokens'), align: 'right', cell: (r) => (r.input_tokens === null ? '—' : formatAmount(r.input_tokens).replace(/[.,]00$/, '')) },
     { id: 'out', header: t('ai.outputTokens'), align: 'right', cell: (r) => (r.output_tokens === null ? '—' : formatAmount(r.output_tokens).replace(/[.,]00$/, '')) },
-    { id: 'ms', header: t('ai.duration'), align: 'right', defaultHidden: true, cell: (r) => (r.duration_ms === null ? '—' : `${(r.duration_ms / 1000).toFixed(1)} s`) },
+    { id: 'ms', header: t('ai.duration'), align: 'right', defaultHidden: true, cell: (r) => (r.duration_ms === null ? '—' : `${formatNumber(r.duration_ms / 1000, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} s`) },
     { id: 'error', header: t('ai.error'), defaultHidden: true, className: 'max-w-64', cell: (r) => <span className="block truncate" title={r.error ?? ''}>{r.error ?? '—'}</span> },
   ]
 

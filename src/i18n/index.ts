@@ -8,7 +8,7 @@ import uz from '@/locales/uz.json'
 export const LANGUAGES = [
   { code: 'en', label: 'English', short: 'EN' },
   { code: 'ru', label: 'Русский', short: 'RU' },
-  { code: 'uz', label: "O'zbekcha", short: 'UZ' },
+  { code: 'uz', label: 'Oʻzbekcha', short: 'UZ' },
 ] as const
 
 export type LanguageCode = (typeof LANGUAGES)[number]['code']

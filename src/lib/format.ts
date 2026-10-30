@@ -6,12 +6,26 @@ export function locale() {
   return LOCALES[i18n.resolvedLanguage ?? 'en'] ?? 'en-GB'
 }
 
+/*
+ * Uzbek numbers are written the Russian way: a space between thousands and a
+ * decimal comma («1 234,38», «83,01 ming»). Browsers ship uneven Uzbek number
+ * data (some fall back to «1,234.38» / «83.01K»), so the separators come from
+ * ru-RU and the scale words below are spelled out here.
+ */
+const numberLocaleOf = (loc: string) => (loc.startsWith('uz') ? 'ru-RU' : loc)
+const UZ_SCALES = ['ming', 'mln', 'mlrd', 'trln']
+
+/** Any figure in the interface language's number format (Uzbek as Russian). */
+export function formatNumber(value: number, options?: Intl.NumberFormatOptions): string {
+  return new Intl.NumberFormat(numberLocaleOf(locale()), options).format(value)
+}
+
 /** 1 234 567.89 style, always 2 decimals. Accepts DB numbers or exact decimal strings. */
 export function formatAmount(value: number | string | null | undefined): string {
   if (value === null || value === undefined || value === '') return '—'
   const n = typeof value === 'string' ? Number(value) : value
   if (!Number.isFinite(n)) return '—'
-  return new Intl.NumberFormat(locale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n)
+  return formatNumber(n, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
 export function formatMoney(value: number | string | null | undefined, currency?: string | null): string {
@@ -24,11 +38,26 @@ export function formatMoney(value: number | string | null | undefined, currency?
  * 1 250 000 → «1,25 млн» («12.00K», «1.25M» in English). Scaled figures always
  * carry two decimals, so neighbours line up («12,00 тыс.» next to «83,01 тыс.»);
  * figures under a thousand are already human and keep up to two decimals.
+ * Uzbek: «83,01 ming», «1,25 mln», «2,50 mlrd».
  */
 export function compactNumber(value: number, loc: string): string {
   // 999.996 rounds up to «1,00 тыс.»: it is scaled too
   const scaled = Math.abs(value) >= 999.995
+  if (loc.startsWith('uz')) return compactUz(value, scaled)
   return new Intl.NumberFormat(loc, { notation: 'compact', minimumFractionDigits: scaled ? 2 : 0, maximumFractionDigits: 2 }).format(value)
+}
+
+function compactUz(value: number, scaled: boolean): string {
+  const nf = (min: number) => new Intl.NumberFormat('ru-RU', { minimumFractionDigits: min, maximumFractionDigits: 2 })
+  if (!scaled) return nf(0).format(value)
+  let step = 0
+  let n = value / 1000
+  // 999 995 → «1,00 mln», not «1 000,00 ming»
+  while (step < UZ_SCALES.length - 1 && Math.abs(n) >= 999.995) {
+    n /= 1000
+    step++
+  }
+  return `${nf(2).format(n)}\u00a0${UZ_SCALES[step]}`
 }
 
 /** {@link compactNumber} in the interface language. */
@@ -40,7 +69,7 @@ export function formatHuman(value: number): string {
 export function formatPct(value: number | string | null | undefined): string {
   if (value === null || value === undefined || value === '') return '—'
   const n = typeof value === 'string' ? Number(value) : value
-  return `${new Intl.NumberFormat(locale(), { maximumFractionDigits: 6 }).format(n)} %`
+  return `${formatNumber(n, { maximumFractionDigits: 6 })} %`
 }
 
 /*

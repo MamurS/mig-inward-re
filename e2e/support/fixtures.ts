@@ -41,8 +41,8 @@ const currencies: Row[] = [
 ].map(([code, name, sort_order]) => ({ code, name, sort_order, active: true }))
 
 const countries: Row[] = [
-  ['UZ', 'Uzbekistan', 'Узбекистан', "O'zbekiston"], ['KZ', 'Kazakhstan', 'Казахстан', "Qozog'iston"],
-  ['KG', 'Kyrgyzstan', 'Кыргызстан', "Qirg'iziston"], ['AZ', 'Azerbaijan', 'Азербайджан', 'Ozarbayjon'],
+  ['UZ', 'Uzbekistan', 'Узбекистан', 'Oʻzbekiston'], ['KZ', 'Kazakhstan', 'Казахстан', 'Qozogʻiston'],
+  ['KG', 'Kyrgyzstan', 'Кыргызстан', 'Qirgʻiziston'], ['AZ', 'Azerbaijan', 'Азербайджан', 'Ozarbayjon'],
   ['GE', 'Georgia', 'Грузия', 'Gruziya'], ['TR', 'Turkey', 'Турция', 'Turkiya'], ['AE', 'United Arab Emirates', 'ОАЭ', 'BAA'],
   ['SA', 'Saudi Arabia', 'Саудовская Аравия', 'Saudiya Arabistoni'], ['OM', 'Oman', 'Оман', 'Ummon'], ['GB', 'United Kingdom', 'Великобритания', 'Buyuk Britaniya'],
 ].map(([code, name, name_ru, name_uz]) => ({ code, name, name_ru, name_uz, active: true }))
@@ -52,7 +52,7 @@ const LOB = [
   ['ENER', 'Energy', 'Энергетика', 'Energetika'], ['CARGO', 'Marine Cargo', 'Грузы', 'Yuklar'], ['HULL', 'Marine Hull', 'Каско судов', 'Kema kaskosi'],
   ['AVIA', 'Aviation', 'Авиация', 'Aviatsiya'], ['CRED', 'Credit & Surety', 'Кредит и поручительство', 'Kredit va kafillik'],
   ['FINL', 'Financial Lines (D&O, PI, FI)', 'Финансовые риски (D&O, PI, FI)', 'Moliyaviy xavflar (D&O, PI, FI)'],
-  ['CYBER', 'Cyber', 'Кибер-риски', 'Kiber xavflar'], ['AGRI', 'Agriculture', 'Сельское хозяйство', "Qishloq xo'jaligi"],
+  ['CYBER', 'Cyber', 'Кибер-риски', 'Kiber xavflar'], ['AGRI', 'Agriculture', 'Сельское хозяйство', 'Qishloq xoʻjaligi'],
 ]
 const lines_of_business: Row[] = LOB.map(([code, name, name_ru, name_uz], i) => ({
   id: `10000000-0000-4000-8000-${String(i + 1).padStart(12, '0')}`, code, name, name_ru, name_uz, active: true, sort_order: (i + 1) * 10,

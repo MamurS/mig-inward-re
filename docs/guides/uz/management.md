@@ -26,19 +26,19 @@ Ish **Dashboard** sahifasidan boshlanadi. Menyuingizda **Dashboard**, **Arizalar
 
 - **Olinadigan mukofot** (muddati hali kelmagan summa bilan) va **Kechikkan mukofot**;
 - **Shu oyda olingan** va **… yilda olingan**;
-- **Kechikkan mukofot yoshi bo'yicha**, **Eng ko'p kechiktirgan MGA lar** va **Eng ko'p kechikkan to'lovlar**.
+- **Kechikkan mukofot yoshi boʻyicha**, **Eng koʻp kechiktirgan MGA lar** va **Eng koʻp kechikkan toʻlovlar**.
 
 Valyuta kursi yoʻq pozitsiyalar USD jamiga kirmaydi va plitkalar ostida sanab koʻrsatiladi.
 
 **Zararlar** boʻlimida quyidagilar koʻrsatiladi:
 
-- **Ochiq zararlar**, **Zaxira qoldiqlari**, **… yilda to'langan** va **… yil ko'rilgan** (yil zararlari);
-- **Yirik zararlar** va **To'lanadigan keshkollar**.
+- **Ochiq zararlar**, **Zaxira qoldiqlari**, **… yilda toʻlangan** va **… yil koʻrilgan** (yil zararlari);
+- **Yirik zararlar** va **Toʻlanadigan keshkollar**.
 
 **Binderlar** boʻlimida quyidagilar koʻrsatiladi:
 
-- **Faol binderlar**, **Bordero yo‘q**, **Kechikib olingan** va **Sig‘im ogohlantirishlari** (agregatning 80 % va undan koʻpi);
-- **So‘raladigan borderolar** roʻyxati va sigʻimi toʻlib borayotgan binderlar.
+- **Faol binderlar**, **Bordero yoʻq**, **Kechikib olingan** va **Sigʻim ogohlantirishlari** (agregatning 80 % va undan koʻpi);
+- **Soʻraladigan borderolar** roʻyxati va sigʻimi toʻlib borayotgan binderlar.
 
 Istalgan raqamni bossangiz, reyestr aynan shu raqam ortidagi qatorlar boʻyicha filtrlangan holda ochiladi. Reyestrda xuddi shu jami koʻrsatiladi.
 
@@ -46,8 +46,8 @@ Istalgan raqamni bossangiz, reyestr aynan shu raqam ortidagi qatorlar boʻyicha 
 
 1. Zararlar boʻlimidagi **Zararlilik** qismida **Zararlilikni guruhlash** orqali MGA, Sugʻurta turi yoki Anderrayting yilini tanlang.
 2. Ikkala koʻrsatkichni koʻrib chiqing:
-   - **Zararlilik, ko'rilgan / yozilgan mukofot**: yozilgan mukofot = tasdiqlangan risklar boʻyicha tasdiqlangan ulushimizdagi sof mukofot.
-   - **Zararlilik, ko'rilgan / ishlangan mukofot**: ishlangan mukofot = yozilgan mukofot × risk davrining oʻtgan qismi, kunma-kun hisoblanadi.
+   - **Zararlilik, koʻrilgan / yozilgan mukofot**: yozilgan mukofot = tasdiqlangan risklar boʻyicha tasdiqlangan ulushimizdagi sof mukofot.
+   - **Zararlilik, koʻrilgan / ishlangan mukofot**: ishlangan mukofot = yozilgan mukofot × risk davrining oʻtgan qismi, kunma-kun hisoblanadi.
 3. Barcha raqamlar — ulushimiz, USD da. Koʻrilgan zarar = toʻlangan + qoldiq − qoplamalar.
 
 Kontragent sahifasida ham uning oʻz **Mukofotlar** va **Zararlar** kartochkalari ikkala zararlilik koʻrsatkichi bilan koʻrsatiladi.
@@ -57,7 +57,7 @@ Binder sahifasida uning oʻz **Zarar koeffitsienti** koʻrsatiladi: koʻrilgan z
 ### Yirik zararlar va sigʻim ogohlantirishlari
 
 - Ulushimiz **USD 250,000** (standart chegara) ga yetgan zarar **Yirik zarar** deb belgilanadi. Rahbariyat va administrator har biri eslatma oladi.
-- Binder agregatining **80 %** va keyin **100 %** ishlatilganda rahbariyat va binder anderrayteri har bir daraja uchun bir martadan **Sig‘im ogohlantirishi** eslatmasini oladi.
+- Binder agregatining **80 %** va keyin **100 %** ishlatilganda rahbariyat va binder anderrayteri har bir daraja uchun bir martadan **Sigʻim ogohlantirishi** eslatmasini oladi.
 - Bu eslatmalar **Mening vazifalarim** sahifasida paydo boʻladi. Eslatmani **Bajarildi** tugmasi va **Natija** bilan yoping.
 
 ### Boshqa xodimning vazifalarini koʻrish
@@ -103,5 +103,5 @@ Har bir reyestrdagi **Excel’ga eksport** aynan soʻrovingiz koʻrsatayotgan qa
 - Dashboarddagi har bir raqam oʻz ortidagi reyestrni xuddi shu jami bilan ochadi.
 - Qaytariladigan mukofot MGA ga toʻlanadigan summa sifatida koʻrsatiladi. U hech qachon debitorlik qarzidan ayirilmaydi.
 - USD raqamlari oʻsha kundagi saqlangan kurs boʻyicha hisoblanadi. Kursi yoʻq pozitsiyalar taxmin qilinmaydi, balki sanab koʻrsatiladi.
-- "Yil ko'rilgan" — zarar sanasi shu yilga toʻgʻri keladigan zararlar. "Yilda to'langan" — shu yil sanasi bilan qayd etilgan toʻlovlar.
+- "Yil koʻrilgan" — zarar sanasi shu yilga toʻgʻri keladigan zararlar. "Yilda toʻlangan" — shu yil sanasi bilan qayd etilgan toʻlovlar.
 - Zaxiralar, qoplamalar va yuklangan borderolar hech qachon tahrirlanmaydi. Tuzatishlar yangi yozuvlar sifatida paydo boʻladi.

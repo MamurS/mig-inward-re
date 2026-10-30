@@ -15,7 +15,7 @@ Ish **Dashboard** sahifasidan boshlanadi. Menyuning barcha bandlari, shuningdek 
   - binderlar va borderolarning har uch turi.
 - Barcha xodimlarning eslatmalarini koʻra olasiz. **Mening vazifalarim** sahifasida `assignee:all` deb qidiring.
 - **Tasdiqlovchi hujjat** deb belgilanganidan tashqari istalgan hujjatni oʻchira olasiz.
-- **Boshqaruv** sahifasida yettita yorliq bor: **Foydalanuvchilar va rollar**, **Ma’lumotnomalar**, **Valyuta kurslari**, **Sozlamalar**, **SI**, **Rejalashtirilgan vazifalar** va **Demo ma'lumotlar**.
+- **Boshqaruv** sahifasida yettita yorliq bor: **Foydalanuvchilar va rollar**, **Maʼlumotnomalar**, **Valyuta kurslari**, **Sozlamalar**, **SI**, **Rejalashtirilgan vazifalar** va **Demo maʼlumotlar**.
 
 ## 2. Kundalik ishlar
 
@@ -50,30 +50,30 @@ Sozlamalar guruhlarga ajratilgan. Standart qiymatlar:
 
 | Guruh | Sozlama | Standart |
 |---|---|---|
-| Takliflar bo'yicha eslatmalar | Taklifdan keyingi birinchi eslatma (kun) | 7 |
+| Takliflar boʻyicha eslatmalar | Taklifdan keyingi birinchi eslatma (kun) | 7 |
 | | Eslatmalarni har (kun) takrorlash | 7 |
-| | Eski takliflarni avtomatik «Javob yo'q» ga o'tkazish | o'chirilgan |
+| | Eski takliflarni avtomatik «Javob yoʻq» ga oʻtkazish | oʻchirilgan |
 | | …dan keyin (taklifdan beri kun) | 30 |
-| Mukofotlar | Standart to'lov muddati (boshlanishdan kun) | 60 |
+| Mukofotlar | Standart toʻlov muddati (boshlanishdan kun) | 60 |
 | | Birinchi kechikish eslatmasigacha imtiyoz (kun) | 0 |
 | Zararlar | Yirik zarar chegarasi, USD (ulushimiz) | 250,000 |
-| | Zaxira o'zgarmasa mas'ulga eslatish (kun) | 90 |
+| | Zaxira oʻzgarmasa masʼulga eslatish (kun) | 90 |
 
 Kunlar 1 dan 365 gacha boʻlishi kerak (toʻlov muddati va imtiyoz uchun 0 dan 365 gacha). **Sozlamalarni saqlash** tugmasini bosing.
 
 ### SI
 
-SI yordamida maʼlumot kiritish siz uni yoqmaguningizcha **o'chirilgan** boʻladi.
+SI yordamida maʼlumot kiritish siz uni yoqmaguningizcha **oʻchirilgan** boʻladi.
 
 1. **Avval egasi bajaradigan amal:** provayder kaliti Supabase → Edge Functions → Secrets boʻlimiga kiritiladi (`ANTHROPIC_API_KEY`, ixtiyoriy ravishda `AI_PROVIDER` va `AI_MODEL`). U hech qachon ilovaga kiritilmaydi.
 2. **SI** yorligʻida **Yoqilgan** belgisini qoʻying.
 3. **Foydalana oladigan rollar**ni tanlang. Standart rollar: administrator, anderrayter, moliya va zararlar.
-4. **Foydalanuvchiga kuniga so‘rovlar** sonini belgilang. Standart qiymat — 100, keshdan olingan javoblar hisoblanmaydi.
+4. **Foydalanuvchiga kuniga soʻrovlar** sonini belgilang. Standart qiymat — 100, keshdan olingan javoblar hisoblanmaydi.
 5. **Saqlash** tugmasini bosing.
 
 Foydalanish jurnalida har bir soʻrov qayd etiladi: qachon, foydalanuvchi, turi (Ariza hujjati yoki Bordero ustunlari), holati, fayl, kirish va chiqish tokenlari. Unda hujjat ham, javob ham saqlanmaydi. Jurnalni `status:error|refused`, `kind:bordereau_mapping` yoki `date>=7d` kabi soʻzlar bilan qidiring.
 
-Ikkala qadam bajarilmaguncha **Hujjatdan to‘ldirish** tugmasi koʻrinmaydi.
+Ikkala qadam bajarilmaguncha **Hujjatdan toʻldirish** tugmasi koʻrinmaydi.
 
 ### Rejalashtirilgan vazifalar
 
@@ -88,9 +88,9 @@ Ikkala qadam bajarilmaguncha **Hujjatdan to‘ldirish** tugmasi koʻrinmaydi.
 
 Demo maʼlumotlar oʻqitish va tizimni namoyish qilish uchun moʻljallangan. Ularning nomlari «DEMO» bilan, raqamlari DEMO- bilan boshlanadi.
 
-- **Demo ma'lumotlarni yuklash** demo toʻplamni qoʻshadi. U faqat demo maʼlumotlar yuklanmagan paytda ishlaydi.
-- **Bog'lanishlarni tekshirish** hech bir demo yozuv haqiqiy yozuv bilan bogʻlanmaganini tasdiqlaydi.
-- **Barcha demo ma'lumotlarni o'chirish** barcha demo yozuvlarni, jumladan ularning jadvallari, tushumlari, eslatmalari va hujjatlarini oʻchiradi. Haqiqiy maʼlumotlarga tegilmaydi. Bu amalni qaytarib boʻlmaydi, uni tasdiqlashingiz kerak.
+- **Demo maʼlumotlarni yuklash** demo toʻplamni qoʻshadi. U faqat demo maʼlumotlar yuklanmagan paytda ishlaydi.
+- **Bogʻlanishlarni tekshirish** hech bir demo yozuv haqiqiy yozuv bilan bogʻlanmaganini tasdiqlaydi.
+- **Barcha demo maʼlumotlarni oʻchirish** barcha demo yozuvlarni, jumladan ularning jadvallari, tushumlari, eslatmalari va hujjatlarini oʻchiradi. Haqiqiy maʼlumotlarga tegilmaydi. Bu amalni qaytarib boʻlmaydi, uni tasdiqlashingiz kerak.
 
 ## 3. Maʼlumot qidirish
 
@@ -116,5 +116,5 @@ Demo maʼlumotlar oʻqitish va tizimni namoyish qilish uchun moʻljallangan. Ula
 
 - Xodimlarni oʻchirish oʻrniga nofaol qiling.
 - SI kaliti faqat server sirlarida saqlanadi. Ilova faqat SI ni yoqadi yoki oʻchiradi.
-- Yuklangan borderolar va ularning qatorlari hech qachon tahrirlanmaydi va oʻchirilmaydi. Demo borderolarni faqat **Barcha demo ma'lumotlarni o'chirish** oʻchiradi.
+- Yuklangan borderolar va ularning qatorlari hech qachon tahrirlanmaydi va oʻchirilmaydi. Demo borderolarni faqat **Barcha demo maʼlumotlarni oʻchirish** oʻchiradi.
 - Zaxiralar va qoplamalar faqat qoʻshib boriladi. Hisobdan chiqarishda kim, qachon va nima sababdan bajargani saqlanadi.
