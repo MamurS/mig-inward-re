@@ -1,5 +1,6 @@
 -- Behaviour checks for status rules and RLS. Runs inside a transaction and ROLLS BACK.
--- Needs at least one admin profile (used as the test identity; its role is switched temporarily).
+-- Needs no real account: the test identity is a user created inside this transaction (rolled back),
+-- so no real user's role, demo mode or settings ever change, even for a moment.
 -- Usage: paste into the SQL editor and run; every row (52 checks) should say PASS.
 begin;
 
@@ -27,12 +28,19 @@ end $$;
 
 grant execute on function pg_temp.expect_error(text, text, text), pg_temp.expect_ok(text, text) to authenticated, anon;
 
+-- the test identity (never a real account); in Demo mode only when there is no real data to test on
+insert into auth.users (id, email, aud, role) values ('a7000000-0000-4000-8000-000000000001'::uuid, 'at-rls@example.com', 'authenticated', 'authenticated');
+update public.profiles set role = 'admin', active = true,
+  ui_demo_mode = not exists (select 1 from public.submissions where not is_demo)
+ where id = 'a7000000-0000-4000-8000-000000000001'::uuid;
+
 do $$
 declare
-  v_uid uuid := (select id from public.profiles where role = 'admin' order by created_at limit 1);
-  v_rev uuid := (select id from public.submissions where status = 'under_review' order by ref_no limit 1);
-  v_rec uuid := (select id from public.submissions where status = 'received' order by ref_no limit 1);
-  v_off uuid := (select id from public.submissions where status = 'offered' order by ref_no limit 1);
+  v_uid uuid := 'a7000000-0000-4000-8000-000000000001'::uuid;  -- the test identity
+  v_world boolean := (select ui_demo_mode from public.profiles where id = 'a7000000-0000-4000-8000-000000000001'::uuid);
+  v_rev uuid := (select id from public.submissions where status = 'under_review' and is_demo = v_world order by ref_no limit 1);
+  v_rec uuid := (select id from public.submissions where status = 'received' and is_demo = v_world order by ref_no limit 1);
+  v_off uuid := (select id from public.submissions where status = 'offered' and is_demo = v_world order by ref_no limit 1);
   v_fu  uuid;
   v_n   int;
 begin
@@ -173,8 +181,9 @@ end $$;
 -- ---------------- Steps 4–5 objects, storage, calculations ----------------
 do $$
 declare
-  v_uid uuid := (select id from public.profiles order by created_at limit 1);  -- same identity as the first block
-  v_rec uuid := (select id from public.submissions where status = 'received' order by ref_no limit 1);
+  v_uid uuid := 'a7000000-0000-4000-8000-000000000001'::uuid;  -- the test identity, as in the first block
+  v_world boolean := (select ui_demo_mode from public.profiles where id = 'a7000000-0000-4000-8000-000000000001'::uuid);
+  v_rec uuid := (select id from public.submissions where status = 'received' and is_demo = v_world order by ref_no limit 1);
   v_fu  uuid;
   v_n   int;
 begin

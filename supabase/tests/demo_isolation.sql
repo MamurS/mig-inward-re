@@ -1,5 +1,5 @@
 -- Demo data isolation. Runs in one DO block and always ends in an exception, so
--- nothing it does is kept. Needs one admin profile. Loads the demo data first
+-- nothing it does is kept. Needs no real account: every identity is a test user created inside the rolled-back transaction. Loads the demo data first
 -- when none is loaded (rolled back with the rest).
 -- Usage: paste into the SQL editor and run; the error text should read
 -- «ROLLBACK OK: 1 … 8 …». Any «FAIL …» names the broken rule.
@@ -9,7 +9,10 @@ declare
   n int; tot numeric; real_cp uuid; real_sub uuid; real_rcp uuid; demo_inst uuid; ok text := '';
   res jsonb; b boolean; ref text;
 begin
-  select id into adm from public.profiles where role = 'admin' order by created_at limit 1;
+  -- a test admin of our own (never a real account): created here, gone with the rollback
+  adm := gen_random_uuid();
+  insert into auth.users (id, email, aud, role) values (adm, 'at-admin@example.com', 'authenticated', 'authenticated');
+  update public.profiles set role = 'admin', active = true, ui_demo_mode = false where id = adm;
   if not exists (select 1 from public.submissions where is_demo) then perform public._seed_demo_data(adm); end if;
   insert into auth.users (id, email, aud, role) values
     (fin, 'demo-test-fin@example.com', 'authenticated', 'authenticated'),

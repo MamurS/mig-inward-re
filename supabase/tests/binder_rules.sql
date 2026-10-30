@@ -1,6 +1,6 @@
 -- Phase C — binders and bordereaux: rules, roles, effects and demo isolation.
 -- One DO block that always ends in an exception: nothing it does is kept.
--- Needs one admin profile and one line of business.
+-- Needs one line of business; every identity is a test user created inside the rolled-back transaction.
 -- Usage: paste into the SQL editor and run; the error text reads
 -- «ROLLBACK OK: …» with each check, or «FAIL …» naming the broken one.
 do $t$
@@ -9,7 +9,10 @@ declare
   mga uuid; other uuid; lob uuid; bnd uuid; sub uuid; x public.bordereaux; n int; v numeric; ok text := ''; m0 date; m1 date;
   c1 uuid;
 begin
-  select id into adm from public.profiles where role = 'admin' order by created_at limit 1;
+  -- a test admin of our own (never a real account): created here, gone with the rollback
+  adm := gen_random_uuid();
+  insert into auth.users (id, email, aud, role) values (adm, 'at-admin@example.com', 'authenticated', 'authenticated');
+  update public.profiles set role = 'admin', active = true, ui_demo_mode = false where id = adm;
   select id into lob from public.lines_of_business order by code limit 1;
   insert into auth.users (id, email, aud, role) values
     (uw, 'bt-uw@example.com', 'authenticated', 'authenticated'), (fin, 'bt-fin@example.com', 'authenticated', 'authenticated'),
