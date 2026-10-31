@@ -119,6 +119,42 @@ for (const demoMode of [false, true]) {
   }
 }
 
+// «Needs attention» and the dashboard's other compact lists: the name on line 1 (the ref never takes its room), «ref · …» under it
+for (const width of [1280, 1440]) {
+  for (const lang of ['en', 'ru', 'uz'] as const) {
+    for (const textSize of ['normal', 'large'] as const) {
+      test(`compact lists: name on line 1, «ref · …» on line 2, nothing overlaps · ${width} · ${lang} · ${textSize}`, async ({ browser }) => {
+        const context = await browser.newContext({ viewport: { width, height: 900 } })
+        await installMock(context, 'management', lang, { textSize, demoMode: true })
+        const page = await context.newPage()
+        await page.goto('/dashboard')
+        await page.locator('[data-premium-dashboard]').waitFor()
+        await page.locator('[data-ref-list] [data-ref]').first().waitFor()
+        await page.waitForLoadState('networkidle')
+        await page.evaluate(() => document.fonts.ready)
+        const rows = await page.locator('[data-ref-list] > li').evaluateAll((lis) =>
+          lis.map((li) => {
+            const row = li.querySelector('a')!.getBoundingClientRect()
+            const ref = li.querySelector('[data-ref]')!.getBoundingClientRect()
+            const name = li.querySelector('a > span:first-child > span:first-child')!.getBoundingClientRect()
+            return { text: li.textContent ?? '', refBelowName: ref.top >= name.bottom - 1, nameFromLeft: name.left - row.left, refFromLeft: ref.left - row.left }
+          }),
+        )
+        expect(rows.length).toBeGreaterThanOrEqual(3)
+        for (const r of rows) {
+          expect(r.refBelowName, r.text).toBe(true)
+          // the name starts at the row's padding, not after a ref column
+          expect(r.nameFromLeft, r.text).toBeLessThan(32)
+          expect(Math.abs(r.refFromLeft - r.nameFromLeft), r.text).toBeLessThan(2)
+        }
+        const { hits, broken, cut } = await overlaps(page)
+        expect([...hits.map((h) => `«${h.a}» over «${h.b}»`), ...broken, ...cut]).toEqual([])
+        await context.close()
+      })
+    }
+  }
+}
+
 test('the overlap check catches a ref drawn into the name (the old fixed-width bug)', async ({ page }) => {
   await installMock(page.context(), 'management', 'en', { demoMode: true })
   await page.goto('/dashboard')

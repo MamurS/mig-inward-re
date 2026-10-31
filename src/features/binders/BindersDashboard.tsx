@@ -11,7 +11,7 @@ import { errorMessage } from '@/lib/errors'
 import { BINDERS_PAGE, pageLink } from '@/features/search/pages'
 import { useAllBinders } from './api'
 import { CapacityBar } from './BinderBadges'
-import { ATTENTION_MAX, AttentionCard, RefName, RefRow } from '@/features/dashboard/Attention'
+import { ATTENTION_MAX, AttentionCard, RefLines, RefRow } from '@/features/dashboard/Attention'
 
 const bl = (q: string) => pageLink(BINDERS_PAGE, q)
 
@@ -54,18 +54,12 @@ export function BindersDashboard() {
         {full.length === 0 ? (
           <EmptyState pictogram="done" title={t('binder.noCapacityAlerts')} compact />
         ) : (
-          <ul className="grid grid-cols-[max-content_minmax(8rem,1fr)_auto] border-t" data-ref-list data-capacity-alerts>
+          <ul className="grid grid-cols-[minmax(0,1fr)_auto] border-t [&>li:last-child>a]:border-b-0" data-ref-list data-capacity-alerts>
             {full.slice(0, 8).map((b) => (
-              <li key={b.id} className="col-span-full grid grid-cols-subgrid">
-                <Link to={`/binders/${b.id}`} className="col-span-full grid grid-cols-subgrid items-baseline gap-x-3 border-b px-5 py-2 text-body hover:bg-slate-50">
-                  <span className="font-medium whitespace-nowrap text-link num" data-ref>{b.binder_ref}</span>
-                  <span className="min-w-0">
-                    <span className="block truncate" title={b.mga_name ?? ''}>{b.mga_name}</span>
-                    <span className="block truncate text-caption text-muted-foreground">{b.currency} · {t('binder.expiresOn', { date: formatDate(b.period_to) })}</span>
-                  </span>
-                  <CapacityBar pct={b.capacity_pct} />
-                </Link>
-              </li>
+              <RefRow key={b.id} to={`/binders/${b.id}`}>
+                <RefLines name={b.mga_name} refNo={b.binder_ref} sub={`${b.currency} · ${t('binder.expiresOn', { date: formatDate(b.period_to) })}`} />
+                <CapacityBar pct={b.capacity_pct} />
+              </RefRow>
             ))}
           </ul>
         )}
@@ -86,8 +80,7 @@ export function BordereauxToChase() {
     <AttentionCard title={t('binder.toChase')} count={chase.length} to={bl('missing')} empty={t('binder.allIn')} loading={binders.isLoading} error={binders.error} data="bordereaux-to-chase">
       {chase.slice(0, ATTENTION_MAX).map((b) => (
         <RefRow key={b.id} to={`/binders/${b.id}`}>
-          <span className="font-medium whitespace-nowrap text-link num" data-ref>{b.binder_ref}</span>
-          <RefName name={b.mga_name} sub={b.last_received ? t('binder.lastReceivedOn', { date: formatDate(b.last_received) }) : t('binder.nothingReceived')} />
+          <RefLines name={b.mga_name} refNo={b.binder_ref} sub={b.last_received ? t('binder.lastReceivedOn', { date: formatDate(b.last_received) }) : t('binder.nothingReceived')} />
           <span className="inline-flex flex-wrap justify-end gap-1">
             {(b.missing_count ?? 0) > 0 && <Badge tone="danger">{t('binder.missingN', { count: b.missing_count ?? 0 })}</Badge>}
             {(b.late_count ?? 0) > 0 && <Badge tone="warning">{t('binder.lateN', { count: b.late_count ?? 0 })}</Badge>}

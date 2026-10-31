@@ -16,7 +16,7 @@ import { useAllClaims, useClaimPayments, useRatioRisks } from './api'
 import { lossRatios } from './ratios'
 import { pct } from './CounterpartyClaims'
 import { LargeLossBadge } from './ClaimStatusBadge'
-import { ATTENTION_MAX, AttentionCard, RefName, RefRow } from '@/features/dashboard/Attention'
+import { ATTENTION_MAX, AttentionCard, RefFigure, RefLines, RefRow } from '@/features/dashboard/Attention'
 
 const cl = (q: string) => pageLink(CLAIMS_PAGE, q)
 const OPEN = 'status:notified|open|reopened'
@@ -157,9 +157,8 @@ export function LargeLosses() {
     <AttentionCard title={t('claim.largeLosses')} count={large.length} to={cl('large')} empty={t('claim.noLarge')} loading={claims.isLoading} error={claims.error} data="large-losses">
       {large.slice(0, ATTENTION_MAX).map((r) => (
         <RefRow key={r.id} to={`/claims/${r.id}`}>
-          <span className="font-medium whitespace-nowrap text-link num" data-ref>{r.claim_no}</span>
-          <RefName name={r.insured_name} sub={<>{r.mga_name} · {formatDate(r.date_of_loss)}</>} />
-          <span className="text-right whitespace-nowrap">{r.incurred_usd === null ? <LargeLossBadge /> : <Amount value={r.incurred_usd} currency="USD" human />}</span>
+          <RefLines name={r.insured_name} refNo={r.claim_no} sub={r.mga_name} />
+          <RefFigure sub={formatDate(r.date_of_loss)}>{r.incurred_usd === null ? <LargeLossBadge /> : <Amount value={r.incurred_usd} currency="USD" human />}</RefFigure>
         </RefRow>
       ))}
     </AttentionCard>
@@ -176,9 +175,8 @@ export function CashCallsDue() {
     <AttentionCard title={t('claim.cashCallsDue')} count={calls.length} to={cl('cashcall')} empty={t('claim.noCashCalls')} loading={claims.isLoading} error={claims.error} data="cash-calls">
       {calls.slice(0, ATTENTION_MAX).map((r) => (
         <RefRow key={r.id} to={`/claims/${r.id}`}>
-          <span className="font-medium whitespace-nowrap text-link num" data-ref>{r.claim_no}</span>
-          <RefName name={r.insured_name} sub={r.mga_name} />
-          <span className={r.cash_call_due_at! < now ? 'whitespace-nowrap text-destructive' : 'whitespace-nowrap'}>{formatDate(r.cash_call_due_at)}</span>
+          <RefLines name={r.insured_name} refNo={r.claim_no} sub={r.mga_name} />
+          <RefFigure className={r.cash_call_due_at! < now ? 'text-destructive' : undefined}>{formatDate(r.cash_call_due_at)}</RefFigure>
         </RefRow>
       ))}
     </AttentionCard>

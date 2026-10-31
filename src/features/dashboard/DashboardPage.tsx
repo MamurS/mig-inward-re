@@ -24,7 +24,7 @@ import { AgeingBreakdown } from '@/components/AgeingBar'
 import { MostOverduePremium, PremiumDashboard } from '@/features/premium/PremiumDashboard'
 import { CashCallsDue, ClaimsDashboard, LargeLosses } from '@/features/claims/ClaimsDashboard'
 import { BindersDashboard, BordereauxToChase } from '@/features/binders/BindersDashboard'
-import { ATTENTION_MAX, AttentionCard, RefName, RefRow } from './Attention'
+import { ATTENTION_MAX, AttentionCard, RefFigure, RefLines, RefRow } from './Attention'
 import { SectionNav, type DashSection } from './SectionNav'
 
 type Row = {
@@ -267,9 +267,8 @@ export function DashboardPage() {
           >
             {m.overdueFollowUps.slice(0, ATTENTION_MAX).map((r) => (
               <RefRow key={r.id} to={`/submissions/${r.id}`}>
-                <span className="font-medium whitespace-nowrap text-link num" data-ref>{r.ref_no}</span>
-                <RefName name={r.insured_name} sub={r.mga_name} />
-                <span className="text-right"><AgingBadge days={Math.max(daysSince(r.next_follow_up_at) ?? 1, 1)} /></span>
+                <RefLines name={r.insured_name} refNo={r.ref_no} sub={r.mga_name} />
+                <RefFigure><AgingBadge days={Math.max(daysSince(r.next_follow_up_at) ?? 1, 1)} /></RefFigure>
               </RefRow>
             ))}
           </AttentionCard>
@@ -284,14 +283,13 @@ export function DashboardPage() {
               const days = daysSince(r.offered_at) ?? 0
               return (
                 <RefRow key={r.id} to={`/submissions/${r.id}`}>
-                  <span className="font-medium whitespace-nowrap text-link num" data-ref>{r.ref_no}</span>
-                  <RefName name={r.insured_name} sub={r.our_gross_premium_usd === null ? r.mga_name : `${r.mga_name} · ${formatHuman(r.our_gross_premium_usd)} USD`} />
-                  <span className="inline-flex items-center justify-end gap-2">
+                  <RefLines name={r.insured_name} refNo={r.ref_no} sub={r.mga_name} />
+                  <RefFigure sub={r.our_gross_premium_usd === null ? undefined : <span className="num">{formatHuman(r.our_gross_premium_usd)} USD</span>}>
                     {r.offer_expired && (
                       <span title={t('sub.offerExpiredOn', { date: formatDate(r.offer_valid_until) })}><AlertTriangle className="size-4 text-warning-600" /></span>
                     )}
                     <AgingBadge days={Math.max(days, 1)} label={t('ui.daysWaiting', { count: days })} />
-                  </span>
+                  </RefFigure>
                 </RefRow>
               )
             })}
