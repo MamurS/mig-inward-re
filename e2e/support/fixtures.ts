@@ -53,7 +53,7 @@ const countries: Row[] = [
   ['SA', 'Saudi Arabia', 'Саудовская Аравия', 'Saudiya Arabistoni'], ['OM', 'Oman', 'Оман', 'Ummon'], ['GB', 'United Kingdom', 'Великобритания', 'Buyuk Britaniya'],
 ].map(([code, name, name_ru, name_uz]) => ({ code, name, name_ru, name_uz, active: true }))
 
-// the seeded lines with their short names (20261031160000_lob_short_names.sql)
+// the seeded lines with their short names (20261031163621_lob_short_names.sql)
 const LOB = [
   ['PROP', 'Property', 'Имущество', 'Mulk', 'Property', 'Имущество', 'Mulk'],
   ['ENG', 'Engineering & Construction', 'Строительно-монтажные риски', 'Muhandislik va qurilish', 'Engineering', 'Строительство', 'Qurilish'],

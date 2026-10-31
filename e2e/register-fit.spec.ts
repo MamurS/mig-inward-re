@@ -9,7 +9,7 @@ import { readFileSync } from 'node:fs'
 import { installMock } from './support/mockSupabase'
 
 /** Every seeded line's short names [EN, RU, UZ], as the migration writes them. */
-const SEEDED_SHORT = [...readFileSync('supabase/migrations/20261031160000_lob_short_names.sql', 'utf8')
+const SEEDED_SHORT = [...readFileSync('supabase/migrations/20261031163621_lob_short_names.sql', 'utf8')
   .matchAll(/\('([A-Z]+)',\s*'([^']+)',\s*'([^']+)',\s*'([^']+)'\)/g)].map((m) => ({ code: m[1], en: m[2], ru: m[3], uz: m[4] }))
 
 for (const demoMode of [false, true]) {
