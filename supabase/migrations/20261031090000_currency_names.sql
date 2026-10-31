@@ -34,3 +34,13 @@ update public.currencies c
  where c.code = v.code
    and c.name_ru is null
    and c.name_uz is null;
+
+-- Uzbek names of countries and lines of business: the oʻ / gʻ letters with
+-- ʻ (U+02BB), as everywhere else in the app (they were seeded with a straight
+-- apostrophe). Only an apostrophe-like mark right after o / g changes.
+update public.countries
+   set name_uz = regexp_replace(name_uz, '([OoGg])[''‘’`ʼ]', '\1ʻ', 'g')
+ where name_uz ~ '[OoGg][''‘’`ʼ]';
+update public.lines_of_business
+   set name_uz = regexp_replace(name_uz, '([OoGg])[''‘’`ʼ]', '\1ʻ', 'g')
+ where name_uz ~ '[OoGg][''‘’`ʼ]';
