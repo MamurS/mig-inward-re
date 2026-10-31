@@ -71,8 +71,9 @@ on the profile (`profiles.ui_theme`, `ui_text_size`):
   text and borders (slate).
 - **Pastels are backgrounds only** (canvas, sidebar, `brand-50/100` tints);
   text on them uses steps ≥ 5 apart.
-- **Text size.** Normal / Large; Large moves every `text-*` one step up
-  (`:root[data-text-size='large']`). Only type changes — never layout tokens.
+- **Text size.** Normal / Large; Large moves every `text-*` one clear step up
+  (≈ +12 %, `:root[data-text-size='large']`; chart labels follow via
+  `chartFontSize()`). Only type changes — never layout tokens.
 - **Applying.** `src/lib/appearance.ts` sets `data-theme` / `data-text-size`
   on `<html>`; the last choice is cached in `localStorage` (`mig.appearance`)
   and an inline script in `index.html` applies it before the first paint, so
@@ -83,13 +84,16 @@ on the profile (`profiles.ui_theme`, `ui_text_size`):
 
 ### Sidebar
 
-Light and frosted: the theme's sidebar tint at 72 % behind
+Light and frosted, in the theme's colour: a visible but quiet tint of the
+theme (more saturated than the page), at 88 % behind
 `backdrop-filter: saturate(1.4) blur(18px)`, a solid tint where that is not
 supported (`glass-sidebar` in `index.css`), a hairline right border, no heavy
 shadow. Dark text (`sidebar-foreground` slate-800, `sidebar-muted` slate-600),
-20 px icons; the active item is a soft accent pill (`sidebar-accent` brand-100,
-text brand-800, medium weight); hover is a gentle slate-100. No navy in the
-sidebar except the logo chip.
+20 px icons; the active item is a pill in the accent tint (`sidebar-accent`
+brand-200, text brand-800, medium weight); hover is a lighter wash
+(`sidebar-hover` brand-50). Labels and the subtitle wrap rather than being
+cut. No navy in the sidebar except the logo chip. `e2e/contrast.spec.ts`
+measures every label against what shows through (≥ 4.5 : 1, all four themes).
 
 ### Roles (shadcn/ui vocabulary)
 
@@ -138,17 +142,17 @@ Canvas (no theme) `#f8f6f5`. Pairing across every ramp, every theme accent, canv
 
 | theme | 50 | 100 | 200 | 300 | 400 | 500 | 600 | 700 | 800 | 900 | canvas | sidebar |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| grey | `#f7fbff` | `#e9f3ff` | `#d0e4ff` | `#a4cbff` | `#468de4` | `#2770c4` | `#1c5eab` | `#134d8e` | `#0c3b71` | `#002047` | `#f5f7fa` | `#fafbfe` |
-| blue | `#f6fbff` | `#e9f3ff` | `#cce5ff` | `#9dcdff` | `#3690e2` | `#0b72c2` | `#0061a8` | `#004e8a` | `#003d6d` | `#002240` | `#edf9ff` | `#f7fcff` |
-| green | `#f1fdf3` | `#dbfade` | `#b7efbe` | `#88db94` | `#2ca04a` | `#008131` | `#006e29` | `#005920` | `#004517` | `#002809` | `#eefdd8` | `#f5ffe5` |
-| orange | `#fff9f5` | `#ffeee6` | `#ffdac7` | `#ffb991` | `#df6a09` | `#b45300` | `#9a4600` | `#7f3800` | `#642b00` | `#3b1600` | `#fff5ee` | `#fffbf7` |
+| grey | `#f7fbff` | `#e9f3ff` | `#d0e4ff` | `#a4cbff` | `#468de4` | `#2770c4` | `#1c5eab` | `#134d8e` | `#0c3b71` | `#002047` | `#f5f7fa` | `#eef4fd` |
+| blue | `#f6fbff` | `#e9f3ff` | `#cce5ff` | `#9dcdff` | `#3690e2` | `#0b72c2` | `#0061a8` | `#004e8a` | `#003d6d` | `#002240` | `#edf9ff` | `#e7f6ff` |
+| green | `#f1fdf3` | `#dbfade` | `#b7efbe` | `#88db94` | `#2ca04a` | `#008131` | `#006e29` | `#005920` | `#004517` | `#002809` | `#eefdd8` | `#ebf9d8` |
+| orange | `#fff9f5` | `#ffeee6` | `#ffdac7` | `#ffb991` | `#df6a09` | `#b45300` | `#9a4600` | `#7f3800` | `#642b00` | `#3b1600` | `#fff5ee` | `#fff1e7` |
 
 | theme | white on primary | link on white | active nav | sidebar muted text | muted text on canvas | ring on white |
 |---|---|---|---|---|---|---|
-| grey | 6.48 | 6.48 | 9.96 | 6.27 | 6.04 | 3.39 |
-| blue | 6.41 | 6.41 | 9.92 | 6.28 | 6.05 | 3.36 |
-| green | 6.44 | 6.44 | 10.06 | 6.28 | 6.08 | 3.37 |
-| orange | 6.46 | 6.46 | 9.87 | 6.30 | 6.04 | 3.39 |
+| grey | 6.48 | 6.48 | 8.63 | 5.87 | 6.04 | 3.39 |
+| blue | 6.41 | 6.41 | 8.59 | 5.88 | 6.05 | 3.36 |
+| green | 6.44 | 6.44 | 8.64 | 5.89 | 6.08 | 3.37 |
+| orange | 6.46 | 6.46 | 8.53 | 5.87 | 6.04 | 3.39 |
 
 ### Status scale
 
@@ -200,12 +204,12 @@ data-1 `#468de4` (3.39 : 1 on white) · data-2 `#c37c00` (3.39 : 1 on white) · 
 | ring | `#468de4` |
 | link | `#1c5eab` |
 | canvas | `#f5f7fa` |
-| sidebar | `#fafbfe` |
+| sidebar | `#eef4fd` |
 | sidebar-foreground | `#3e3a37` |
 | sidebar-muted | `#635d58` |
-| sidebar-accent | `#e9f3ff` |
+| sidebar-accent | `#d0e4ff` |
 | sidebar-accent-foreground | `#0c3b71` |
-| sidebar-hover | `#f3f1ef` |
+| sidebar-hover | `#f7fbff` |
 | sidebar-border | `#e5e2de` |
 
 ## Type
@@ -217,7 +221,7 @@ data-1 `#468de4` (3.39 : 1 on white) · data-2 `#c37c00` (3.39 : 1 on white) · 
 - **Scale** (px / line height, Normal): caption 12/18 · small 13/20 ·
   table 14/21 · body 15/22.5 (forms too) · lead 16/24 · title 18/26 (section
   titles) · headline 28/36 (page titles) · display 34/40 (KPI figures).
-  Large text moves each one step up (caption 13 … display 36). 12 px is the
+  Large text moves each one clear step up: 14 · 15 · 16 · 17 · 18 · 20 · 32 · 38. 12 px is the
   minimum anywhere. Classes
   `text-caption … text-display`; Tailwind's default sizes and `text-[Npx]`
   are forbidden (the scale test fails).
@@ -351,7 +355,7 @@ All under `src/components/`; screens compose them, never re-style them.
 
 | component | file | rules |
 |---|---|---|
-| **Table v2** | `data/DataTable.tsx` | Regular rows of 48 px everywhere (no density switch). Sticky header and frozen first column inside a scroll box. Column show / hide (first column always shown), remembered. Row actions appear on hover / focus in a pinned right cell — reserved space, no shift. Selecting rows shows a floating bulk bar (fixed, never pushes the page). Search matches are wrapped in `<mark>` (`highlight()`). Skeleton rows at the final row height while loading. Empty → `EmptyState`. |
+| **Table v2** | `data/DataTable.tsx` | Regular rows of 48 px everywhere (no density switch). Sticky header and frozen first column inside a scroll box. Column show / hide (first column always shown), remembered. Row actions appear on hover / focus, floating over the row's end from a zero-width pinned right cell — no reserved space, no shift. Headers may wrap to two lines; cells stay on one line. A name with its context (insured + MGA, payer + type) is one column with a grey second line (`data/NameCell.tsx`), not two. Selecting rows shows a floating bulk bar (fixed, never pushes the page). Search matches are wrapped in `<mark>` (`highlight()`). Skeleton rows at the final row height while loading. Empty → `EmptyState`. |
 | **Quick view** | `features/*/…QuickView` | A right side panel with the essentials and the next actions (open, edit, open in register). Used by the register, the agenda and the counterparties list. |
 | **Side panel** | `ui/dialog.tsx` | Every task dialog opens docked right (max 512 px, full height, 240 ms expressive slide); the footer sticks to the bottom edge. `variant="center"` only for short confirmations. |
 | **KPI card** | `KpiCard.tsx` | Label, figure in the display face, change vs the previous comparable period (green = good direction, red = bad, grey = flat), 12-month sparkline, click-through to the rows behind it. `alert` puts the figure in danger ink. |
@@ -370,6 +374,12 @@ All under `src/components/`; screens compose them, never re-style them.
   decorative — the error says what is needed.
 - Validate on blur (`mode: 'onTouched'`): nothing is red until the user
   leaves the field; after that the field re-checks as they type.
+- Numbers are typed into `DecimalInput` (`src/components/ui/decimal-input.tsx`):
+  «,» and «.» are both decimal separators, spaces and apostrophes group
+  thousands, pasted «1 234 567,89» / «1,234,567.89» both work (rules in
+  `parseDecimalInput`, `src/lib/decimal.ts`). On blur the field shows the
+  number as read, in the interface language («1 234 567,89» / «1,234,567.89»);
+  what is saved is a plain decimal string.
 - Buttons name the outcome: «Create submission», «Save changes», «Close
   follow-up», «Move follow-up», «Set new password» — never a bare «Save» or
   «OK».
@@ -380,7 +390,7 @@ All under `src/components/`; screens compose them, never re-style them.
 
 | screen | what makes it the reference |
 |---|---|
-| Dashboard | Greeting with the date; one row of five KPI cards (delta + sparkline, each a link); the oldest unanswered offers as an action list with days waiting on the ageing scale, next to the ageing stacked bar; two charts only (bound premium by month, the status funnel in status colours); hit ratio and by-MGA / by-line one tab away. |
+| Dashboard | Greeting with the date; a sticky section switcher (Overview · Premium · Claims · Binders · Analytics, only what the role sees); one row of five KPI cards (delta + sparkline, each a link); «Needs attention» — short lists (≤ 5 rows, each with «Open in register»): overdue follow-ups, oldest unanswered offers, most overdue premium, large losses, cash calls due, bordereaux to chase; then Premium, Claims, Binders; last the analytics: bound premium by month, the status funnel in the status badges' colours, offers by age (the ageing stacked bar, 0–30 pale), hit ratio and by-MGA / by-line one tab away. |
 | Submissions register | Search + status chips with their colour dots; less-used filters behind «More filters» (badge shows how many are on, opens itself when any is); table v2 with quick view, bulk export, highlight. |
 | Submission detail | Insured as the title, reference in the subtitle; a summary card with the status stepper (received → under review → offered → bound, each in its status colour with the date reached; an ended submission shows its outcome in place) and the five figures that matter. |
 | Submission form | Grouped sections, labels above, segmented business type, live figures pinned on the right, sticky footer with the required-fields meter («Required: 4 of 5»), form state and the outcome button. |

@@ -5,7 +5,7 @@
  * A value that does not fit is not suggested; the reason is shown instead.
  * Pure: no React, no Supabase.
  */
-import { cleanDecimal, isDecimal } from '@/lib/decimal'
+import { isDecimal, parseDecimalInput } from '@/lib/decimal'
 import { matchParty, SURE_MATCH, type Party, type PartyMatch } from './match'
 
 export type AiField = { value: string | null; confidence: number; source: string | null }
@@ -79,8 +79,9 @@ export function toSuggestions(ai: AiSubmission, lists: Lists): Suggestion[] {
         break
       case 'amount':
       case 'pct': {
-        const n = cleanDecimal(raw.replace(/%$/, ''))
-        if (isDecimal(n, f.type === 'pct' ? 6 : 2) && !n.startsWith('-') && (f.type === 'amount' || Number(n) <= 100)) s.value = n
+        // the model is asked for plain numbers with a dot (supabase/functions/ai-extract/schemas.ts), so read them the English way
+        const n = parseDecimalInput(raw, f.type, 'en')
+        if (n !== null && isDecimal(n, f.type === 'pct' ? 6 : 2) && !n.startsWith('-') && (f.type === 'amount' || Number(n) <= 100)) s.value = n
         else s.problem = 'badNumber'
         break
       }

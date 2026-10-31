@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
-import { Controller, useForm, useWatch, type UseFormRegisterReturn } from 'react-hook-form'
+import { Controller, useForm, useWatch, type Control, type UseFormRegisterReturn } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useTranslation } from 'react-i18next'
@@ -10,6 +10,8 @@ import { toast } from 'sonner'
 import { PageHeader } from '@/components/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DecimalInput } from '@/components/ui/decimal-input'
+import { DateInput } from '@/components/ui/date-input'
 import { Textarea } from '@/components/ui/textarea'
 import { NativeSelect } from '@/components/ui/native-select'
 import { SegmentedControl } from '@/components/SegmentedControl'
@@ -20,7 +22,7 @@ import { StatusBadge } from '@/components/StatusBadge'
 import { FullPageSpinner } from '@/components/FullPageSpinner'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/auth/AuthProvider'
-import { calcFigures, cleanDecimal, isDecimal, toScaled } from '@/lib/decimal'
+import { calcFigures, cleanDecimal, isDecimal, toScaled, type NumberKind } from '@/lib/decimal'
 import { formatAmount, formatDate as formatDateShort, formatPct, isoDate } from '@/lib/format'
 import { errorMessage } from '@/lib/errors'
 import { useCounterparties, useCountries, useCurrencies, useLinesOfBusiness, useLocalName, useUsers, userName } from '@/hooks/useReference'
@@ -47,7 +49,7 @@ const amount = z
 const pct = z
   .string()
   .refine((v) => v.trim() === '' || isDecimal(v, 6), 'v.pct')
-  .refine((v) => v.trim() === '' || (Number(cleanDecimal(v)) >= 0 && Number(cleanDecimal(v)) <= 100), 'v.pctRange')
+  .refine((v) => v.trim() === '' || (Number(cleanDecimal(v, 'pct')) >= 0 && Number(cleanDecimal(v, 'pct')) <= 100), 'v.pctRange')
 
 const schema = z
   .object({
@@ -71,9 +73,9 @@ const schema = z
     gross_premium_100: amount,
     commission_pct: pct,
     brokerage_pct: pct,
-    written_share_pct: pct.refine((v) => v.trim() === '' || Number(cleanDecimal(v)) > 0, 'v.shareAboveZero'),
+    written_share_pct: pct.refine((v) => v.trim() === '' || Number(cleanDecimal(v, 'pct')) > 0, 'v.shareAboveZero'),
     offer_valid_until: z.string(),
-    payment_terms_days: z.string().refine((v) => v.trim() === '' || /^\d{1,4}$/.test(v.trim()), 'v.days'),
+    payment_terms_days: z.string().refine((v) => v.trim() === '' || /^\d{1,4}$/.test(cleanDecimal(v, 'int')), 'v.days'),
     ppw_date: z.string(),
     notes: z.string(),
   })
@@ -90,7 +92,7 @@ type FormValues = z.infer<typeof schema>
 
 const toStr = (v: number | string | null | undefined) => (v === null || v === undefined ? '' : String(v))
 const orNull = (v: string) => (v.trim() === '' ? null : v.trim())
-const decOrNull = (v: string) => (v.trim() === '' ? null : cleanDecimal(v))
+const decOrNull = (v: string, kind: NumberKind = 'amount') => (v.trim() === '' ? null : cleanDecimal(v, kind))
 
 /** The fields AI-assisted entry can fill (the ids of their inputs). */
 const LABEL_KEYS = Object.fromEntries(
@@ -152,11 +154,11 @@ function formToPayload(v: FormValues) {
     limit_100: decOrNull(v.limit_100),
     deductible: decOrNull(v.deductible),
     gross_premium_100: decOrNull(v.gross_premium_100),
-    commission_pct: decOrNull(v.commission_pct) ?? '0',
-    brokerage_pct: decOrNull(v.brokerage_pct) ?? '0',
-    written_share_pct: decOrNull(v.written_share_pct),
+    commission_pct: decOrNull(v.commission_pct, 'pct') ?? '0',
+    brokerage_pct: decOrNull(v.brokerage_pct, 'pct') ?? '0',
+    written_share_pct: decOrNull(v.written_share_pct, 'pct'),
     offer_valid_until: orNull(v.offer_valid_until),
-    payment_terms_days: v.payment_terms_days.trim() === '' ? null : Number(v.payment_terms_days),
+    payment_terms_days: v.payment_terms_days.trim() === '' ? null : Number(cleanDecimal(v.payment_terms_days, 'int')),
     ppw_date: orNull(v.ppw_date),
     notes: orNull(v.notes),
   }
@@ -218,7 +220,9 @@ function SubmissionForm({ existing, binderId }: { existing: SubmissionRow | null
   } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: defaults, mode: 'onTouched' })
 
   const v = useWatch({ control })
-  const sourceTouched = useRef(Boolean(existing))
+  // «Received from» follows the broker (or the MGA) until the user picks it themselves
+  const sourceTouched = useRef(false)
+  const sourceAuto = useRef(existing ? existing.broker_id || existing.mga_id || '' : '')
 
   // AI-assisted entry: fields filled from a document stay marked (ring + banner) until the user changes them; nothing is saved until Save
   const aiAvailable = useAiAvailable()
@@ -247,11 +251,15 @@ function SubmissionForm({ existing, binderId }: { existing: SubmissionRow | null
     }
   }, [v, aiFilled, getValues])
 
-  // Default "received from" = broker if there is one, otherwise the MGA (until the user picks it)
+  // Default "received from" = broker if there is one, otherwise the MGA. A value the user picked
+  // (now, or saved earlier and different from that default) is never overwritten.
   useEffect(() => {
-    if (sourceTouched.current) return
-    setValue('source_party_id', v.broker_id || v.mga_id || '', { shouldDirty: true })
-  }, [v.broker_id, v.mga_id, setValue])
+    const next = v.broker_id || v.mga_id || ''
+    const current = getValues('source_party_id')
+    if (sourceTouched.current || (current && current !== sourceAuto.current)) return
+    sourceAuto.current = next
+    if (current !== next) setValue('source_party_id', next, { shouldDirty: true, shouldValidate: Boolean(next) })
+  }, [v.broker_id, v.mga_id, setValue, getValues])
 
   const mgas = counterparties.data?.filter((c) => c.type === 'mga' && (c.active || c.id === v.mga_id)) ?? []
   const binders = useAllBinders(v.business_type === 'binder' && Boolean(v.mga_id), v.mga_id || undefined)
@@ -368,7 +376,7 @@ function SubmissionForm({ existing, binderId }: { existing: SubmissionRow | null
             <CardHeader><CardTitle>{t('sub.section.source')}</CardTitle></CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <Field label={t('fields.receivedAt')} htmlFor="received_at" error={err('received_at')} required>
-                <Input type="date" {...reg('received_at')} />
+                <DateField control={control} name="received_at" invalid={Boolean(errors.received_at)} />
               </Field>
               <Field label={t('fields.mga')} htmlFor="mga_id" error={err('mga_id')} required>
                 <div className="flex gap-2">
@@ -396,7 +404,8 @@ function SubmissionForm({ existing, binderId }: { existing: SubmissionRow | null
                 <NativeSelect
                   {...reg('source_party_id')}
                   onChange={(e) => {
-                    sourceTouched.current = true
+                    // choosing the default itself keeps it following the broker / MGA
+                    sourceTouched.current = e.target.value !== sourceAuto.current
                     void register('source_party_id').onChange(e)
                   }}
                 >
@@ -404,7 +413,8 @@ function SubmissionForm({ existing, binderId }: { existing: SubmissionRow | null
                   {sources.map((c) => <option key={c.id} value={c.id}>{c.name} · {t(`counterpartyType.${c.type}`)}</option>)}
                 </NativeSelect>
               </Field>
-              <Field label={t('fields.businessType')} htmlFor="business_type">
+              {/* two columns: «Факультатив / Биндер» stays on one line at 1280 px, large text too */}
+              <Field label={t('fields.businessType')} htmlFor="business_type" className="sm:col-span-2">
                 <Controller
                   control={control}
                   name="business_type"
@@ -461,10 +471,10 @@ function SubmissionForm({ existing, binderId }: { existing: SubmissionRow | null
                 </NativeSelect>
               </Field>
               <Field label={t('fields.periodFrom')} htmlFor="period_from" error={err('period_from')}>
-                <Input type="date" {...reg('period_from')} />
+                <DateField control={control} name="period_from" invalid={Boolean(errors.period_from)} />
               </Field>
               <Field label={t('fields.periodTo')} htmlFor="period_to" error={err('period_to')}>
-                <Input type="date" {...reg('period_to')} />
+                <DateField control={control} name="period_to" invalid={Boolean(errors.period_to)} />
               </Field>
               <Field label={t('fields.riskDescription')} htmlFor="risk_description" className="sm:col-span-2 lg:col-span-3">
                 <Textarea rows={3} {...reg('risk_description')} />
@@ -482,23 +492,23 @@ function SubmissionForm({ existing, binderId }: { existing: SubmissionRow | null
                 </NativeSelect>
               </Field>
               <Field label={t('fields.sumInsured100')} htmlFor="sum_insured_100" error={err('sum_insured_100')}>
-                <Input inputMode="decimal" className="text-right tabular-nums" {...reg('sum_insured_100')} />
+                <DecimalInput className="text-right tabular-nums" {...reg('sum_insured_100')} />
               </Field>
               <Field label={t('fields.limit100')} htmlFor="limit_100" error={err('limit_100')}>
-                <Input inputMode="decimal" className="text-right tabular-nums" {...reg('limit_100')} />
+                <DecimalInput className="text-right tabular-nums" {...reg('limit_100')} />
               </Field>
               <Field label={t('fields.deductible')} htmlFor="deductible" error={err('deductible')}>
-                <Input inputMode="decimal" className="text-right tabular-nums" {...reg('deductible')} />
+                <DecimalInput className="text-right tabular-nums" {...reg('deductible')} />
               </Field>
               <Field label={t('fields.grossPremium100')} htmlFor="gross_premium_100" error={err('gross_premium_100')}>
-                <Input inputMode="decimal" className="text-right tabular-nums" {...reg('gross_premium_100')} />
+                <DecimalInput className="text-right tabular-nums" {...reg('gross_premium_100')} />
               </Field>
               <div />
               <Field label={t('fields.commissionPct')} htmlFor="commission_pct" error={err('commission_pct')} hint={t('sub.commissionHint')}>
-                <Input inputMode="decimal" className="text-right tabular-nums" {...reg('commission_pct')} />
+                <DecimalInput kind="pct" className="text-right tabular-nums" {...reg('commission_pct')} />
               </Field>
               <Field label={t('fields.brokeragePct')} htmlFor="brokerage_pct" error={err('brokerage_pct')}>
-                <Input inputMode="decimal" className="text-right tabular-nums" {...reg('brokerage_pct')} />
+                <DecimalInput kind="pct" className="text-right tabular-nums" {...reg('brokerage_pct')} />
               </Field>
             </CardContent>
           </Card>
@@ -508,19 +518,19 @@ function SubmissionForm({ existing, binderId }: { existing: SubmissionRow | null
             <CardHeader><CardTitle>{t('sub.section.terms')}</CardTitle></CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <Field label={t('fields.writtenSharePct')} htmlFor="written_share_pct" error={err('written_share_pct')} hint={t('sub.writtenHint')}>
-                <Input inputMode="decimal" className="text-right tabular-nums" {...reg('written_share_pct')} />
+                <DecimalInput kind="pct" className="text-right tabular-nums" {...reg('written_share_pct')} />
               </Field>
               <Field label={t('fields.signedSharePct')}>
                 <Input value={existing?.signed_share_pct === null || existing?.signed_share_pct === undefined ? '' : formatPct(existing.signed_share_pct)} disabled placeholder={t('sub.signedSetOnBind')} />
               </Field>
               <Field label={t('fields.offerValidUntil')} htmlFor="offer_valid_until">
-                <Input type="date" {...reg('offer_valid_until')} />
+                <DateField control={control} name="offer_valid_until" invalid={Boolean(errors.offer_valid_until)} />
               </Field>
               <Field label={t('fields.paymentTermsDays')} htmlFor="payment_terms_days" error={err('payment_terms_days')}>
-                <Input inputMode="numeric" className="text-right tabular-nums" {...reg('payment_terms_days')} />
+                <DecimalInput kind="int" className="text-right tabular-nums" {...reg('payment_terms_days')} />
               </Field>
               <Field label={t('fields.ppwDate')} htmlFor="ppw_date" hint={t('sub.ppwHint')}>
-                <Input type="date" {...reg('ppw_date')} />
+                <DateField control={control} name="ppw_date" invalid={Boolean(errors.ppw_date)} />
               </Field>
               <Field label={t('fields.notes')} htmlFor="notes" className="sm:col-span-2 lg:col-span-3">
                 <Textarea rows={3} {...reg('notes')} />
@@ -530,7 +540,8 @@ function SubmissionForm({ existing, binderId }: { existing: SubmissionRow | null
         </div>
 
         {/* Live figures */}
-        <div className="xl:sticky xl:top-20 xl:self-start">
+        {/* Stays in view while the form scrolls: just under the pinned header (and demo banner), above the sticky footer */}
+        <div className="xl:sticky xl:top-[calc(var(--app-top,4rem)+1rem)] xl:max-h-[calc(100vh-var(--app-top,4rem)-6rem)] xl:self-start xl:overflow-y-auto" data-share-panel>
           <Card>
             <CardHeader>
               <CardTitle>{t('sub.liveFigures')}</CardTitle>
@@ -577,6 +588,19 @@ function SubmissionForm({ existing, binderId }: { existing: SubmissionRow | null
   )
 }
 
+/** A date of the form: the app's date field through react-hook-form (the value stays ISO). */
+function DateField({ control, name, invalid }: { control: Control<FormValues>; name: 'received_at' | 'period_from' | 'period_to' | 'offer_valid_until' | 'ppw_date'; invalid: boolean }) {
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <DateInput id={name} name={field.name} ref={field.ref} value={field.value} onChange={field.onChange} onBlur={field.onBlur} aria-invalid={invalid || undefined} />
+      )}
+    />
+  )
+}
+
 export function FiguresTable({
   figures,
   currency,
@@ -610,13 +634,16 @@ export function FiguresTable({
         <Row label={`− ${t('fields.brokerage')}`} value={formatAmount(figures.brokerage)} />
         <Row label={`${t('fields.ourNetPremium')} (${currency})`} value={formatAmount(figures.ourNet)} strong />
       </div>
-      <div>
-        <Row label={t('fields.ourGrossUsd')} value={formatAmount(figures.ourGrossUsd)} />
-        <Row label={t('fields.ourNetUsd')} value={formatAmount(figures.ourNetUsd)} />
-        <p className="pt-1 text-caption text-muted-foreground">
-          {currency === 'USD' ? '' : fxLoading ? t('common.loading') : fxRate ? t('sub.fxUsed', { rate: fxRate, currency }) : t('sub.noFx', { currency })}
-        </p>
-      </div>
+      {/* USD equivalents only when they say something new: a USD submission would repeat the lines above */}
+      {currency !== 'USD' && (
+        <div>
+          <Row label={t('fields.ourGrossUsd')} value={formatAmount(figures.ourGrossUsd)} />
+          <Row label={t('fields.ourNetUsd')} value={formatAmount(figures.ourNetUsd)} />
+          <p className="pt-1 text-caption text-muted-foreground">
+            {fxLoading ? t('common.loading') : fxRate ? t('sub.fxUsed', { rate: fxRate, currency }) : t('sub.noFx', { currency })}
+          </p>
+        </div>
+      )}
     </div>
   )
 }

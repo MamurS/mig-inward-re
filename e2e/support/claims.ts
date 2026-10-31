@@ -20,7 +20,11 @@ const nameOf = (id: unknown) => Object.values(USERS).find((u) => u.id === id)?.f
 
 export const LARGE_LOSS_USD = 250_000
 
-/** Claims seed on the fixture risks: an open fire claim with history, a large loss with a cash call, a closed one, a EUR one, a demo one. */
+/**
+ * Claims seed on the fixture risks: an open fire claim with history, a large loss with a cash call, a closed one, a EUR one, a cyber one
+ * (appended last: the ids above stay stable), a demo one. Calibrated like the demo seed (docs/decisions.md row 37): loss ratios per MGA
+ * 20–90 % written and earned, Silk Road ≈ 65 % / ≈ 120 % (the large loss).
+ */
 export function claimsSeed(subs: Row[]) {
   seq = 0 // stable ids: the fire claim is 80000000-…-000000000001
   const by = (insured: string) => subs.find((s) => s.insured_name === insured)!
@@ -48,29 +52,33 @@ export function claimsSeed(subs: Row[]) {
   const pay = (c: Row, daysAgo: number, amount: number, type: string, ref: string) =>
     payments.push({ id: uid('82000000'), claim_id: c.id, payment_date: d(daysAgo), currency: c.currency, amount, type, payee_id: null, method: 'cash', bank_reference: ref, notes: null, offset_receipt_id: null, entered_by: USERS.finance.id, created_at: new Date().toISOString() })
 
-  const fire = claim(by('Navoiyazot Chemical Plant'), { notified_date: d(210), date_of_loss: d(215), cause: 'Fire', location: 'Ammonia unit 2, Navoi', description: 'Fire in the compressor hall', cedent_claim_ref: 'SRU-CL-2026-014', estimate_100: 2_500_000 })
-  reserve(fire, 205, 120_000, 'Initial reserve per loss advice')
-  reserve(fire, 160, 40_000, 'Adjuster report: business interruption extended')
-  pay(fire, 100, 50_000, 'indemnity', 'SWIFT CLP-0001')
+  const fire = claim(by('Navoiyazot Chemical Plant'), { notified_date: d(210), date_of_loss: d(215), cause: 'Fire', location: 'Ammonia unit 2, Navoi', description: 'Fire in the compressor hall', cedent_claim_ref: 'SRU-CL-2026-014', estimate_100: 300_000 })
+  reserve(fire, 205, 14_000, 'Initial reserve per loss advice')
+  reserve(fire, 160, 4_000, 'Adjuster report: business interruption extended')
+  pay(fire, 100, 11_000, 'indemnity', 'SWIFT CLP-0001')
 
-  const hull = claim(by('Emirates Aviation Services Hull'), { notified_date: d(28), date_of_loss: d(30), cause: 'Hard landing', location: 'Sharjah', cedent_claim_ref: 'GPP-H-0911', estimate_100: 8_000_000, large_loss: true, large_loss_at: new Date().toISOString() })
-  reserve(hull, 25, 400_000, 'Initial reserve: repair estimate')
-  pay(hull, 10, 150_000, 'cash_call', 'SWIFT CLP-0002')
-  followUps.push({ id: uid('83000000'), entity_type: 'claim', entity_id: hull.id, type: 'cash_call_due', title: 'Cash call: USD 100,000 to the MGA', due_at: new Date(Date.now() + 5 * DAY).toISOString(), assigned_to: null, assigned_role: 'finance', done_at: null, done_by: null, outcome: null, created_at: new Date().toISOString(), created_by: ADMIN })
+  const hull = claim(by('Emirates Aviation Services Hull'), { notified_date: d(28), date_of_loss: d(30), cause: 'Hard landing', location: 'Sharjah', cedent_claim_ref: 'GPP-H-0911', estimate_100: 5_600_000, large_loss: true, large_loss_at: new Date().toISOString() })
+  reserve(hull, 25, 60_000, 'Initial reserve: first cash calls, repair estimate awaited')
+  pay(hull, 10, 35_000, 'cash_call', 'SWIFT CLP-0002')
+  followUps.push({ id: uid('83000000'), entity_type: 'claim', entity_id: hull.id, type: 'cash_call_due', title: 'Cash call: USD 25,000 to the MGA', due_at: new Date(Date.now() + 5 * DAY).toISOString(), assigned_to: null, assigned_role: 'finance', done_at: null, done_by: null, outcome: null, created_at: new Date().toISOString(), created_by: ADMIN })
   for (const role of ['management', 'admin']) {
     followUps.push({ id: uid('83000000'), entity_type: 'claim', entity_id: hull.id, type: 'large_loss', title: 'Large loss', due_at: new Date(Date.now() - DAY).toISOString(), assigned_to: null, assigned_role: role, done_at: null, done_by: null, outcome: null, created_at: new Date().toISOString(), created_by: ADMIN })
   }
 
-  const flood = claim(by('Tashkent City Mall'), { notified_date: d(98), date_of_loss: d(100), cause: 'Flood', location: 'Basement parking', cedent_claim_ref: 'TRB-2026-077', estimate_100: 400_000, status: 'closed' })
-  reserve(flood, 95, 30_000, 'Reserve per loss adjuster')
-  pay(flood, 60, 30_000, 'indemnity', 'SWIFT CLP-0003')
+  const flood = claim(by('Tashkent City Mall'), { notified_date: d(98), date_of_loss: d(100), cause: 'Flood', location: 'Basement parking', cedent_claim_ref: 'TRB-2026-077', estimate_100: 40_000, status: 'closed' })
+  reserve(flood, 95, 4_000, 'Reserve per loss adjuster')
+  pay(flood, 60, 4_000, 'indemnity', 'SWIFT CLP-0003')
 
-  const credit = claim(by('Georgian Wine Exporters Credit'), { notified_date: d(38), date_of_loss: d(40), cause: 'Buyer insolvency', location: 'Hamburg', cedent_claim_ref: 'MRP-TC-2026-5', estimate_100: 400_000 })
-  reserve(credit, 35, 60_000, 'Reserve: insured debt, our share')
-  recoveries.push({ id: uid('84000000'), claim_id: credit.id, recovery_date: d(10), type: 'salvage', amount: 5000, notes: 'Stock recovered', entered_by: ADMIN, created_at: new Date().toISOString() })
+  const credit = claim(by('Georgian Mineral Water Exporters Credit'), { notified_date: d(38), date_of_loss: d(40), cause: 'Buyer insolvency', location: 'Hamburg', cedent_claim_ref: 'MRP-TC-2026-5', estimate_100: 32_000 })
+  reserve(credit, 35, 4_800, 'Reserve: insured debt, our share')
+  recoveries.push({ id: uid('84000000'), claim_id: credit.id, recovery_date: d(10), type: 'salvage', amount: 400, notes: 'Unsold stock recovered', entered_by: ADMIN, created_at: new Date().toISOString() })
 
-  const demo = claim(by('DEMO Izmir Port Logistics Centre'), { notified_date: d(45), date_of_loss: d(50), cause: 'Roof collapse', location: 'Warehouse B', estimate_100: 900_000 })
-  reserve(demo, 40, 20_000, 'Initial reserve')
+  const demo = claim(by('DEMO Izmir Port Logistics Centre'), { notified_date: d(45), date_of_loss: d(50), cause: 'Roof collapse', location: 'Warehouse B', estimate_100: 95_000 })
+  reserve(demo, 40, 9_500, 'Initial reserve')
+
+  const cyber = claim(by('Kazakh Telecom Cyber Programme'), { notified_date: d(70), date_of_loss: d(72), cause: 'Data breach', location: 'Almaty data centre', cedent_claim_ref: 'GPP-CY-0031', estimate_100: 400_000 })
+  reserve(cyber, 65, 28_000, 'Reserve: forensics, notification and liability')
+  pay(cyber, 30, 12_000, 'indemnity', 'SWIFT CLP-0005')
 
   return { claims, claim_reserves: reserves, claim_payments: payments, claim_recoveries: recoveries, claimFollowUps: followUps }
 }

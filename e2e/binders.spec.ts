@@ -213,7 +213,7 @@ test('dashboard: binders section opens the register; the submission form links a
   await open(page, '/dashboard', 'management')
   const sec = page.locator('[data-binders-dashboard]')
   await expect(sec).toContainText('Active binders')
-  await expect(sec.locator('[data-bordereaux-to-chase]')).toContainText('ALM-CARGO-2026')
+  await expect(page.locator('[data-attention] [data-bordereaux-to-chase]')).toContainText('ALM-CARGO-2026')
   await expect(sec.locator('[data-capacity-alerts]')).toContainText('85 %')
   await sec.getByText('Capacity alerts').first().click()
   await expect(page).toHaveURL(/\/binders\?q=capacity/)

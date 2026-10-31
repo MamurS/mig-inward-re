@@ -1,14 +1,14 @@
 import { useState } from 'react'
-import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { Banknote, CircleDollarSign, Flame, FolderOpen, Scale, Wallet } from 'lucide-react'
-import { KpiCard } from '@/components/KpiCard'
+import { KPI_GRID_6, KpiCard } from '@/components/KpiCard'
 import { Amount } from '@/components/Amount'
 import { EmptyState } from '@/components/EmptyState'
 import { Skeleton } from '@/components/Skeleton'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { SegmentedControl } from '@/components/SegmentedControl'
+import { chartFontSize } from '@/lib/appearance'
 import { formatAmount, formatDate, isoDate } from '@/lib/format'
 import { errorMessage } from '@/lib/errors'
 import { CLAIMS_PAGE, pageLink } from '@/features/search/pages'
@@ -16,6 +16,7 @@ import { useAllClaims, useClaimPayments, useRatioRisks } from './api'
 import { lossRatios } from './ratios'
 import { pct } from './CounterpartyClaims'
 import { LargeLossBadge } from './ClaimStatusBadge'
+import { ATTENTION_MAX, AttentionCard, RefName, RefRow } from '@/features/dashboard/Attention'
 
 const cl = (q: string) => pageLink(CLAIMS_PAGE, q)
 const OPEN = 'status:notified|open|reopened'
@@ -24,7 +25,8 @@ const OPEN = 'status:notified|open|reopened'
  * Dashboard › Claims: open claims, outstanding reserves, paid and incurred
  * this year (USD, our share), loss ratios (incurred / written and incurred /
  * earned — always labelled), large losses and cash calls due. Every figure
- * opens the filtered claims register.
+ * opens the filtered claims register. Large losses and cash calls due are in
+ * «Needs attention» ({@link LargeLosses}, {@link CashCallsDue}).
  */
 export function ClaimsDashboard() {
   const { t } = useTranslation()
@@ -36,7 +38,7 @@ export function ClaimsDashboard() {
   const [by, setBy] = useState<'mga' | 'lob' | 'year'>('mga')
 
   if (claims.isLoading || payments.isLoading)
-    return <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-3 2xl:grid-cols-6">{[0, 1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-32 rounded-xl" />)}</div>
+    return <div className={`mb-4 ${KPI_GRID_6}`}>{[0, 1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-32 rounded-xl" />)}</div>
   if (claims.error) return <p className="mb-4 text-body text-destructive">{errorMessage(claims.error)}</p>
 
   const rows = claims.data ?? []
@@ -45,8 +47,8 @@ export function ClaimsDashboard() {
   const paidYtd = (payments.data ?? []).reduce((s, p) => s + (p.amount_usd ?? 0), 0)
   const incurredYtdRows = rows.filter((r) => r.date_of_loss?.startsWith(year))
   const incurredYtd = incurredYtdRows.reduce((s, r) => s + (r.incurred_usd ?? 0), 0)
-  const large = rows.filter((r) => r.large_loss).sort((a, b) => (b.incurred_usd ?? 0) - (a.incurred_usd ?? 0))
-  const cashCalls = rows.filter((r) => r.cash_call_due_at).sort((a, b) => a.cash_call_due_at!.localeCompare(b.cash_call_due_at!))
+  const large = largeLosses(rows)
+  const cashCalls = cashCallsDue(rows)
   const noRate = rows.filter((r) => r.fx_rate_to_usd === null).length + (payments.data ?? []).filter((p) => p.amount_usd === null).length
   const ratios = risks.data ? lossRatios(risks.data, rows, by, today) : null
   const chartData = (ratios?.rows ?? []).filter((r) => r.lrWritten !== null || r.lrEarned !== null).slice(0, 8)
@@ -55,7 +57,7 @@ export function ClaimsDashboard() {
   return (
     <section aria-labelledby="dash-claims" className="mb-4 grid gap-4" data-claims-dashboard>
       <h2 id="dash-claims" className="text-title font-semibold">{t('claim.dashTitle')}</h2>
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 2xl:grid-cols-6">
+      <div className={KPI_GRID_6}>
         <KpiCard icon={FolderOpen} label={t('claim.openClaims')} value={open.length} to={cl(OPEN)} />
         <KpiCard icon={Wallet} label={t('claim.outstandingReserves')} value={<Amount value={outstandingUsd} human />} sub="USD" to={cl(OPEN)} />
         <KpiCard icon={Banknote} label={t('claim.paidYear', { year })} value={<Amount value={paidYtd} human />} sub="USD" to={cl('paid>0')} />
@@ -77,15 +79,16 @@ export function ClaimsDashboard() {
           ) : (
             <>
               {chartData.length > 0 && (
-                <ResponsiveContainer width="100%" height={Math.max(160, chartData.length * 44 + 40)}>
-                  <BarChart data={chartData} layout="vertical" margin={{ left: 8, right: 32 }}>
+                // the name above its pair of bars, never cut on a narrow axis; the full name in the tooltip
+                <ResponsiveContainer width="100%" height={chartData.length * 64 + 56}>
+                  <BarChart data={chartData} layout="vertical" margin={{ left: 8, right: 32, top: 4 }} barGap={2} barCategoryGap={20}>
                     <CartesianGrid horizontal={false} strokeDasharray="3 3" stroke="var(--color-slate-200)" />
-                    <XAxis type="number" unit=" %" tick={{ fontSize: 12, fill: 'var(--color-slate-600)' }} tickLine={false} axisLine={false} />
-                    <YAxis type="category" dataKey="name" width={180} tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: 'var(--color-slate-600)' }} tickFormatter={(v: string) => (v.length > 26 ? `${v.slice(0, 25)}…` : v)} />
+                    <XAxis type="number" unit=" %" tick={{ fontSize: chartFontSize(), fill: 'var(--color-slate-600)' }} tickLine={false} axisLine={false} />
+                    <YAxis type="category" dataKey="name" width={1} tickLine={false} axisLine={false} tick={NameAbove} interval={0} />
                     <Tooltip formatter={(v, n) => [`${v} %`, n === 'written' ? t('claim.lrWritten') : t('claim.lrEarned')]} cursor={{ fill: 'var(--color-slate-50)' }} />
                     <Legend formatter={(v) => (v === 'written' ? t('claim.lrWritten') : t('claim.lrEarned'))} />
-                    <Bar dataKey="written" fill="var(--color-brand-300)" radius={[0, 3, 3, 0]} isAnimationActive={false} />
-                    <Bar dataKey="earned" fill="var(--color-brand-600)" radius={[0, 3, 3, 0]} isAnimationActive={false} />
+                    <Bar dataKey="written" fill="var(--color-brand-300)" radius={[0, 3, 3, 0]} barSize={12} isAnimationActive={false} />
+                    <Bar dataKey="earned" fill="var(--color-brand-600)" radius={[0, 3, 3, 0]} barSize={12} isAnimationActive={false} />
                   </BarChart>
                 </ResponsiveContainer>
               )}
@@ -128,56 +131,56 @@ export function ClaimsDashboard() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="gap-0 py-0">
-          <CardHeader className="flex flex-row items-center justify-between gap-2 py-4">
-            <CardTitle>{t('claim.largeLosses')}</CardTitle>
-            <Link to={cl('large')} className="text-body text-link hover:underline">{t('dash.openInRegister')}</Link>
-          </CardHeader>
-          {large.length === 0 ? (
-            <EmptyState pictogram="done" title={t('claim.noLarge')} compact />
-          ) : (
-            <ul className="grid grid-cols-[max-content_minmax(8rem,1fr)_auto] border-t" data-ref-list data-large-losses>
-              {large.slice(0, 8).map((r) => (
-                <li key={r.id} className="col-span-full grid grid-cols-subgrid">
-                  <Link to={`/claims/${r.id}`} className="col-span-full grid grid-cols-subgrid items-baseline gap-x-3 border-b px-5 py-2 text-body hover:bg-slate-50">
-                    <span className="font-medium whitespace-nowrap text-link num" data-ref>{r.claim_no}</span>
-                    <span className="min-w-0">
-                      <span className="block truncate" title={r.insured_name ?? ''}>{r.insured_name}</span>
-                      <span className="block truncate text-caption text-muted-foreground">{r.mga_name} · {formatDate(r.date_of_loss)}</span>
-                    </span>
-                    <span className="text-right whitespace-nowrap">{r.incurred_usd === null ? <LargeLossBadge /> : <Amount value={r.incurred_usd} currency="USD" human />}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-        <Card className="gap-0 py-0">
-          <CardHeader className="flex flex-row items-center justify-between gap-2 py-4">
-            <CardTitle>{t('claim.cashCallsDue')}</CardTitle>
-            <Link to={cl('cashcall')} className="text-body text-link hover:underline">{t('dash.openInRegister')}</Link>
-          </CardHeader>
-          {cashCalls.length === 0 ? (
-            <EmptyState pictogram="done" title={t('claim.noCashCalls')} compact />
-          ) : (
-            <ul className="grid grid-cols-[max-content_minmax(8rem,1fr)_auto] border-t" data-ref-list data-cash-calls>
-              {cashCalls.slice(0, 8).map((r) => (
-                <li key={r.id} className="col-span-full grid grid-cols-subgrid">
-                  <Link to={`/claims/${r.id}`} className="col-span-full grid grid-cols-subgrid items-baseline gap-x-3 border-b px-5 py-2 text-body hover:bg-slate-50">
-                    <span className="font-medium whitespace-nowrap text-link num" data-ref>{r.claim_no}</span>
-                    <span className="min-w-0">
-                      <span className="block truncate" title={r.insured_name ?? ''}>{r.insured_name}</span>
-                      <span className="block truncate text-caption text-muted-foreground">{r.mga_name}</span>
-                    </span>
-                    <span className={r.cash_call_due_at! < new Date().toISOString() ? 'whitespace-nowrap text-destructive' : 'whitespace-nowrap'}>{formatDate(r.cash_call_due_at)}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-      </div>
     </section>
+  )
+}
+
+/** A category tick drawn above its pair of bars (2 × 12 px around the tick), from the plot's left edge — even when both bars are 0. */
+function NameAbove({ x, y, payload }: { x?: number | string; y?: number | string; payload?: { value?: unknown } }) {
+  return (
+    <text x={Number(x)} y={Number(y) - 19} fontSize={chartFontSize()} fill="var(--color-slate-700)" textAnchor="start">
+      {String(payload?.value ?? '')}
+    </text>
+  )
+}
+
+type ClaimRows = NonNullable<ReturnType<typeof useAllClaims>['data']>
+const largeLosses = (rows: ClaimRows) => rows.filter((r) => r.large_loss).sort((a, b) => (b.incurred_usd ?? 0) - (a.incurred_usd ?? 0))
+const cashCallsDue = (rows: ClaimRows) => rows.filter((r) => r.cash_call_due_at).sort((a, b) => a.cash_call_due_at!.localeCompare(b.cash_call_due_at!))
+
+/** «Needs attention»: the largest large losses. */
+export function LargeLosses() {
+  const { t } = useTranslation()
+  const claims = useAllClaims()
+  const large = largeLosses(claims.data ?? [])
+  return (
+    <AttentionCard title={t('claim.largeLosses')} count={large.length} to={cl('large')} empty={t('claim.noLarge')} loading={claims.isLoading} error={claims.error} data="large-losses">
+      {large.slice(0, ATTENTION_MAX).map((r) => (
+        <RefRow key={r.id} to={`/claims/${r.id}`}>
+          <span className="font-medium whitespace-nowrap text-link num" data-ref>{r.claim_no}</span>
+          <RefName name={r.insured_name} sub={<>{r.mga_name} · {formatDate(r.date_of_loss)}</>} />
+          <span className="text-right whitespace-nowrap">{r.incurred_usd === null ? <LargeLossBadge /> : <Amount value={r.incurred_usd} currency="USD" human />}</span>
+        </RefRow>
+      ))}
+    </AttentionCard>
+  )
+}
+
+/** «Needs attention»: cash calls, the earliest due first (past due in the danger ink). */
+export function CashCallsDue() {
+  const { t } = useTranslation()
+  const claims = useAllClaims()
+  const calls = cashCallsDue(claims.data ?? [])
+  const now = new Date().toISOString()
+  return (
+    <AttentionCard title={t('claim.cashCallsDue')} count={calls.length} to={cl('cashcall')} empty={t('claim.noCashCalls')} loading={claims.isLoading} error={claims.error} data="cash-calls">
+      {calls.slice(0, ATTENTION_MAX).map((r) => (
+        <RefRow key={r.id} to={`/claims/${r.id}`}>
+          <span className="font-medium whitespace-nowrap text-link num" data-ref>{r.claim_no}</span>
+          <RefName name={r.insured_name} sub={r.mga_name} />
+          <span className={r.cash_call_due_at! < now ? 'whitespace-nowrap text-destructive' : 'whitespace-nowrap'}>{formatDate(r.cash_call_due_at)}</span>
+        </RefRow>
+      ))}
+    </AttentionCard>
   )
 }

@@ -38,6 +38,19 @@ export const STATUS_SOLID: Record<SubmissionStatus, string> = {
   ntu: 'var(--color-status-ntu)',
 }
 
+/**
+ * A status as a chart mark in its badge colours: the badge's hairline as the
+ * fill, the solid as the edge, the deep ink for the figure. Reads as the
+ * status badge, never as the ageing scale (whose solids share hues with
+ * «offered» / «no response»).
+ */
+export const STATUS_MARK: Record<SubmissionStatus, { fill: string; edge: string; ink: string }> = Object.fromEntries(
+  STATUSES.map((s) => {
+    const k = s.replace('_', '-')
+    return [s, { fill: `var(--color-status-${k}-line)`, edge: `var(--color-status-${k})`, ink: `var(--color-status-${k}-deep)` }]
+  }),
+) as Record<SubmissionStatus, { fill: string; edge: string; ink: string }>
+
 export const DOC_TYPES: Enums<'doc_type'>[] = [
   'submission', 'slip', 'correspondence', 'bordereau', 'invoice', 'debit_note', 'credit_note', 'claim_notice', 'loss_advice', 'other',
 ]

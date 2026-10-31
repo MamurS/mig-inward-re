@@ -5,7 +5,7 @@ import { Loader2, Save } from 'lucide-react'
 import { toast } from 'sonner'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { DecimalInput } from '@/components/ui/decimal-input'
 import { Badge, type BadgeTone } from '@/components/ui/badge'
 import { Field } from '@/components/Field'
 import { DataTable, type Column } from '@/components/data/DataTable'
@@ -13,8 +13,9 @@ import { highlight } from '@/components/data/highlight'
 import { EmptyState } from '@/components/EmptyState'
 import { supabase } from '@/lib/supabase'
 import { errorMessage } from '@/lib/errors'
+import { cleanDecimal } from '@/lib/decimal'
 import { ALL_ROLES } from '@/lib/roles'
-import { formatAmount, formatBytes, formatDateTime } from '@/lib/format'
+import { formatAmount, formatBytes, formatDateTime, formatNumber } from '@/lib/format'
 import type { Tables } from '@/lib/database.types'
 import { textWords } from '@/features/search/query'
 import { AI_USAGE_PAGE } from '@/features/search/pages'
@@ -70,8 +71,9 @@ export function AiAdminTab() {
   const tokensOut = rows.reduce((s, r) => s + (r.output_tokens ?? 0), 0)
 
   async function save() {
-    const n = Number(limit)
-    if (!/^\d{1,5}$/.test(limit) || n < 1) return toast.error(t('ai.admin.badLimit'))
+    const digits = cleanDecimal(limit, 'int')
+    const n = Number(digits)
+    if (!/^\d{1,5}$/.test(digits) || n < 1) return toast.error(t('ai.admin.badLimit'))
     setBusy(true)
     try {
       const { error } = await supabase.from('settings').upsert([
@@ -98,7 +100,7 @@ export function AiAdminTab() {
     { id: 'model', header: t('ai.model'), defaultHidden: true, cell: (r) => r.model ?? '—' },
     { id: 'in', header: t('ai.inputTokens'), align: 'right', cell: (r) => (r.input_tokens === null ? '—' : formatAmount(r.input_tokens).replace(/[.,]00$/, '')) },
     { id: 'out', header: t('ai.outputTokens'), align: 'right', cell: (r) => (r.output_tokens === null ? '—' : formatAmount(r.output_tokens).replace(/[.,]00$/, '')) },
-    { id: 'ms', header: t('ai.duration'), align: 'right', defaultHidden: true, cell: (r) => (r.duration_ms === null ? '—' : `${(r.duration_ms / 1000).toFixed(1)} s`) },
+    { id: 'ms', header: t('ai.duration'), align: 'right', defaultHidden: true, cell: (r) => (r.duration_ms === null ? '—' : `${formatNumber(r.duration_ms / 1000, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} s`) },
     { id: 'error', header: t('ai.error'), defaultHidden: true, className: 'max-w-64', cell: (r) => <span className="block truncate" title={r.error ?? ''}>{r.error ?? '—'}</span> },
   ]
 
@@ -126,7 +128,7 @@ export function AiAdminTab() {
             </div>
           </fieldset>
           <Field label={t('ai.admin.limit')} hint={t('ai.admin.limitHint')}>
-            <Input inputMode="numeric" className="w-32 text-right tabular-nums" value={limit} onChange={(e) => setLimit(e.target.value)} />
+            <DecimalInput kind="int" className="w-32 text-right tabular-nums" value={limit} onChange={(e) => setLimit(e.target.value)} />
           </Field>
           <div>
             <Button onClick={() => void save()} disabled={busy || settings.isLoading}>

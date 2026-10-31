@@ -5,6 +5,8 @@ import { AlertTriangle, Loader2, Paperclip } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DecimalInput } from '@/components/ui/decimal-input'
+import { DateInput } from '@/components/ui/date-input'
 import { Textarea } from '@/components/ui/textarea'
 import { NativeSelect } from '@/components/ui/native-select'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -64,11 +66,11 @@ export function StatusChangeDialog({ submission, target, documents, onClose, onD
   function validate(): string | null {
     if (needsReason && !comment.trim()) return t('statusDlg.reasonRequired')
     if (isOffer) {
-      if (!written || !isDecimal(written, 6) || Number(cleanDecimal(written)) <= 0 || Number(cleanDecimal(written)) > 100) return t('statusDlg.writtenInvalid')
+      if (!written || !isDecimal(written, 6) || Number(cleanDecimal(written, 'pct')) <= 0 || Number(cleanDecimal(written, 'pct')) > 100) return t('statusDlg.writtenInvalid')
       if (!validUntil) return t('statusDlg.validUntilRequired')
     }
     if (isBind) {
-      if (!signed || !isDecimal(signed, 6) || Number(cleanDecimal(signed)) <= 0) return t('statusDlg.signedInvalid')
+      if (!signed || !isDecimal(signed, 6) || Number(cleanDecimal(signed, 'pct')) <= 0) return t('statusDlg.signedInvalid')
       const s = toScaled(signed, 6)!
       const w = toScaled(submission.written_share_pct ?? 0, 6)!
       if (s > w) return t('statusDlg.signedAboveWritten', { written: formatPct(submission.written_share_pct) })
@@ -95,9 +97,9 @@ export function StatusChangeDialog({ submission, target, documents, onClose, onD
         p_submission_id: submission.id!,
         p_to_status: target!,
         p_comment: comment.trim() || undefined,
-        p_written_share_pct: isOffer ? cleanDecimal(written) : undefined,
+        p_written_share_pct: isOffer ? cleanDecimal(written, 'pct') : undefined,
         p_offer_valid_until: isOffer ? validUntil : undefined,
-        p_signed_share_pct: isBind ? cleanDecimal(signed) : undefined,
+        p_signed_share_pct: isBind ? cleanDecimal(signed, 'pct') : undefined,
         p_document_id: documentId ?? undefined,
       })
       if (rpcErr) throw rpcErr
@@ -131,10 +133,10 @@ export function StatusChangeDialog({ submission, target, documents, onClose, onD
           {isOffer && (
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label={t('fields.writtenSharePct')} required>
-                <Input inputMode="decimal" value={written} onChange={(e) => setWritten(e.target.value)} className="text-right" autoFocus />
+                <DecimalInput kind="pct" value={written} onChange={(e) => setWritten(e.target.value)} className="text-right" autoFocus />
               </Field>
               <Field label={t('fields.offerValidUntil')} required>
-                <Input type="date" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} />
+                <DateInput value={validUntil} onChange={setValidUntil} />
               </Field>
               <p className="text-caption text-muted-foreground sm:col-span-2">{t('statusDlg.offerFollowUpNote')}</p>
             </div>
@@ -147,7 +149,7 @@ export function StatusChangeDialog({ submission, target, documents, onClose, onD
                   <Input value={formatPct(submission.written_share_pct)} disabled />
                 </Field>
                 <Field label={t('fields.signedSharePct')} required hint={t('statusDlg.signedHint')}>
-                  <Input inputMode="decimal" value={signed} onChange={(e) => setSigned(e.target.value)} className="text-right" autoFocus />
+                  <DecimalInput kind="pct" value={signed} onChange={(e) => setSigned(e.target.value)} className="text-right" autoFocus />
                 </Field>
               </div>
               <div className="grid gap-3 rounded-md border border-dashed p-3">

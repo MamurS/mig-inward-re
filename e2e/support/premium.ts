@@ -37,7 +37,7 @@ export function premiumSeed(submissions: Row[]) {
   const by = (insured: string) => submissions.find((s) => s.insured_name === insured)!
   const mall = by('Tashkent City Mall')
   const cargo = by('Almalyk MMC Fleet Cargo Programme')
-  const wine = by('Georgian Wine Exporters Credit')
+  const water = by('Georgian Mineral Water Exporters Credit')
   const d = (daysAgo: number) => new Date(Date.now() - daysAgo * DAY).toISOString().slice(0, 10)
 
   const mallRows = scheduleRows(
@@ -47,9 +47,9 @@ export function premiumSeed(submissions: Row[]) {
   )
   const mallReturn = installment(mall, 5, 'return', d(10), '-2000.00', '-500.00', '-100.00', { basis_signed_share_pct: null, notes: 'Reduced sum insured — endorsement 2' })
   const cargoRows = scheduleRows(cargo, [{ due_date: d(45), gross_amount: String(cargo.our_gross_premium) }], 1)
-  const wineRows = scheduleRows(
-    wine,
-    splitEqual(String(wine.our_gross_premium), 2).map((g, i) => ({ due_date: addDaysIso(d(20), i * 90), gross_amount: g })),
+  const waterRows = scheduleRows(
+    water,
+    splitEqual(String(water.our_gross_premium), 2).map((g, i) => ({ due_date: addDaysIso(d(20), i * 90), gross_amount: g })),
     1,
   )
 
@@ -58,15 +58,15 @@ export function premiumSeed(submissions: Row[]) {
   const demoRows = scheduleRows(izmir, [{ due_date: d(50), gross_amount: String(izmir.our_gross_premium) }], 1)
 
   const r1 = { id: uid('60000000'), ref_no: 'RCP-2026-0001', received_date: d(200), payer_id: mall.broker_id, currency: 'USD', amount: n(sumMoney([mallRows[0].net_amount as number, '5000.00'])), bank_reference: 'SWIFT MT103 TRB-55120', notes: null, created_at: new Date().toISOString(), created_by: USERS.finance.id, updated_at: new Date().toISOString(), updated_by: null }
-  const r2 = { ...r1, id: uid('60000000'), ref_no: 'RCP-2026-0002', received_date: d(15), payer_id: wine.mga_id, currency: 'USD', amount: 12000, bank_reference: 'SWIFT MT103 MRP-10021' }
+  const r2 = { ...r1, id: uid('60000000'), ref_no: 'RCP-2026-0002', received_date: d(15), payer_id: water.mga_id, currency: 'USD', amount: 12000, bank_reference: 'SWIFT MT103 MRP-10021' }
   const allocations: Row[] = [
     { id: uid('70000000'), receipt_id: r1.id, installment_id: mallRows[0].id, amount: mallRows[0].net_amount, fx_rate: 1, installment_amount: mallRows[0].net_amount, created_at: r1.created_at },
     { id: uid('70000000'), receipt_id: r1.id, installment_id: mallRows[1].id, amount: 5000, fx_rate: 1, installment_amount: 5000, created_at: r1.created_at },
     // USD 12,000 → EUR at 0.9205 EUR per 1 USD
-    { id: uid('70000000'), receipt_id: r2.id, installment_id: wineRows[0].id, amount: 12000, fx_rate: 0.9205, installment_amount: 11046, created_at: r2.created_at },
+    { id: uid('70000000'), receipt_id: r2.id, installment_id: waterRows[0].id, amount: 12000, fx_rate: 0.9205, installment_amount: 11046, created_at: r2.created_at },
   ]
   return {
-    premium_installments: [...mallRows, mallReturn, ...cargoRows, ...wineRows, ...demoRows],
+    premium_installments: [...mallRows, mallReturn, ...cargoRows, ...waterRows, ...demoRows],
     premium_receipts: [r1, r2],
     premium_allocations: allocations,
   }

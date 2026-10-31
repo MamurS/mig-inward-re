@@ -84,7 +84,7 @@ const PAGES: { name: string; path: string; role: FixtureRole; ready: string }[] 
   { name: 'claims dashboard', path: '/dashboard', role: 'claims', ready: '[data-claims-dashboard] [data-ratio-table]' },
   { name: 'binders', path: '/binders', role: 'underwriter', ready: 'main tbody tr' },
   { name: 'binder', path: '/binders/b1000000-0000-4000-8000-000000000001', role: 'underwriter', ready: '[data-periods-grid]' },
-  { name: 'binders dashboard', path: '/dashboard', role: 'management', ready: '[data-binders-dashboard] [data-ref-list]' },
+  { name: 'binders dashboard', path: '/dashboard', role: 'management', ready: '[data-binders-dashboard] h2' },
 ]
 
 for (const demoMode of [false, true]) {
@@ -128,3 +128,21 @@ test('the overlap check catches a ref drawn into the name (the old fixed-width b
   const { hits } = await overlaps(page)
   expect(hits.length).toBeGreaterThan(0)
 })
+
+for (const lang of ['en', 'ru', 'uz'] as const) {
+  for (const textSize of ['normal', 'large'] as const) {
+    test(`«Facultative / Binder» stays on one line at 1280 px · ${lang} · ${textSize}`, async ({ browser }) => {
+      const context = await browser.newContext({ viewport: { width: 1280, height: 800 } })
+      await installMock(context, 'underwriter', lang, { textSize })
+      const page = await context.newPage()
+      await page.goto('/submissions/new')
+      const toggle = page.locator('#business_type')
+      await toggle.waitFor()
+      await page.evaluate(() => document.fonts.ready)
+      const tops = await toggle.getByRole('radio').evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().top)))
+      expect(tops).toHaveLength(2)
+      expect(new Set(tops).size).toBe(1)
+      await context.close()
+    })
+  }
+}

@@ -1,12 +1,14 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Database, KeyRound, Loader2, Play, Plus, Save, ShieldCheck, Trash2, UserPlus } from 'lucide-react'
+import { ChevronDown, ChevronRight, Database, KeyRound, Loader2, Play, Plus, Save, ShieldCheck, Trash2, UserPlus } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DecimalInput } from '@/components/ui/decimal-input'
+import { DateInput } from '@/components/ui/date-input'
 import { NativeSelect } from '@/components/ui/native-select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -18,8 +20,9 @@ import { useAuth } from '@/auth/AuthProvider'
 import { DOCUMENTS_BUCKET } from '@/lib/documents'
 import { supabase } from '@/lib/supabase'
 import { ALL_ROLES, type AppRole } from '@/lib/roles'
-import { formatDate, formatDateTime, isoDate } from '@/lib/format'
-import { cleanDecimal, isDecimal } from '@/lib/decimal'
+import { formatDate, formatDateTime, formatNumber, isoDate } from '@/lib/format'
+import { cn } from '@/lib/utils'
+import { cleanDecimal, formatDecimalInput, isDecimal } from '@/lib/decimal'
 import { errorMessage } from '@/lib/errors'
 import type { Tables } from '@/lib/database.types'
 import { useCurrencies } from '@/hooks/useReference'
@@ -168,7 +171,7 @@ function UsersTab() {
                 <TableCell className="text-body">{u.email}</TableCell>
                 <TableCell>
                   <div className="w-40">
-                    <NativeSelect value={e.role} onChange={(ev) => setEdits({ ...edits, [u.id]: { ...e, role: ev.target.value as AppRole } })} className="h-8" aria-label={`${t('admin.users.role')} · ${u.email}`}>
+                    <NativeSelect value={e.role} onChange={(ev) => setEdits({ ...edits, [u.id]: { ...e, role: ev.target.value as AppRole } })} className="min-h-8 py-1" aria-label={`${t('admin.users.role')} · ${u.email}`}>
                       <option value="">{t('admin.users.noRole')}</option>
                       {ALL_ROLES.map((r) => <option key={r} value={r}>{t(`roles.${r}`)}</option>)}
                     </NativeSelect>
@@ -519,16 +522,31 @@ function FxTab() {
   })
 
   async function add() {
-    if (!ccy || !date || !isDecimal(rate, 10) || Number(cleanDecimal(rate)) <= 0) {
+    if (!ccy || !date || !isDecimal(rate, 10) || Number(cleanDecimal(rate, 'rate')) <= 0) {
       toast.error(t('admin.fx.invalid'))
       return
     }
-    const { error } = await supabase.from('fx_rates').upsert({ currency: ccy, rate_date: date, rate_to_usd: cleanDecimal(rate) as never, source: 'manual' })
+    const { error } = await supabase.from('fx_rates').upsert({ currency: ccy, rate_date: date, rate_to_usd: cleanDecimal(rate, 'rate') as never, source: 'manual' })
     if (error) return toast.error(errorMessage(error))
     setRate('')
     toast.success(t('admin.saved'))
     await Promise.all([qc.invalidateQueries({ queryKey: ['admin', 'fx'] }), qc.invalidateQueries({ queryKey: ['submissions'] }), qc.invalidateQueries({ queryKey: ['fx'] })])
   }
+
+  // grouped by currency (A–Z), the latest rate first; earlier ones fold away under it
+  const groups = useMemo(() => {
+    const by = new Map<string, Tables<'fx_rates'>[]>()
+    for (const r of rates.data ?? []) by.set(r.currency, [...(by.get(r.currency) ?? []), r])
+    return [...by.entries()].sort(([a], [b]) => a.localeCompare(b))
+  }, [rates.data])
+  const searching = !!parsed && parsed.groups.length > 0
+  const [open, setOpen] = useState<Set<string>>(new Set())
+  const toggle = (currency: string) =>
+    setOpen((prev) => {
+      const next = new Set(prev)
+      if (!next.delete(currency)) next.add(currency)
+      return next
+    })
 
   async function remove(r: Tables<'fx_rates'>) {
     if (!window.confirm(t('admin.fx.confirmDelete', { ccy: r.currency, date: formatDate(r.rate_date) }))) return
@@ -555,10 +573,10 @@ function FxTab() {
             </div>
           </Field>
           <Field label={t('admin.fx.date')}>
-            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-40" />
+            <DateInput value={date} onChange={setDate} className="w-40" />
           </Field>
           <Field label={t('admin.fx.rate', { ccy: ccy || '…' })}>
-            <Input inputMode="decimal" value={rate} onChange={(e) => setRate(e.target.value)} className="w-48 text-right" placeholder="0.0000785" />
+            <DecimalInput kind="rate" value={rate} onChange={(e) => setRate(e.target.value)} className="w-48 text-right" placeholder={formatDecimalInput('0.0000785', 'rate')} />
           </Field>
           <Button onClick={() => void add()}>
             <Plus />
@@ -567,39 +585,64 @@ function FxTab() {
         </CardContent>
       </Card>
       <Card className="gap-0 py-0">
-        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 py-4">
+        <CardHeader className="gap-1 py-4">
           <CardTitle>{t('admin.tabs.fx')}</CardTitle>
+          <p className="text-caption text-muted-foreground">{t('admin.fx.groupedHelp')}</p>
         </CardHeader>
-        <div className="max-h-[480px] overflow-y-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead>{t('fields.currency')}</TableHead>
-                <TableHead>{t('admin.fx.date')}</TableHead>
-                <TableHead className="text-right">{t('admin.fx.rateShort')}</TableHead>
-                <TableHead>{t('admin.fx.source')}</TableHead>
-                <TableHead />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rates.data?.map((r) => (
-                <TableRow key={`${r.currency}-${r.rate_date}`}>
-                  <TableCell className="font-mono">{r.currency}</TableCell>
-                  <TableCell>{formatDate(r.rate_date)}</TableCell>
-                  <TableCell className="text-right font-mono tabular-nums">{String(r.rate_to_usd)}</TableCell>
-                  <TableCell className="text-caption text-muted-foreground">{r.source ?? '—'}</TableCell>
-                  <TableCell className="text-right">
-                    <Button size="icon" variant="ghost" onClick={() => void remove(r)} aria-label={t('common.delete')}>
-                      <Trash2 />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        <Table>
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              <TableHead>{t('fields.currency')}</TableHead>
+              <TableHead>{t('admin.fx.date')}</TableHead>
+              <TableHead className="text-right">{t('admin.fx.rateShort')}</TableHead>
+              <TableHead>{t('admin.fx.source')}</TableHead>
+              <TableHead />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {groups.map(([currency, list]) => {
+              const [latest, ...history] = list
+              // a search shows every matching rate; otherwise the history waits behind its toggle
+              const expanded = searching || open.has(currency)
+              return (
+                <Fragment key={currency}>
+                  <FxRow r={latest} onRemove={remove}>
+                    {history.length > 0 && (
+                      <Button size="sm" variant="ghost" aria-expanded={expanded} disabled={searching} onClick={() => toggle(currency)} data-fx-history={currency}>
+                        {expanded ? <ChevronDown /> : <ChevronRight />}
+                        {t('admin.fx.history', { count: history.length })}
+                      </Button>
+                    )}
+                  </FxRow>
+                  {expanded && history.map((r) => <FxRow key={r.rate_date} r={r} onRemove={remove} past />)}
+                </Fragment>
+              )
+            })}
+          </TableBody>
+        </Table>
       </Card>
     </div>
+  )
+}
+
+/** One rate: the latest of its currency (bold code), or an earlier one under it (muted, indented). */
+function FxRow({ r, past = false, onRemove, children }: { r: Tables<'fx_rates'>; past?: boolean; onRemove: (r: Tables<'fx_rates'>) => void; children?: ReactNode }) {
+  const { t } = useTranslation()
+  return (
+    <TableRow className={cn(past && 'bg-muted/40 text-muted-foreground')} data-fx-past={past || undefined}>
+      <TableCell className={cn('font-mono', past ? 'pl-8' : 'font-semibold')}>{r.currency}</TableCell>
+      <TableCell>{formatDate(r.rate_date)}</TableCell>
+      <TableCell className="text-right font-mono tabular-nums">{formatNumber(Number(r.rate_to_usd), { maximumFractionDigits: 10 })}</TableCell>
+      <TableCell className="text-caption text-muted-foreground">{r.source ?? '—'}</TableCell>
+      <TableCell>
+        <div className="flex items-center justify-end gap-2">
+          {children}
+          <Button size="icon" variant="ghost" onClick={() => onRemove(r)} aria-label={t('common.delete')}>
+            <Trash2 />
+          </Button>
+        </div>
+      </TableCell>
+    </TableRow>
   )
 }
 
@@ -638,6 +681,9 @@ export const SETTING_GROUPS: { id: string; settings: SettingDef[] }[] = [
   },
 ]
 const ALL_SETTINGS = SETTING_GROUPS.flatMap((g) => g.settings)
+/** A setting as typed («1 000 000», «30») → its number (NaN when unreadable; empty is 0, as before). */
+const settingNumber = (v: string | boolean | undefined, kind: SettingDef['kind']) =>
+  typeof v === 'string' && v.trim() !== '' ? Number(cleanDecimal(v, kind === 'days' ? 'int' : 'amount')) : Number(v ?? NaN)
 
 function SettingsTab() {
   const { t } = useTranslation()
@@ -663,14 +709,14 @@ function SettingsTab() {
   async function save() {
     for (const d of ALL_SETTINGS) {
       if (d.kind === 'bool' || disabledBy(d.key)) continue
-      const n = Number(vals[d.key])
+      const n = settingNumber(vals[d.key], d.kind)
       if (!Number.isFinite(n) || (d.kind === 'days' && !Number.isInteger(n)) || n < (d.min ?? 0) || n > (d.max ?? Infinity)) {
         toast.error(t('admin.settings.invalid', { label: t(`admin.settings.${d.key}`), min: d.min ?? 0, max: d.max ?? '∞' }))
         return
       }
     }
     setBusy(true)
-    const rows = ALL_SETTINGS.filter((d) => vals[d.key] !== undefined).map((d) => ({ key: d.key, value: d.kind === 'bool' ? Boolean(vals[d.key]) : Number(vals[d.key]) }))
+    const rows = ALL_SETTINGS.filter((d) => vals[d.key] !== undefined).map((d) => ({ key: d.key, value: d.kind === 'bool' ? Boolean(vals[d.key]) : settingNumber(vals[d.key], d.kind) }))
     const { error } = await supabase.from('settings').upsert(rows)
     setBusy(false)
     if (error) return toast.error(errorMessage(error))
@@ -692,11 +738,9 @@ function SettingsTab() {
                 </label>
               ) : (
                 <Field key={d.key} label={t(`admin.settings.${d.key}`)} hint={t(`admin.settings.${d.key}Hint`)} htmlFor={`setting-${d.key}`}>
-                  <Input
+                  <DecimalInput
                     id={`setting-${d.key}`}
-                    type="number"
-                    min={d.min}
-                    max={d.max}
+                    kind={d.kind === 'days' ? 'int' : 'amount'}
                     className="w-40 text-right tabular-nums"
                     value={String(vals[d.key] ?? '')}
                     onChange={(e) => setVals({ ...vals, [d.key]: e.target.value })}

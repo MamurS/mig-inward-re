@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAuth } from '@/auth/AuthProvider'
 import { supabase } from '@/lib/supabase'
 import { errorMessage } from '@/lib/errors'
+import { systemText } from '@/lib/systemText'
 import { norm } from '@/features/search/normalize'
 import { fieldValues, matchesQuery, type ClientSpec } from '@/features/search/client'
 import { AGENDA_PAGE } from '@/features/search/pages'
@@ -118,7 +119,7 @@ export function AgendaPage() {
 
   const spec: ClientSpec<FollowUp> = useMemo(
     () => ({
-      text: (f) => norm([f.title, f.entity_ref, f.entity_label, f.mga_name, f.outcome, f.assigned_to_name, f.type ? t(`fuType.${f.type}`) : ''].filter(Boolean).join(' ')),
+      text: (f) => norm([f.title, systemText(f.title, t), f.entity_ref, f.entity_label, f.mga_name, f.outcome, systemText(f.outcome, t), f.assigned_to_name, f.type ? t(`fuType.${f.type}`) : ''].filter(Boolean).join(' ')),
       list: { assignee: (f) => [f.assigned_to ?? '', 'all'], type: (f) => f.type },
       date: { due: (f) => f.due_at },
       flags: { overdue: (f) => Boolean(f.is_overdue) },

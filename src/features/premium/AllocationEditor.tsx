@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AlertTriangle, ArrowRightLeft, Plus, Trash2, Wand2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { DecimalInput } from '@/components/ui/decimal-input'
 import { NativeSelect } from '@/components/ui/native-select'
 import { Badge } from '@/components/ui/badge'
 import { AgingBadge } from '@/components/AgingBadge'
@@ -21,8 +21,8 @@ function rowProblem(d: AllocDraft, inst: InstallmentRow | undefined, receiptCcy:
   if (!isDecimal(d.amount, 2) || Number(cleanDecimal(d.amount)) <= 0) return 'rcp.err.amount'
   const cross = inst.currency !== receiptCcy
   const rate = cross ? d.rate : '1'
-  if (cross && (!isDecimal(d.rate, 10) || Number(cleanDecimal(d.rate)) <= 0)) return 'rcp.err.rate'
-  const converted = convert(cleanDecimal(d.amount), cleanDecimal(rate))
+  if (cross && (!isDecimal(d.rate, 10) || Number(cleanDecimal(d.rate, 'rate')) <= 0)) return 'rcp.err.rate'
+  const converted = convert(cleanDecimal(d.amount), cleanDecimal(rate, 'rate'))
   if (converted === null || Number(converted) > Number(inst.outstanding_amount ?? 0)) return 'rcp.err.overInstallment'
   return null
 }
@@ -34,7 +34,7 @@ export function draftsToAllocations(drafts: AllocDraft[], installments: Installm
   for (const d of drafts) {
     const inst = byId.get(d.installmentId)
     if (rowProblem(d, inst, receiptCcy)) return null
-    out.push({ installment_id: d.installmentId, amount: cleanDecimal(d.amount), fx_rate: inst!.currency === receiptCcy ? null : cleanDecimal(d.rate) })
+    out.push({ installment_id: d.installmentId, amount: cleanDecimal(d.amount), fx_rate: inst!.currency === receiptCcy ? null : cleanDecimal(d.rate, 'rate') })
   }
   return out
 }
@@ -93,7 +93,7 @@ export function AllocationEditor({
     const rows = order.map((inst) => {
       const draft = value.find((d) => d.installmentId === inst.id)
       const rate = inst.currency === currency ? '1' : (draft?.rate || reference(inst.currency!))
-      return { id: inst.id!, outstanding: String(inst.outstanding_amount ?? 0), rate: rate && isDecimal(rate, 10) ? cleanDecimal(rate) : null }
+      return { id: inst.id!, outstanding: String(inst.outstanding_amount ?? 0), rate: rate && isDecimal(rate, 10) ? cleanDecimal(rate, 'rate') : null }
     })
     const amounts = autoAllocate(cleanDecimal(amount || '0'), rows)
     onChange(
@@ -129,12 +129,12 @@ export function AllocationEditor({
         if (!inst) return null
         const cross = inst.currency !== currency
         const rate = cross ? d.rate : '1'
-        const okRate = cross && isDecimal(rate, 10) && Number(cleanDecimal(rate)) > 0
-        const converted = isDecimal(d.amount, 2) && (!cross || okRate) ? convert(cleanDecimal(d.amount), cleanDecimal(rate)) : null
+        const okRate = cross && isDecimal(rate, 10) && Number(cleanDecimal(rate, 'rate')) > 0
+        const converted = isDecimal(d.amount, 2) && (!cross || okRate) ? convert(cleanDecimal(d.amount), cleanDecimal(rate, 'rate')) : null
         const ref = cross ? reference(inst.currency!) : null
-        const check = okRate ? checkRate(cleanDecimal(rate), ref) : null
+        const check = okRate ? checkRate(cleanDecimal(rate, 'rate'), ref) : null
         const problem = d.amount ? rowProblem(d, inst, currency) : null
-        const max = !cross || okRate ? maxFor(String(inst.outstanding_amount ?? 0), cleanDecimal(rate)) : null
+        const max = !cross || okRate ? maxFor(String(inst.outstanding_amount ?? 0), cleanDecimal(rate, 'rate')) : null
         return (
           <div key={d.installmentId} className="grid gap-3 rounded-xl border p-4" data-allocation-row>
             <div className="flex flex-wrap items-start justify-between gap-2">
@@ -157,7 +157,7 @@ export function AllocationEditor({
               <label className="grid gap-1">
                 <span className="text-small font-medium">{t('rcp.allocAmount', { ccy: currency })}</span>
                 <div className="flex gap-2">
-                  <Input inputMode="decimal" className="text-right num" value={d.amount} onChange={(e) => set(i, { amount: e.target.value })} aria-invalid={Boolean(problem) || undefined} />
+                  <DecimalInput className="text-right num" value={d.amount} onChange={(e) => set(i, { amount: e.target.value })} aria-invalid={Boolean(problem) || undefined} />
                   {max && (
                     <Button type="button" variant="outline" onClick={() => set(i, { amount: Math.min(Number(max), room(d)).toFixed(2) })}>
                       {t('rcp.max')}
@@ -169,8 +169,8 @@ export function AllocationEditor({
                 <label className="grid gap-1">
                   <span className="text-small font-medium">{t('rcp.rate', { to: inst.currency, from: currency })}</span>
                   <div className="flex gap-2">
-                    <Input inputMode="decimal" className="text-right num" value={d.rate} onChange={(e) => set(i, { rate: e.target.value })} aria-invalid={check === 'inverted' || check === 'far' || undefined} />
-                    {ref && cleanDecimal(d.rate) !== ref && (
+                    <DecimalInput kind="rate" className="text-right num" value={d.rate} onChange={(e) => set(i, { rate: e.target.value })} aria-invalid={check === 'inverted' || check === 'far' || undefined} />
+                    {ref && cleanDecimal(d.rate, 'rate') !== ref && (
                       <Button type="button" variant="outline" onClick={() => set(i, { rate: ref })} title={t('rcp.useReference')}>
                         {t('rcp.useReferenceShort')}
                       </Button>
@@ -190,7 +190,7 @@ export function AllocationEditor({
                 </div>
                 {okRate && (
                   <div className="text-muted-foreground num">
-                    1 {currency} = {trimRate(cleanDecimal(rate))} {inst.currency} · 1 {inst.currency} = {inverseRate(cleanDecimal(rate))} {currency}
+                    1 {currency} = {trimRate(cleanDecimal(rate, 'rate'))} {inst.currency} · 1 {inst.currency} = {inverseRate(cleanDecimal(rate, 'rate'))} {currency}
                   </div>
                 )}
                 {ref && <div className="text-muted-foreground num">{t('rcp.reference', { rate: `1 ${currency} = ${ref} ${inst.currency}` })}</div>}

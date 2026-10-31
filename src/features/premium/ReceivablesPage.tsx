@@ -2,17 +2,19 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
-import { AlarmClock, CalendarCheck, FileSpreadsheet, Loader2, Undo2, Wallet } from 'lucide-react'
+import { CalendarCheck, FileSpreadsheet, Loader2, Undo2, Wallet } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/PageHeader'
-import { Card } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { highlight } from '@/components/data/highlight'
+import { NameCell } from '@/components/data/NameCell'
 import { EmptyState } from '@/components/EmptyState'
 import { Amount } from '@/components/Amount'
-import { AgingBadge } from '@/components/AgingBadge'
+import { AgingBadge, type AgingBucket } from '@/components/AgingBadge'
+import { AgeingBreakdown } from '@/components/AgeingBar'
 import { KpiCard } from '@/components/KpiCard'
 import { errorMessage } from '@/lib/errors'
 import { fitWidth, formatAmount, formatDate, isoDate } from '@/lib/format'
@@ -50,6 +52,9 @@ export function ReceivablesPage() {
   const payableView = base === null
   const summary = ageing(rows)
   const tile = (bucket: string) => pageLink(RECEIVABLES_PAGE, `bucket:${bucket}`)
+  // the bucket the search narrows to (bucket:61-90), highlighted in the ageing card
+  const bucketTerm = parsed?.groups.length === 1 ? parsed.groups[0].terms.find((x) => x.kind === 'field' && x.field === 'bucket' && !x.neg) : undefined
+  const activeBucket = bucketTerm?.kind === 'field' && bucketTerm.values.length === 1 ? (bucketTerm.values[0] as AgingBucket) : null
 
   const columns: Column<InstallmentRow>[] = [
     {
@@ -61,8 +66,13 @@ export function ReceivablesPage() {
         </Link>
       ),
     },
-    { id: 'insured', header: t('fields.insuredName'), className: 'max-w-64 truncate', cell: (r, c) => <span title={r.insured_name ?? ''}>{c.hl(r.insured_name)}</span> },
-    { id: 'mga', header: t('fields.mga'), className: 'max-w-48 truncate', cell: (r, c) => c.hl(r.mga_name) },
+    {
+      id: 'insured',
+      header: t('fields.insuredName'),
+      className: 'max-w-64',
+      cell: (r, c) => <NameCell name={c.hl(r.insured_name)} sub={r.mga_name && c.hl(r.mga_name)} title={[r.insured_name, r.mga_name].filter(Boolean).join('\n')} />,
+    },
+    { id: 'mga', header: t('fields.mga'), className: 'max-w-48 truncate', defaultHidden: true, cell: (r, c) => c.hl(r.mga_name) },
     { id: 'broker', header: t('fields.broker'), className: 'max-w-48 truncate', defaultHidden: true, cell: (r, c) => c.hl(r.broker_name) || '—' },
     { id: 'due_date', header: t('prem.dueDate'), cell: (r) => formatDate(r.due_date) },
     {
@@ -116,21 +126,10 @@ export function ReceivablesPage() {
         }
       />
 
-      {/* Ageing over the rows shown (receivable only); payable in its own tile */}
-      <section aria-label={t('rcv.ageing')} className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-7" data-ageing>
+      {/* Ageing over the rows shown (receivable only): three figures, then one card with the buckets; payable in its own tile */}
+      <section aria-label={t('rcv.ageing')} className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5" data-ageing>
         <KpiCard icon={Wallet} label={t('rcv.totalOutstanding')} value={<Amount value={summary.total} human />} sub="USD" className="col-span-2 md:col-span-1" />
         <KpiCard icon={CalendarCheck} label={t('rcv.notDue')} value={<Amount value={summary.buckets.current} human />} sub="USD" />
-        {AGING_BUCKETS.map((b) => (
-          <KpiCard
-            key={b}
-            icon={AlarmClock}
-            label={t('rcv.bucketDays', { bucket: b })}
-            value={<Amount value={summary.buckets[b]} human />}
-            sub="USD"
-            to={tile(b)}
-            alert={b === '90+' && summary.buckets[b] > 0}
-          />
-        ))}
         <KpiCard
           icon={Undo2}
           label={t('rcv.payableTile')}
@@ -139,6 +138,21 @@ export function ReceivablesPage() {
           to={pageLink(RECEIVABLES_PAGE, 'payable')}
           className={cn(payableView && 'ring-2 ring-ring/40')}
         />
+        <Card className="col-span-2 gap-3 py-4 md:col-span-3 xl:col-span-2" data-ageing-card>
+          <CardHeader className="px-5"><CardTitle className="text-small font-medium text-muted-foreground">{t('rcv.ageing')}</CardTitle></CardHeader>
+          <CardContent className="px-3">
+            <AgeingBreakdown
+              active={activeBucket}
+              items={AGING_BUCKETS.map((b) => ({
+                bucket: b,
+                label: t('rcv.bucketDays', { bucket: b }),
+                weight: summary.buckets[b],
+                value: <Amount value={summary.buckets[b]} currency="USD" human className={b === '90+' && summary.buckets[b] > 0 ? 'text-danger-700' : undefined} />,
+                to: tile(b),
+              }))}
+            />
+          </CardContent>
+        </Card>
       </section>
 
       {parsed && (
@@ -159,7 +173,7 @@ export function ReceivablesPage() {
 
       <Card className="gap-0 py-0">
         <DataTable
-          id={payableView ? 'payables' : 'receivables'}
+          id={payableView ? 'payables.v2' : 'receivables.v2'}
           columns={columns}
           rows={rows}
           getRowId={(r) => r.id!}

@@ -3,13 +3,13 @@ import { useTranslation } from 'react-i18next'
 import { Amount } from '@/components/Amount'
 import { Skeleton } from '@/components/Skeleton'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { isoDate, locale } from '@/lib/format'
+import { formatNumber, isoDate } from '@/lib/format'
 import { quoteValue } from '@/features/search/query'
 import { CLAIMS_PAGE, pageLink } from '@/features/search/pages'
 import { useAllClaims, useRatioRisks } from './api'
 import { lossRatios } from './ratios'
 
-export const pct = (v: number | null) => (v === null ? '—' : `${new Intl.NumberFormat(locale(), { maximumFractionDigits: 1 }).format(v * 100)} %`)
+export const pct = (v: number | null) => (v === null ? '—' : `${formatNumber(v * 100, { maximumFractionDigits: 1 })} %`)
 
 /** Counterparty page › Claims: open claims, outstanding and incurred (USD), and this MGA's loss ratios, both kinds, labelled. */
 export function CounterpartyClaims({ party }: { party: { id: string; name: string; type: string } }) {

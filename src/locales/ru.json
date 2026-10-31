@@ -175,6 +175,7 @@
     "sourceParty": "Получено от",
     "businessType": "Вид бизнеса",
     "lob": "Вид страхования",
+    "lobShort": "Вид",
     "status": "Статус",
     "currency": "Валюта",
     "currencyShort": "Вал.",
@@ -189,6 +190,7 @@
     "commissionPct": "Комиссия %",
     "brokeragePct": "Брокерская комиссия %",
     "writtenSharePct": "Предложенная доля %",
+    "writtenSignedShare": "Предл. / подтв. доля",
     "signedSharePct": "Подтверждённая доля %",
     "share": "Доля",
     "offerValidUntil": "Предложение действует до",
@@ -294,13 +296,19 @@
       "source": "Источник",
       "risk": "Риск",
       "financials": "Финансы (100%)",
-      "terms": "Условия"
+      "terms": "Условия",
+      "sourceRisk": "Источник и риск",
+      "financialsTerms": "Финансы (100 %) и условия"
     },
     "tabs": {
       "timeline": "История статусов",
       "documents": "Документы",
       "changes": "Журнал изменений"
-    }
+    },
+    "premiumShortcut": "Премия",
+    "premiumShortcutHint": "Перейти на вкладку «Премия»",
+    "shareBar": "Подтверждённая доля {{signed}} из предложенной {{written}}",
+    "shareBarOf": "из предложенных {{pct}}"
   },
   "statusDlg": {
     "reason": "Причина",
@@ -486,6 +494,13 @@
       "topMgas": "MGA с наибольшей просрочкой",
       "mostOverdue": "Самые просроченные взносы",
       "noOverdue": "Просроченных премий нет"
+    },
+    "attention": "Требует внимания",
+    "noOverdueFollowUps": "Просроченных напоминаний нет.",
+    "nav": {
+      "label": "Разделы дашборда",
+      "overview": "Обзор",
+      "charts": "Аналитика"
     }
   },
   "admin": {
@@ -532,7 +547,12 @@
       "rateShort": "USD за единицу",
       "source": "Источник",
       "invalid": "Выберите валюту и дату и укажите курс больше 0.",
-      "confirmDelete": "Удалить курс {{ccy}} на {{date}}?"
+      "confirmDelete": "Удалить курс {{ccy}} на {{date}}?",
+      "groupedHelp": "Последний курс каждой валюты; более ранние курсы скрыты под ним.",
+      "history_one": "ещё {{count}} курс",
+      "history_few": "ещё {{count}} курса",
+      "history_many": "ещё {{count}} курсов",
+      "history_other": "ещё {{count}} курса"
     },
     "settings": {
       "groups": {
@@ -687,7 +707,14 @@
     "overdueFollowUps": "Просроченных напоминаний: {{count}}",
     "noSubmissionsYet": "От них ещё не было заявок",
     "moreFilters": "Ещё фильтры",
-    "resetColumns": "Сбросить по умолчанию"
+    "resetColumns": "Сбросить по умолчанию",
+    "date": {
+      "pattern": "дд.мм.гггг",
+      "openCalendar": "Выбрать дату",
+      "prevMonth": "Предыдущий месяц",
+      "nextMonth": "Следующий месяц",
+      "today": "Сегодня"
+    }
   },
   "prem": {
     "tab": "Премия",
@@ -1687,5 +1714,27 @@
       "tokens": "токенов на входе {{input}}, на выходе {{output}}",
       "noUsage": "Запросов к ИИ ещё не было"
     }
+  },
+  "sysText": {
+    "requestUpdate": "Запросить ответ по предложению",
+    "offerExpired": "Срок действия предложения истёк",
+    "premiumOverdue": "Просрочена премия",
+    "reviewReserve": "Пересмотреть резерв",
+    "largeLoss": "Крупный убыток",
+    "registered": "Заявка зарегистрирована",
+    "offsetNote": "Выплата по убытку зачтена в счёт премии",
+    "closedPaid": "Закрыто автоматически: взнос оплачен",
+    "closedWrittenOff": "Закрыто автоматически: взнос списан",
+    "cashCallPaid": "Кэш-колл оплачен",
+    "cashCallPaidOn": "Кэш-колл оплачен {{date}}",
+    "closedStatus": "Закрыто автоматически: статус изменён на «{{status}}»",
+    "autoNoResponse_one": "Установлено автоматически: нет ответа {{count}} день после предложения",
+    "autoNoResponse_few": "Установлено автоматически: нет ответа {{count}} дня после предложения",
+    "autoNoResponse_many": "Установлено автоматически: нет ответа {{count}} дней после предложения",
+    "autoNoResponse_other": "Установлено автоматически: нет ответа {{count}} дня после предложения",
+    "capacityUsed": "Ёмкость использована на {{pct}}",
+    "bordereauMissing": "Нет бордеро: {{kind}}, {{period}}",
+    "firmOrder": "Получен твёрдый ордер от MGA",
+    "quoteSent": "Котировка отправлена"
   }
 }

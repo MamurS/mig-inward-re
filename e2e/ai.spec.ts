@@ -138,5 +138,5 @@ test('Russian and Uzbek', async ({ page }) => {
   await openForm(page, 'underwriter', 'ru')
   await expect(page.locator('[data-ai-open]')).toHaveText(/Заполнить из документа/)
   await openForm(page, 'underwriter', 'uz')
-  await expect(page.locator('[data-ai-open]')).toHaveText(/Hujjatdan to‘ldirish/)
+  await expect(page.locator('[data-ai-open]')).toHaveText(/Hujjatdan toʻldirish/)
 })

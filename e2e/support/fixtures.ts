@@ -41,8 +41,8 @@ const currencies: Row[] = [
 ].map(([code, name, sort_order]) => ({ code, name, sort_order, active: true }))
 
 const countries: Row[] = [
-  ['UZ', 'Uzbekistan', 'Узбекистан', "O'zbekiston"], ['KZ', 'Kazakhstan', 'Казахстан', "Qozog'iston"],
-  ['KG', 'Kyrgyzstan', 'Кыргызстан', "Qirg'iziston"], ['AZ', 'Azerbaijan', 'Азербайджан', 'Ozarbayjon'],
+  ['UZ', 'Uzbekistan', 'Узбекистан', 'Oʻzbekiston'], ['KZ', 'Kazakhstan', 'Казахстан', 'Qozogʻiston'],
+  ['KG', 'Kyrgyzstan', 'Кыргызстан', 'Qirgʻiziston'], ['AZ', 'Azerbaijan', 'Азербайджан', 'Ozarbayjon'],
   ['GE', 'Georgia', 'Грузия', 'Gruziya'], ['TR', 'Turkey', 'Турция', 'Turkiya'], ['AE', 'United Arab Emirates', 'ОАЭ', 'BAA'],
   ['SA', 'Saudi Arabia', 'Саудовская Аравия', 'Saudiya Arabistoni'], ['OM', 'Oman', 'Оман', 'Ummon'], ['GB', 'United Kingdom', 'Великобритания', 'Buyuk Britaniya'],
 ].map(([code, name, name_ru, name_uz]) => ({ code, name, name_ru, name_uz, active: true }))
@@ -52,7 +52,7 @@ const LOB = [
   ['ENER', 'Energy', 'Энергетика', 'Energetika'], ['CARGO', 'Marine Cargo', 'Грузы', 'Yuklar'], ['HULL', 'Marine Hull', 'Каско судов', 'Kema kaskosi'],
   ['AVIA', 'Aviation', 'Авиация', 'Aviatsiya'], ['CRED', 'Credit & Surety', 'Кредит и поручительство', 'Kredit va kafillik'],
   ['FINL', 'Financial Lines (D&O, PI, FI)', 'Финансовые риски (D&O, PI, FI)', 'Moliyaviy xavflar (D&O, PI, FI)'],
-  ['CYBER', 'Cyber', 'Кибер-риски', 'Kiber xavflar'], ['AGRI', 'Agriculture', 'Сельское хозяйство', "Qishloq xo'jaligi"],
+  ['CYBER', 'Cyber', 'Кибер-риски', 'Kiber xavflar'], ['AGRI', 'Agriculture', 'Сельское хозяйство', 'Qishloq xoʻjaligi'],
 ]
 const lines_of_business: Row[] = LOB.map(([code, name, name_ru, name_uz], i) => ({
   id: `10000000-0000-4000-8000-${String(i + 1).padStart(12, '0')}`, code, name, name_ru, name_uz, active: true, sort_order: (i + 1) * 10,
@@ -105,7 +105,7 @@ const SPECS: Spec[] = [
   ['Tashkent City Mall', 'UZ', 'PROP', 'Silk Road Underwriting Agency', 'Tashkent Re Brokers', 'facultative', 'USD', 95000000, 95000000, 250000, 285000, 25, 5, 15, 12.5, ['under_review', 'offered', 'bound'], 280, 277, 268, null, 250, 30, null, 'Shopping mall PD/BI, earthquake zone 8'],
   ['Almalyk MMC Fleet Cargo Programme', 'UZ', 'CARGO', 'Caspian Specialty MGA', null, 'binder', 'USD', 40000000, 5000000, 25000, 410000, 27.5, 0, 20, 20, ['under_review', 'offered', 'bound'], 200, 198, 192, null, 180, 30, null, 'Annual cargo open cover, copper concentrate'],
   ['Kazakh Telecom Cyber Programme', 'KZ', 'CYBER', 'Caspian Specialty MGA', 'Gulf Placement Partners', 'facultative', 'USD', 20000000, 20000000, 250000, 640000, 20, 7.5, 10, 7.5, ['under_review', 'offered', 'bound'], 140, 137, 131, null, 120, 30, null, 'Primary cyber tower, USD 20m xs 250k'],
-  ['Georgian Wine Exporters Credit', 'GE', 'CRED', 'Meridian Risk Partners', null, 'facultative', 'EUR', 12000000, 12000000, 100000, 168000, 30, 0, 15, 15, ['under_review', 'offered', 'no_response', 'bound'], 110, 108, 100, 65, 50, 30, null, 'Trade credit whole turnover, EU buyers'],
+  ['Georgian Mineral Water Exporters Credit', 'GE', 'CRED', 'Meridian Risk Partners', null, 'facultative', 'EUR', 12000000, 12000000, 100000, 168000, 30, 0, 15, 15, ['under_review', 'offered', 'no_response', 'bound'], 150, 148, 140, 105, 90, 30, null, 'Trade credit whole turnover, EU buyers'],
   ['Emirates Aviation Services Hull', 'AE', 'AVIA', 'Silk Road Underwriting Agency', 'Gulf Placement Partners', 'facultative', 'USD', 310000000, 310000000, 1000000, 1550000, 17.5, 5, 5, 5, ['under_review', 'offered', 'bound'], 90, 88, 82, null, 70, 30, null, 'Hull all risks + war, 6 narrow-body aircraft'],
   ['Bukhara Gas Compressor Station', 'UZ', 'ENER', 'Silk Road Underwriting Agency', 'Tashkent Re Brokers', 'facultative', 'USD', 75000000, 75000000, 1000000, 525000, 20, 5, 10, null, ['under_review', 'offered', 'no_response'], 80, 78, 70, 35, null, 30, null, 'Onshore energy PD, gas compression'],
   ['Ankara Metro Rolling Stock', 'TR', 'ENG', 'Meridian Risk Partners', null, 'facultative', 'EUR', 140000000, 140000000, 500000, 392000, 25, 0, 7.5, null, ['under_review', 'offered', 'ntu'], 75, 73, 65, null, 45, 30, 'Placed with another reinsurer at a lower rate', 'CAR/EAR rolling stock delivery & testing'],

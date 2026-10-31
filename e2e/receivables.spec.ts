@@ -16,7 +16,7 @@ const bar = (page: Page) => page.locator('header').getByRole('combobox')
 const ageing = (page: Page) => page.locator('[data-ageing]')
 /** The «Days overdue» column (0 = not yet due). */
 const daysOf = async (page: Page) =>
-  (await page.locator('main tbody tr td:nth-child(5)').allTextContents()).map((t) => Number(/(\d+)/.exec(t)?.[1] ?? 0))
+  (await page.locator('main tbody tr td:nth-child(4)').allTextContents()).map((t) => Number(/(\d+)/.exec(t)?.[1] ?? 0))
 /** Types a query and waits until the list shows its result (the count above it matches the rows). */
 const search = async (page: Page, q: string) => {
   await bar(page).fill(q)

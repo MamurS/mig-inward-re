@@ -37,3 +37,8 @@ export function applyAppearance(a: Appearance, { fade = false }: { fade?: boolea
     /* storage unavailable: the profile still has it */
   }
 }
+
+/** Chart labels are drawn in SVG (no CSS size tokens): the caption size in px, one step up with Large text. */
+export function chartFontSize(): number {
+  return typeof document !== 'undefined' && document.documentElement.dataset.textSize === 'large' ? 14 : 12
+}

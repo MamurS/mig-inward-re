@@ -88,10 +88,10 @@ export const CANVAS = solveStep(0.93, RAMP_SPECS.slate.chroma * 0.2, RAMP_SPECS.
 // ---------------------------------------------------------------------------
 
 export const THEME_SPECS = {
-  grey: { accent: { hue: 255, chroma: 0.15 }, tint: { hue: 255, chroma: 0.004 }, role: 'neutral light grey, blue accent (default)' },
-  blue: { accent: { hue: 250, chroma: 0.15 }, tint: { hue: 232, chroma: 0.03 }, role: 'sky-blue tint, blue accent' },
-  green: { accent: { hue: 148, chroma: 0.16 }, tint: { hue: 125, chroma: 0.05 }, role: 'lime / salad-green tint, green accent' },
-  orange: { accent: { hue: 50, chroma: 0.17 }, tint: { hue: 60, chroma: 0.045 }, role: 'peach / soft-orange tint, orange accent' },
+  grey: { accent: { hue: 255, chroma: 0.15 }, tint: { hue: 255, chroma: 0.004 }, sidebarChroma: 0.014, role: 'neutral light grey, blue accent (default)' },
+  blue: { accent: { hue: 250, chroma: 0.15 }, tint: { hue: 232, chroma: 0.03 }, sidebarChroma: 0.045, role: 'sky-blue tint, blue accent' },
+  green: { accent: { hue: 148, chroma: 0.16 }, tint: { hue: 125, chroma: 0.05 }, sidebarChroma: 0.045, role: 'lime / salad-green tint, green accent' },
+  orange: { accent: { hue: 50, chroma: 0.17 }, tint: { hue: 60, chroma: 0.045 }, sidebarChroma: 0.05, role: 'peach / soft-orange tint, orange accent' },
 } as const
 
 export type ThemeName = keyof typeof THEME_SPECS
@@ -112,7 +112,9 @@ export const THEMES = Object.fromEntries(
     {
       brand: buildRamp(spec.accent),
       canvas: solveStep(0.93, spec.tint.chroma, spec.tint.hue),
-      sidebar: solveStep(0.965, spec.tint.chroma * 0.8, spec.tint.hue),
+      // a visible (still quiet) tint: a little darker than white and more
+      // saturated than the page, so the sidebar reads as the theme's colour
+      sidebar: solveStep(0.9, spec.sidebarChroma, spec.tint.hue),
     },
   ]),
 ) as Record<ThemeName, ThemeColors>
@@ -245,16 +247,20 @@ export const TYPE_SCALE = {
 
 export type TextSize = 'normal' | 'large'
 
-/** «Large» text (Appearance): every size one step up — 13 · 14 · 15 · 16 · 17 · 20 · 30 · 36. */
+/**
+ * «Large» text (Appearance): every size one clear step up (≈ +12 %, at least
+ * 2 px from 14 px on) — 14 · 15 · 16 · 17 · 18 · 20 · 32 · 38. A single pixel
+ * was too little to see; spacing stays as it is, so nothing else moves.
+ */
 export const TYPE_SCALE_LARGE: Record<keyof typeof TYPE_SCALE, readonly [string, string]> = {
-  caption: ['0.8125rem', '1.25rem'],
-  small: ['0.875rem', '1.3125rem'],
-  table: ['0.9375rem', '1.40625rem'],
-  body: ['1rem', '1.5rem'],
-  lead: ['1.0625rem', '1.625rem'],
+  caption: ['0.875rem', '1.25rem'],
+  small: ['0.9375rem', '1.375rem'],
+  table: ['1rem', '1.5rem'],
+  body: ['1.0625rem', '1.5625rem'],
+  lead: ['1.125rem', '1.6875rem'],
   title: ['1.25rem', '1.75rem'],
-  headline: ['1.875rem', '2.375rem'],
-  display: ['2.25rem', '2.625rem'],
+  headline: ['2rem', '2.5rem'],
+  display: ['2.375rem', '2.75rem'],
 }
 
 export const FONTS = {
@@ -326,13 +332,15 @@ export function roleTokens(theme: ThemeName = DEFAULT_THEME): Record<string, str
     ring: t.brand[400],
     link: t.brand[600],
     canvas: t.canvas,
-    // the light, frosted sidebar: dark text, the active item a soft accent pill
+    // the light, frosted sidebar in the theme's tint: dark text, the active
+    // item a pill in the accent tint (step 200 — it reads against the tinted
+    // sidebar), hover a lighter wash of the accent
     sidebar: t.sidebar,
     'sidebar-foreground': r.slate[800],
     'sidebar-muted': r.slate[600],
-    'sidebar-accent': t.brand[100],
+    'sidebar-accent': t.brand[200],
     'sidebar-accent-foreground': t.brand[800],
-    'sidebar-hover': r.slate[100],
+    'sidebar-hover': t.brand[50],
     'sidebar-border': r.slate[200],
   }
 }
@@ -342,7 +350,7 @@ export function themeTokens(theme: ThemeName): Record<string, string> {
   const out: Record<string, string> = {}
   for (const step of STEPS) out[`brand-${step}`] = THEMES[theme].brand[step]
   const roles = roleTokens(theme)
-  for (const k of ['primary', 'ring', 'link', 'canvas', 'sidebar', 'sidebar-accent', 'sidebar-accent-foreground']) out[k] = roles[k]
+  for (const k of ['primary', 'ring', 'link', 'canvas', 'sidebar', 'sidebar-accent', 'sidebar-accent-foreground', 'sidebar-hover']) out[k] = roles[k]
   out['data-1'] = THEMES[theme].brand[400]
   STEPS.slice(1).forEach((s, i) => (out[`seq-${i + 1}`] = THEMES[theme].brand[s]))
   return out

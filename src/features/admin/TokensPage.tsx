@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { STATUSES } from '@/lib/status'
+import { formatAmount } from '@/lib/format'
 import { cssOklch, hexToOklch } from '@/design/oklch'
 import {
   AGING_COLORS,
@@ -84,7 +85,7 @@ function ThemePreview({ theme }: { theme: ThemeName }) {
     ['ring', r.ring, '#ffffff', GRAPHIC_MIN],
   ]
   return (
-    <div className="grid min-w-0 gap-3" data-theme-preview={theme}>
+    <div className="grid min-w-0 grid-cols-1 gap-3" data-theme-preview={theme}>
       <div className="text-body font-medium">{t(`appearance.themes.${theme}`)}</div>
       <div className="flex h-36 overflow-hidden rounded-lg border" style={{ background: c.canvas }} aria-hidden>
         <div className="grid w-2/5 content-start gap-2 border-r p-3" style={{ background: c.sidebar, borderColor: r['sidebar-border'] }}>
@@ -116,7 +117,7 @@ function ThemePreview({ theme }: { theme: ThemeName }) {
       <div className="grid grid-cols-10 gap-0.5 overflow-hidden rounded-md">
         {STEPS.map((step) => <span key={step} className="h-4" title={`brand-${step} ${c.brand[step]}`} style={{ background: c.brand[step] }} />)}
       </div>
-      <dl className="grid gap-1 text-caption">
+      <dl className="grid grid-cols-1 gap-1 text-caption">
         {pairs.map(([key, fg, bg, min]) => {
           const v = contrast(fg, bg)
           return (
@@ -125,7 +126,7 @@ function ThemePreview({ theme }: { theme: ThemeName }) {
                 <span className="inline-flex size-5 shrink-0 items-center justify-center rounded-sm border text-caption font-semibold" style={{ background: bg, color: fg }}>A</span>
                 <span className="truncate" title={t(`tokens.pair.${key}`)}>{t(`tokens.pair.${key}`)}</span>
               </dt>
-              <dd className={v >= min ? 'font-medium num' : 'font-medium text-danger-700 num'}>{v.toFixed(2)} : 1</dd>
+              <dd className={v >= min ? 'shrink-0 font-medium num' : 'shrink-0 font-medium text-danger-700 num'}>{v.toFixed(2)} : 1</dd>
             </div>
           )
         })}
@@ -304,7 +305,7 @@ export function TokensPage() {
                 <TableRow key={s}>
                   <TableCell className="font-medium num">SUB-2026-{String(i + 1).padStart(4, '0')}</TableCell>
                   <TableCell><StatusBadge status={s} /></TableCell>
-                  <TableCell className="text-right num">{(125000 * (i + 1)).toLocaleString('en-US')}.00</TableCell>
+                  <TableCell className="text-right num">{formatAmount(125000 * (i + 1))}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

@@ -8,6 +8,8 @@ import { PageHeader } from '@/components/PageHeader'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DecimalInput } from '@/components/ui/decimal-input'
+import { DateInput } from '@/components/ui/date-input'
 import { Textarea } from '@/components/ui/textarea'
 import { NativeSelect } from '@/components/ui/native-select'
 import { Badge } from '@/components/ui/badge'
@@ -15,11 +17,13 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Field } from '@/components/Field'
 import { DataTable, type Column } from '@/components/data/DataTable'
 import { highlight } from '@/components/data/highlight'
+import { NameCell } from '@/components/data/NameCell'
 import { EmptyState } from '@/components/EmptyState'
 import { Amount } from '@/components/Amount'
 import { useAuth } from '@/auth/AuthProvider'
 import { can } from '@/lib/roles'
 import { errorMessage } from '@/lib/errors'
+import { systemText } from '@/lib/systemText'
 import { fitWidth, formatAmount, formatDate, isoDate } from '@/lib/format'
 import { cleanDecimal, isDecimal } from '@/lib/decimal'
 import { useCounterparties, useCurrencies } from '@/hooks/useReference'
@@ -59,13 +63,9 @@ export function ReceiptsPage() {
     {
       id: 'payer',
       header: t('rcp.payer'),
-      className: 'max-w-64 truncate',
-      cell: (r, c) => (
-        <span className="inline-flex min-w-0 items-center gap-2" title={r.payer_name ?? ''}>
-          <span className="truncate">{c.hl(r.payer_name)}</span>
-          {r.payer_type && <Badge>{t(`counterpartyType.${r.payer_type}`)}</Badge>}
-        </span>
-      ),
+      className: 'max-w-64',
+      // the payer's type (MGA / broker) is the grey line under the name
+      cell: (r, c) => <NameCell name={c.hl(r.payer_name)} sub={r.payer_type && t(`counterpartyType.${r.payer_type}`)} title={r.payer_name ?? ''} />,
     },
     { id: 'currency', header: t('fields.currencyShort'), cell: (r) => r.currency },
     { id: 'amount', header: t('rcp.amount'), align: 'right', cell: (r) => formatAmount(r.amount) },
@@ -219,7 +219,7 @@ function NewReceiptDialog({ open, onClose }: { open: boolean; onClose: () => voi
         </DialogHeader>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label={t('rcp.receivedDate')} required>
-            <Input type="date" value={form.received_date} onChange={(e) => setForm({ ...form, received_date: e.target.value })} />
+            <DateInput value={form.received_date} onChange={(v) => setForm({ ...form, received_date: v })} />
           </Field>
           <Field label={t('rcp.payer')} required>
             <NativeSelect value={form.payer_id} onChange={(e) => setForm({ ...form, payer_id: e.target.value })}>
@@ -237,7 +237,7 @@ function NewReceiptDialog({ open, onClose }: { open: boolean; onClose: () => voi
             </NativeSelect>
           </Field>
           <Field label={t('rcp.amountIn', { ccy: form.currency })} required>
-            <Input inputMode="decimal" className="text-right num" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+            <DecimalInput className="text-right num" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
           </Field>
           <Field label={t('rcp.bankReference')}>
             <Input value={form.bank_reference} onChange={(e) => setForm({ ...form, bank_reference: e.target.value })} placeholder="SWIFT MT103 …" />
@@ -349,7 +349,7 @@ function ReceiptPanel({ receipt, onClose }: { receipt: ReceiptRow | null; onClos
               <div><dt className="text-caption text-muted-foreground">{t('rcp.unallocated')}</dt><dd className={left > 0 ? 'font-semibold text-warning-700 num' : 'font-semibold num'}>{formatAmount(left)} {r.currency}</dd></div>
               <div><dt className="text-caption text-muted-foreground">{t('rcp.amountUsd')}</dt><dd className="font-semibold num">{formatAmount(r.amount_usd)}</dd></div>
             </dl>
-            {r.notes && <p className="text-body whitespace-pre-line text-muted-foreground">{r.notes}</p>}
+            {r.notes && <p className="text-body whitespace-pre-line text-muted-foreground">{systemText(r.notes, t)}</p>}
 
             <div className="overflow-x-auto rounded-lg border">
               <table className="w-full text-table">
@@ -442,7 +442,7 @@ async function exportReceiptsXlsx(rows: ReceiptRow[], t: TFunction) {
     money(r.unallocated_amount),
     money(r.amount_usd),
     { type: String, value: r.bank_reference ?? '' },
-    { type: String, value: r.notes ?? '' },
+    { type: String, value: systemText(r.notes, t) },
   ])
   await writeXlsxFile([head, ...body] as never, {
     sheet: t('pages.receipts.title').slice(0, 31),

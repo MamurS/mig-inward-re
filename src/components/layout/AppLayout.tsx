@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { FlaskConical, Menu, X } from 'lucide-react'
@@ -49,7 +49,8 @@ export function AppLayout() {
           }
         >
           <Icon className="size-5 shrink-0" />
-          <span className="min-w-0 flex-1 truncate" title={t(labelKey)}>{t(labelKey)}</span>
+          {/* a long label (any language, either text size) wraps to a second line instead of being cut */}
+          <span className="min-w-0 flex-1 leading-snug break-words">{t(labelKey)}</span>
           {to === '/agenda' && (overdue.data ?? 0) > 0 && (
             <span className="rounded-full bg-danger-600 px-2 py-0.5 text-caption leading-none font-semibold text-white" title={t('agenda.bucket.overdue')}>
               {overdue.data}
@@ -61,18 +62,20 @@ export function AppLayout() {
   )
 
   const brand = (
-    <div className="flex h-16 items-center gap-3 px-5">
+    <div className="flex min-h-16 items-center gap-3 px-5 py-2">
       {/* the brand lives in the logo mark */}
       <div className="flex size-9 shrink-0 items-center justify-center rounded-control bg-navy-800 text-caption font-display-bold text-white">MIG</div>
-      <div className="min-w-0 leading-tight">
-        <div className="truncate text-body font-semibold text-sidebar-foreground">{t('app.name')}</div>
-        <div className="truncate text-caption text-sidebar-muted" title={t('app.tagline')}>{t('app.tagline')}</div>
+      <div className="min-w-0 leading-tight" data-brand>
+        <div className="text-body font-semibold break-words text-sidebar-foreground">{t('app.name')}</div>
+        {/* the subtitle wraps (two lines in Russian) instead of being cut */}
+        <div className="text-caption leading-tight break-words text-sidebar-muted">{t('app.tagline')}</div>
       </div>
     </div>
   )
 
   return (
-    <div className="flex min-h-screen flex-col">
+    // --app-top: the height of what stays pinned at the top (demo banner + header), for sticky panels below it
+    <div className="flex min-h-screen flex-col" style={{ '--app-top': demo.on ? '6.5rem' : '4rem' } as CSSProperties}>
       {/* Demo mode: a banner across the top, always in view, so demo figures are never taken for real ones */}
       {demo.on && (
         <div role="alert" data-demo-banner className="sticky top-0 z-40 flex h-10 shrink-0 items-center justify-center gap-3 bg-warning-600 px-4 text-small text-white">
