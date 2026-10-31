@@ -3,7 +3,7 @@ import { useLocation, useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/auth/AuthProvider'
 import { isoDate } from '@/lib/format'
-import { useCounterparties, useCountries, useCurrencies, useLinesOfBusiness, useLocalName, useUsers, userName } from '@/hooks/useReference'
+import { useCounterparties, useCountries, useCurrencies, useLinesOfBusiness, useLocalName, useLocalShortName, useUsers, userName } from '@/hooks/useReference'
 import { parseQuery, type ParsedQuery, type SearchContext } from './query'
 import { toPostgrestFilter } from './postgrest'
 import { pageSearchFor, type PageSearch } from './pages'
@@ -18,6 +18,7 @@ export function useSearchContext(): SearchContext | null {
   const currencies = useCurrencies()
   const users = useUsers()
   const localName = useLocalName()
+  const localShortName = useLocalShortName()
   const userId = session?.user.id ?? null
   const today = isoDate()
   return useMemo(() => {
@@ -32,8 +33,9 @@ export function useSearchContext(): SearchContext | null {
       users: users.data.map((u) => ({ id: u.id, name: userName(u), role: u.role })),
       t: (key: string) => t(key),
       localName,
+      localShortName,
     }
-    // localName follows the language, as t does
+    // localName / localShortName follow the language, as t does
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cps.data, lobs.data, countries.data, currencies.data, users.data, userId, today, t])
 }

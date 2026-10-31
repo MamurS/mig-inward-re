@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '@/lib/supabase'
 import type { Tables } from '@/lib/database.types'
-import { pickName, type Named } from '@/lib/refName'
+import { pickName, pickShortName, type Named, type ShortNamed } from '@/lib/refName'
 
 const STALE = 5 * 60_000
 
@@ -79,12 +79,20 @@ export function useLocalName() {
   return (row: Named | undefined | null) => pickName(row, lang)
 }
 
+/** The short name of a line of business in the UI language (tables, chips, charts); see pickShortName. */
+export function useLocalShortName() {
+  const { i18n } = useTranslation()
+  const lang = i18n.resolvedLanguage
+  return (row: ShortNamed | undefined | null) => pickShortName(row, lang)
+}
+
 /**
  * Reference names in the UI language, from the cached reference lists: a line
  * of business by id or code, a country or a currency by code. Falls back to
  * the English name (or the given fallback, e.g. a view's `lob_name`) while the
  * lists load or when the RU / UZ name is empty. Views keep their English
- * columns; the screen maps ids and codes here.
+ * columns; the screen maps ids and codes here. `lobShort` / `lobShortByCode`
+ * give the short name (tables, chips, charts; the full name goes in title=).
  */
 export function useRefNames() {
   const lobs = useLinesOfBusiness()
@@ -98,11 +106,15 @@ export function useRefNames() {
     const countryByCode = new Map((countries.data ?? []).map((c) => [c.code, c]))
     const ccyByCode = new Map((currencies.data ?? []).map((c) => [c.code, c]))
     const pick = (row: Named | undefined, fallback?: string | null) => (row ? pickName(row, lang) : fallback || null)
+    const pickShort = (row: ShortNamed | undefined, fallback?: string | null) => (row ? pickShortName(row, lang) : fallback || null)
+    const lobRow = (id: string | null | undefined, code?: string | null) => (id ? lobById.get(id) : undefined) ?? (code ? lobByCode.get(code) : undefined)
     return {
       /** A line of business by id (the code as a second key); `fallback` is the view's English name. */
-      lob: (id: string | null | undefined, fallback?: string | null, code?: string | null) =>
-        pick((id ? lobById.get(id) : undefined) ?? (code ? lobByCode.get(code) : undefined), fallback),
-      lobByCode: (code: string | null | undefined, fallback?: string | null) => pick(code ? lobByCode.get(code) : undefined, fallback),
+      lob: (id: string | null | undefined, fallback?: string | null, code?: string | null) => pick(lobRow(id, code), fallback),
+      lobByCode: (code: string | null | undefined, fallback?: string | null) => pick(lobRow(null, code), fallback),
+      /** The short name of a line of business by id (the code as a second key); `fallback` as for `lob`. */
+      lobShort: (id: string | null | undefined, fallback?: string | null, code?: string | null) => pickShort(lobRow(id, code), fallback),
+      lobShortByCode: (code: string | null | undefined, fallback?: string | null) => pickShort(lobRow(null, code), fallback),
       country: (code: string | null | undefined, fallback?: string | null) => pick(code ? countryByCode.get(code) : undefined, fallback ?? code),
       currency: (code: string | null | undefined) => pick(code ? ccyByCode.get(code) : undefined, code),
     }

@@ -319,7 +319,8 @@ function SetPasswordDialog({ user, onClose }: { user: Tables<'profiles'> | null;
 // ---------------------------------------------------------------------------
 // Reference data: currencies, countries, lines of business
 // ---------------------------------------------------------------------------
-type RefCol = { key: string; label: string; width?: string; upper?: boolean; maxLength?: number }
+/** `optional`: may stay empty when adding a row (the RU / UZ names are always optional). */
+type RefCol = { key: string; label: string; width?: string; upper?: boolean; maxLength?: number; optional?: boolean }
 
 function RefTable({
   table,
@@ -438,7 +439,7 @@ function RefTable({
             onChange={(e) => setDraft({ ...draft, [c.key]: e.target.value })}
           />
         ))}
-        <Button size="sm" variant="outline" onClick={() => void add()} disabled={!cols.every((c) => c.key.startsWith('name_') || draft[c.key]?.trim())}>
+        <Button size="sm" variant="outline" onClick={() => void add()} disabled={!cols.every((c) => c.optional || c.key.startsWith('name_') || draft[c.key]?.trim())}>
           <Plus />
           {t('admin.add')}
         </Button>
@@ -461,9 +462,13 @@ function ReferenceTab() {
         title={t('admin.ref.lob')}
         cols={[
           { key: 'code', label: t('admin.ref.code'), width: 'w-24', upper: true },
-          { key: 'name', label: 'EN', width: 'w-56' },
-          { key: 'name_ru', label: 'RU', width: 'w-56' },
-          { key: 'name_uz', label: 'UZ', width: 'w-56' },
+          { key: 'name', label: 'EN', width: 'w-48' },
+          { key: 'name_ru', label: 'RU', width: 'w-48' },
+          { key: 'name_uz', label: 'UZ', width: 'w-48' },
+          // short names for tables, chips and charts (optional: empty → the English short name, then the full name)
+          { key: 'short_name', label: t('admin.ref.shortEn'), width: 'w-36', optional: true },
+          { key: 'short_name_ru', label: t('admin.ref.shortRu'), width: 'w-36', optional: true },
+          { key: 'short_name_uz', label: t('admin.ref.shortUz'), width: 'w-36', optional: true },
         ]}
       />
       <div className="grid gap-4 xl:grid-cols-2">

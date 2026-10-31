@@ -43,10 +43,11 @@ const partyOptions = (type: string) => (ctx: SearchContext): Option[] => [
   ...ctx.counterparties.filter((c) => c.type === type).map((c) => ({ value: c.id, label: c.name, insert: c.name, names: [c.name] })),
 ]
 
+// lines of business: the short name on chips, the full one in pickers and tooltips
 const lobOptions = (ctx: SearchContext): Option[] =>
   ctx.lobs.map((l) => ({
-    value: l.id, label: ctx.localName?.(l) ?? l.name, insert: l.name,
-    names: [l.name, l.name_ru, l.name_uz].filter((x): x is string => Boolean(x)), codes: [l.code],
+    value: l.id, label: ctx.localShortName?.(l) ?? ctx.localName?.(l) ?? l.name, full: ctx.localName?.(l) ?? l.name, insert: l.name,
+    names: [l.name, l.name_ru, l.name_uz, l.short_name, l.short_name_ru, l.short_name_uz].filter((x): x is string => Boolean(x)), codes: [l.code],
   }))
 
 const countryOptions = (ctx: SearchContext): Option[] =>

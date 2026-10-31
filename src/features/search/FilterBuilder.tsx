@@ -236,7 +236,7 @@ function MultiPick({ options, value, onChange, labelledBy }: { options: Option[]
   const [open, setOpen] = useState(false)
   const [filter, setFilter] = useState('')
   const c = compact(filter)
-  const shown = options.filter((o) => !c || compact(o.label).includes(c) || o.names.some((n) => compact(n).includes(c)))
+  const shown = options.filter((o) => !c || compact(o.label).includes(c) || compact(o.full ?? '').includes(c) || o.names.some((n) => compact(n).includes(c)))
   const selected = options.filter((o) => value.includes(o.value))
   const summary = selected.length === 0 ? t('search.builder.any') : selected.length <= 2 ? selected.map((o) => o.label).join(', ') : t('search.builder.nSelected', { count: selected.length })
   return (
@@ -248,7 +248,7 @@ function MultiPick({ options, value, onChange, labelledBy }: { options: Option[]
           aria-describedby={`${labelledBy}-value`}
           className="flex h-10 w-full min-w-0 items-center justify-between gap-2 rounded-control border border-input bg-background px-3 text-left text-body transition-colors hover:bg-muted/50"
         >
-          <span id={`${labelledBy}-value`} className={cn('truncate', !selected.length && 'text-muted-foreground')} title={selected.map((o) => o.label).join(', ')}>{summary}</span>
+          <span id={`${labelledBy}-value`} className={cn('truncate', !selected.length && 'text-muted-foreground')} title={selected.map((o) => o.full ?? o.label).join(', ')}>{summary}</span>
           <ChevronDown className="size-4 shrink-0 text-muted-foreground" aria-hidden />
         </button>
       </P.Trigger>
@@ -262,7 +262,7 @@ function MultiPick({ options, value, onChange, labelledBy }: { options: Option[]
               return (
                 <label key={o.value} className="flex min-h-9 cursor-pointer items-center gap-2 rounded-md px-2 text-body hover:bg-muted">
                   <input type="checkbox" checked={on} onChange={() => onChange(on ? value.filter((v) => v !== o.value) : [...value, o.value])} className="accent-(--color-primary)" />
-                  <span className="truncate" title={o.label}>{o.label}</span>
+                  <span className="truncate" title={o.full ?? o.label}>{o.full ?? o.label}</span>
                 </label>
               )
             })}

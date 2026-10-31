@@ -46,11 +46,13 @@ export function SearchChips({ query, scope, count, onChange }: { query: ParsedQu
               {g.terms.map((term) => {
                 const label = termLabel(term, t, scope)
                 const asText = term.kind === 'text' && term.asText
+                // a chip with short names (lines of business) shows the full ones in its tooltip
+                const full = term.kind === 'field' && term.titles && term.titles.join() !== term.labels.join() ? termLabel({ ...term, labels: term.titles }, t, scope) : null
                 return (
                   <span
                     key={term.id}
                     data-chip
-                    title={asText ? t('search.asTextHint', { raw: term.raw }) : term.raw}
+                    title={asText ? t('search.asTextHint', { raw: term.raw }) : full ?? term.raw}
                     className={cn(
                       'inline-flex h-8 max-w-full items-center gap-1 rounded-full border pr-1 pl-3 text-small',
                       asText ? 'border-dashed bg-background text-muted-foreground' : term.neg ? 'border-danger-200 bg-danger-50 text-danger-700' : 'border-brand-200 bg-brand-50 text-brand-800',

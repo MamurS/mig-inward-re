@@ -537,6 +537,9 @@
       "currencies": "Valyutalar",
       "countries": "Davlatlar",
       "code": "Kod",
+      "shortEn": "Qisqa EN",
+      "shortRu": "Qisqa RU",
+      "shortUz": "Qisqa UZ",
       "counterpartiesHint": "MGA, brokerlar va tsedentlar \"Kontragentlar\" boʻlimida yuritiladi."
     },
     "fx": {

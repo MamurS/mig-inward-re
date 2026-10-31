@@ -539,6 +539,9 @@
       "currencies": "Валюты",
       "countries": "Страны",
       "code": "Код",
+      "shortEn": "Кратко EN",
+      "shortRu": "Кратко RU",
+      "shortUz": "Кратко UZ",
       "counterpartiesHint": "MGA, брокеры и цеденты ведутся в разделе «Контрагенты»."
     },
     "fx": {

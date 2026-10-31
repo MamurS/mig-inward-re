@@ -225,7 +225,7 @@ export function SearchBar() {
           .filter((o) => !c || compact(o.label).includes(c) || o.names.some((n) => compact(n).startsWith(c)) || (tok.field && (o.codes ?? []).some((n) => compact(n).startsWith(c))))
           .slice(0, tok.field ? MAX_VALUES : 4)
         const icon = key === 'mga' || key === 'broker' ? <Building2 /> : undefined
-        for (const o of hits) values.push(fieldItem(key, o.insert, o.label, t(f.labelKey), icon))
+        for (const o of hits) values.push(fieldItem(key, o.insert, o.full ?? o.label, t(f.labelKey), icon))
       }
       out.push(...values.slice(0, MAX_VALUES))
     }

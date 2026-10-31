@@ -13,6 +13,7 @@ import { NameCell } from '@/components/data/NameCell'
 import { EmptyState } from '@/components/EmptyState'
 import { Amount } from '@/components/Amount'
 import { useAuth } from '@/auth/AuthProvider'
+import { useRefNames } from '@/hooks/useReference'
 import { can } from '@/lib/roles'
 import { errorMessage } from '@/lib/errors'
 import { fitWidth, formatAmount, formatDate, isoDate } from '@/lib/format'
@@ -31,6 +32,7 @@ import { NewClaimDialog } from './NewClaimDialog'
  */
 export function ClaimsPage() {
   const { t } = useTranslation()
+  const names = useRefNames()
   const { role } = useAuth()
   const navigate = useNavigate()
   const { q, parsed, filter, setQ } = useListSearch(CLAIMS_PAGE)
@@ -73,7 +75,7 @@ export function ClaimsPage() {
       ),
     },
     { id: 'mga', header: t('fields.mga'), className: 'max-w-48 truncate', defaultHidden: true, cell: (r, c) => c.hl(r.mga_name) },
-    { id: 'lob', header: t('fields.lob'), defaultHidden: true, cell: (r) => r.lob_code ?? '—' },
+    { id: 'lob', header: t('fields.lob'), defaultHidden: true, cell: (r) => (r.lob_code ? <span title={names.lob(r.lob_id, r.lob_name, r.lob_code) ?? ''}>{names.lobShort(r.lob_id, r.lob_name, r.lob_code)}</span> : '—') },
     { id: 'dol', header: t('claim.dateOfLoss'), cell: (r) => formatDate(r.date_of_loss) },
     { id: 'status', header: t('fields.status'), cell: (r) => <ClaimStatusBadge status={r.status} /> },
     { id: 'currency', header: t('fields.currencyShort'), cell: (r) => r.currency },

@@ -12,6 +12,7 @@ import { DataTable, type Column } from '@/components/data/DataTable'
 import { highlight } from '@/components/data/highlight'
 import { EmptyState } from '@/components/EmptyState'
 import { useAuth } from '@/auth/AuthProvider'
+import { useRefNames } from '@/hooks/useReference'
 import { can } from '@/lib/roles'
 import { errorMessage } from '@/lib/errors'
 import { fitWidth, formatAmount, formatDate, formatPct, isoDate } from '@/lib/format'
@@ -26,6 +27,7 @@ import { BinderDialog } from './BinderDialog'
 /** Binders register: every MGA authority, its terms, capacity used and bordereaux still owed. */
 export function BindersPage() {
   const { t } = useTranslation()
+  const names = useRefNames()
   const { role } = useAuth()
   const navigate = useNavigate()
   const { q, parsed, filter, setQ } = useListSearch(BINDERS_PAGE)
@@ -50,7 +52,8 @@ export function BindersPage() {
     },
     { id: 'status', header: t('fields.status'), cell: (r) => <BinderStatusBadge status={r.status} /> },
     { id: 'period', header: t('binder.period'), cell: (r) => <span className="whitespace-nowrap">{formatDate(r.period_from)} – {formatDate(r.period_to)}</span> },
-    { id: 'lobs', header: t('binder.lobs'), cell: (r) => r.lob_codes ?? '—' },
+    // the codes (shortest of all); the names in the UI language in the tooltip
+    { id: 'lobs', header: t('binder.lobs'), cell: (r) => (r.lob_codes ? <span title={r.lob_codes.split(', ').map((c) => names.lobByCode(c, c)).join('\n')}>{r.lob_codes}</span> : '—') },
     { id: 'share', header: t('binder.ourShare'), align: 'right', cell: (r) => formatPct(r.our_share_pct) },
     { id: 'currency', header: t('fields.currencyShort'), cell: (r) => r.currency },
     { id: 'aggregate', header: t('binder.aggregateLimit'), align: 'right', cell: (r) => (r.aggregate_limit === null ? '—' : formatAmount(r.aggregate_limit)) },

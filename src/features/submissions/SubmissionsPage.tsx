@@ -76,10 +76,19 @@ export function SubmissionsPage() {
       id: 'insured_name',
       header: t('fields.insuredName'),
       sortKey: 'insured_name',
-      className: 'max-w-40 min-[1440px]:max-w-64',
+      className: 'max-w-32 min-[1440px]:max-w-64', // 128 px at 1280: room for the line of business beside it
       cell: (r, c) => <NameCell name={c.hl(r.insured_name)} sub={r.mga_name && c.hl(r.mga_name)} title={[r.insured_name, r.mga_name].filter(Boolean).join('\n')} />,
     },
-    { id: 'lob_name', header: t('fields.lobShort'), sortKey: 'lob_name', className: 'max-w-24 truncate min-[1440px]:max-w-32', cell: (r) => { const lob = names.lob(r.lob_id, r.lob_name); return <span title={lob ?? ''}>{lob ?? '—'}</span> } },
+    // the short name of the line (the full one in the tooltip); a long one («Кредит и поручительство»)
+    // takes a second line, as the insured does, rather than an ellipsis
+    {
+      id: 'lob_name',
+      header: t('fields.lobShort'),
+      sortKey: 'lob_name',
+      // large text: a little wider; a name longer than the column still breaks rather than being cut
+      className: 'max-w-32 pr-2 min-[1440px]:max-w-40 [[data-text-size=large]_&]:max-w-40 min-[1440px]:[[data-text-size=large]_&]:max-w-48',
+      cell: (r) => <span data-lob-cell className="line-clamp-2 leading-tight break-words whitespace-normal" title={names.lob(r.lob_id, r.lob_name) ?? ''}>{names.lobShort(r.lob_id, r.lob_name) ?? '—'}</span>,
+    },
     {
       id: 'status',
       header: t('fields.status'),

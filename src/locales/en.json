@@ -537,6 +537,9 @@
       "currencies": "Currencies",
       "countries": "Countries",
       "code": "Code",
+      "shortEn": "Short EN",
+      "shortRu": "Short RU",
+      "shortUz": "Short UZ",
       "counterpartiesHint": "MGAs, brokers and cedents are managed on the Counterparties page."
     },
     "fx": {
