@@ -413,7 +413,8 @@ function SubmissionForm({ existing, binderId }: { existing: SubmissionRow | null
                   {sources.map((c) => <option key={c.id} value={c.id}>{c.name} · {t(`counterpartyType.${c.type}`)}</option>)}
                 </NativeSelect>
               </Field>
-              <Field label={t('fields.businessType')} htmlFor="business_type">
+              {/* two columns: «Факультатив / Биндер» stays on one line at 1280 px, large text too */}
+              <Field label={t('fields.businessType')} htmlFor="business_type" className="sm:col-span-2">
                 <Controller
                   control={control}
                   name="business_type"

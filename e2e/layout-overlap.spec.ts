@@ -128,3 +128,21 @@ test('the overlap check catches a ref drawn into the name (the old fixed-width b
   const { hits } = await overlaps(page)
   expect(hits.length).toBeGreaterThan(0)
 })
+
+for (const lang of ['en', 'ru', 'uz'] as const) {
+  for (const textSize of ['normal', 'large'] as const) {
+    test(`«Facultative / Binder» stays on one line at 1280 px · ${lang} · ${textSize}`, async ({ browser }) => {
+      const context = await browser.newContext({ viewport: { width: 1280, height: 800 } })
+      await installMock(context, 'underwriter', lang, { textSize })
+      const page = await context.newPage()
+      await page.goto('/submissions/new')
+      const toggle = page.locator('#business_type')
+      await toggle.waitFor()
+      await page.evaluate(() => document.fonts.ready)
+      const tops = await toggle.getByRole('radio').evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().top)))
+      expect(tops).toHaveLength(2)
+      expect(new Set(tops).size).toBe(1)
+      await context.close()
+    })
+  }
+}
