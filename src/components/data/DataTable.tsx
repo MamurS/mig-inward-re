@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ArrowDown, ArrowUp, ChevronsUpDown, Columns3, RotateCcw, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -104,6 +104,22 @@ export function DataTable<T>({
   const divider = 'group-data-[scrolled-x=true]/scroll:shadow-[inset_-1px_0_0_var(--color-border)]'
   const frozen = `sticky left-0 z-[1] bg-card ${divider} group-hover/row:bg-slate-50 group-data-[selected=true]/row:bg-brand-50`
   const [scrolledX, setScrolledX] = useState(false)
+  // more columns to the right than the card shows: a soft edge says the table scrolls (nothing is cut off silently)
+  const [moreX, setMoreX] = useState(false)
+  const scrollBox = useRef<HTMLDivElement>(null)
+  const measureX = useCallback(() => {
+    const el = scrollBox.current
+    if (el) setMoreX(el.scrollLeft + el.clientWidth < el.scrollWidth - 1)
+  }, [])
+  useEffect(() => {
+    const el = scrollBox.current
+    if (!el) return
+    measureX()
+    const ro = new ResizeObserver(measureX)
+    ro.observe(el)
+    if (el.firstElementChild) ro.observe(el.firstElementChild)
+    return () => ro.disconnect()
+  }, [measureX, rows, hidden, loading])
   const headCell = 'sticky top-0 z-[2] h-11 border-b bg-card px-3 text-left align-middle text-small leading-tight font-medium text-muted-foreground'
 
   return (
@@ -142,118 +158,124 @@ export function DataTable<T>({
         </div>
       </div>
 
-      <div
-        className={cn('group/scroll relative overflow-auto outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50', maxHeight)}
-        tabIndex={0}
-        data-scrolled-x={scrolledX}
-        onScroll={(e) => {
-          const x = e.currentTarget.scrollLeft > 0
-          if (x !== scrolledX) setScrolledX(x)
-        }}
-      >
-        <table className="w-full caption-bottom border-separate border-spacing-0 text-table">
-          <thead>
-            <tr>
-              {visible.map((c, i) => {
-                const sorted = sort && c.sortKey && sort.key === c.sortKey
-                const label = c.sortKey && onSort ? (
-                  <button
-                    type="button"
-                    onClick={() => onSort(c.sortKey!)}
-                    className={cn('inline-flex items-center gap-1 rounded-sm hover:text-foreground', c.align === 'right' && 'flex-row-reverse')}
-                  >
-                    {c.header}
-                    {sorted ? (sort.dir === 'asc' ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />) : <ChevronsUpDown className="size-3 opacity-40" />}
-                  </button>
-                ) : (
-                  c.header
-                )
-                return (
-                  <th
-                    key={c.id}
-                    className={cn(headCell, c.align === 'right' && 'text-right', i === 0 && cn('left-0 z-[3]', divider))}
-                    aria-sort={sorted ? (sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}
-                  >
-                    {i === 0 && selectable ? (
-                      <span className="inline-flex items-center gap-3">
-                        <input
-                          type="checkbox"
-                          aria-label={t('ui.selectAll')}
-                          className="size-4 accent-brand-600"
-                          checked={allOn}
-                          ref={(el) => {
-                            if (el) el.indeterminate = selectedRows.length > 0 && !allOn
-                          }}
-                          onChange={() => setSelected(allOn ? new Set() : new Set(rowIds))}
-                        />
-                        {label}
-                      </span>
-                    ) : (
-                      label
-                    )}
-                  </th>
-                )
-              })}
-              {/* row actions take no width: they float over the row's end on hover / focus */}
-              {rowActions && <th className={cn(headCell, 'right-0 z-[3] w-0 p-0')}><span className="sr-only">{t('ui.actions')}</span></th>}
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <SkeletonRows rows={8} cols={visible.length + (rowActions ? 1 : 0)} rowClassName={ROW_H} />
-            ) : rows.length === 0 ? (
+      <div className="relative">
+        <div
+          ref={scrollBox}
+          className={cn('group/scroll relative overflow-auto outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50', maxHeight)}
+          tabIndex={0}
+          data-scrolled-x={scrolledX}
+          data-table-scroll
+          onScroll={(e) => {
+            const x = e.currentTarget.scrollLeft > 0
+            if (x !== scrolledX) setScrolledX(x)
+            measureX()
+          }}
+        >
+          <table className="w-full caption-bottom border-separate border-spacing-0 text-table">
+            <thead>
               <tr>
-                <td colSpan={visible.length + (rowActions ? 1 : 0)}>{empty}</td>
+                {visible.map((c, i) => {
+                  const sorted = sort && c.sortKey && sort.key === c.sortKey
+                  const label = c.sortKey && onSort ? (
+                    <button
+                      type="button"
+                      onClick={() => onSort(c.sortKey!)}
+                      className={cn('inline-flex items-center gap-1 rounded-sm hover:text-foreground', c.align === 'right' && 'flex-row-reverse')}
+                    >
+                      {c.header}
+                      {sorted ? (sort.dir === 'asc' ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />) : <ChevronsUpDown className="size-3 opacity-40" />}
+                    </button>
+                  ) : (
+                    c.header
+                  )
+                  return (
+                    <th
+                      key={c.id}
+                      className={cn(headCell, c.align === 'right' && 'text-right', i === 0 && cn('left-0 z-[3]', divider))}
+                      aria-sort={sorted ? (sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}
+                    >
+                      {i === 0 && selectable ? (
+                        <span className="inline-flex items-center gap-3">
+                          <input
+                            type="checkbox"
+                            aria-label={t('ui.selectAll')}
+                            className="size-4 accent-brand-600"
+                            checked={allOn}
+                            ref={(el) => {
+                              if (el) el.indeterminate = selectedRows.length > 0 && !allOn
+                            }}
+                            onChange={() => setSelected(allOn ? new Set() : new Set(rowIds))}
+                          />
+                          {label}
+                        </span>
+                      ) : (
+                        label
+                      )}
+                    </th>
+                  )
+                })}
+                {/* row actions take no width: they float over the row's end on hover / focus */}
+                {rowActions && <th className={cn(headCell, 'right-0 z-[3] w-0 p-0')}><span className="sr-only">{t('ui.actions')}</span></th>}
               </tr>
-            ) : (
-              rows.map((r) => {
-                const rid = getRowId(r)
-                const on = selected.has(rid)
-                return (
-                  <tr
-                    key={rid}
-                    data-selected={on}
-                    className={cn('group/row transition-colors hover:bg-slate-50 data-[selected=true]:bg-brand-50', ROW_H, onRowClick && 'cursor-pointer')}
-                    onClick={onRowClick ? () => onRowClick(r) : undefined}
-                  >
-                    {visible.map((c, i) => (
-                      <td
-                        key={c.id}
-                        className={cn('border-b px-3 align-middle whitespace-nowrap', c.align === 'right' && 'text-right num', i === 0 && frozen, c.className)}
-                      >
-                        {i === 0 && selectable ? (
-                          <span className="inline-flex items-center gap-3">
-                            <input
-                              type="checkbox"
-                              aria-label={t('ui.selectRow')}
-                              className="size-4 accent-brand-600"
-                              checked={on}
-                              onClick={(e) => e.stopPropagation()}
-                              onChange={() => toggle(rid)}
-                            />
-                            {c.cell(r, ctx)}
-                          </span>
-                        ) : (
-                          c.cell(r, ctx)
-                        )}
-                      </td>
-                    ))}
-                    {rowActions && (
-                      <td
-                        className="sticky right-0 w-0 border-b bg-transparent p-0 align-middle whitespace-nowrap"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <div className="absolute top-1/2 right-2 flex -translate-y-1/2 items-center justify-end gap-1 rounded-md bg-card opacity-0 shadow-card transition-opacity group-hover/row:opacity-100 focus-within:opacity-100 group-data-[selected=true]/row:opacity-100">
-                          {rowActions(r)}
-                        </div>
-                      </td>
-                    )}
-                  </tr>
-                )
-              })
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {loading ? (
+                <SkeletonRows rows={8} cols={visible.length + (rowActions ? 1 : 0)} rowClassName={ROW_H} />
+              ) : rows.length === 0 ? (
+                <tr>
+                  <td colSpan={visible.length + (rowActions ? 1 : 0)}>{empty}</td>
+                </tr>
+              ) : (
+                rows.map((r) => {
+                  const rid = getRowId(r)
+                  const on = selected.has(rid)
+                  return (
+                    <tr
+                      key={rid}
+                      data-selected={on}
+                      className={cn('group/row transition-colors hover:bg-slate-50 data-[selected=true]:bg-brand-50', ROW_H, onRowClick && 'cursor-pointer')}
+                      onClick={onRowClick ? () => onRowClick(r) : undefined}
+                    >
+                      {visible.map((c, i) => (
+                        <td
+                          key={c.id}
+                          className={cn('border-b px-3 align-middle whitespace-nowrap', c.align === 'right' && 'text-right num', i === 0 && frozen, c.className)}
+                        >
+                          {i === 0 && selectable ? (
+                            <span className="inline-flex items-center gap-3">
+                              <input
+                                type="checkbox"
+                                aria-label={t('ui.selectRow')}
+                                className="size-4 accent-brand-600"
+                                checked={on}
+                                onClick={(e) => e.stopPropagation()}
+                                onChange={() => toggle(rid)}
+                              />
+                              {c.cell(r, ctx)}
+                            </span>
+                          ) : (
+                            c.cell(r, ctx)
+                          )}
+                        </td>
+                      ))}
+                      {rowActions && (
+                        <td
+                          className="sticky right-0 w-0 border-b bg-transparent p-0 align-middle whitespace-nowrap"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="absolute top-1/2 right-2 flex -translate-y-1/2 items-center justify-end gap-1 rounded-md bg-card opacity-0 shadow-card transition-opacity group-hover/row:opacity-100 focus-within:opacity-100 group-data-[selected=true]/row:opacity-100">
+                            {rowActions(r)}
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  )
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+        {moreX && <div aria-hidden className="pointer-events-none absolute inset-y-0 right-0 z-[4] w-6 bg-linear-to-l from-slate-900/10 to-transparent" data-more-x />}
       </div>
       {footer}
 

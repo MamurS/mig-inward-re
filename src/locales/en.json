@@ -697,6 +697,7 @@
       "evening": "Good evening, {{name}}"
     },
     "daysWaiting": "{{count}} d waiting",
+    "daysCount": "{{count}} d",
     "editDetails": "Edit details",
     "thisYear": "this year",
     "openOffers": "Open offers: {{count}}",

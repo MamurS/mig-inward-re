@@ -703,6 +703,7 @@
       "evening": "Добрый вечер, {{name}}"
     },
     "daysWaiting": "ждёт {{count}} дн.",
+    "daysCount": "{{count}} дн.",
     "editDetails": "Изменить данные",
     "thisYear": "в этом году",
     "openOffers": "Открытых предложений: {{count}}",

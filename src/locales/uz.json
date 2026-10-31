@@ -697,6 +697,7 @@
       "evening": "Xayrli kech, {{name}}"
     },
     "daysWaiting": "{{count}} kun kutmoqda",
+    "daysCount": "{{count}} kun",
     "editDetails": "Maʼlumotlarni tahrirlash",
     "thisYear": "bu yil",
     "openOffers": "Ochiq takliflar: {{count}}",

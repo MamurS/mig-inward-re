@@ -69,7 +69,7 @@ export function ReceivablesPage() {
     {
       id: 'insured',
       header: t('fields.insuredName'),
-      className: 'max-w-64',
+      className: 'max-w-48 min-[1440px]:max-w-56',
       cell: (r, c) => <NameCell name={c.hl(r.insured_name)} sub={r.mga_name && c.hl(r.mga_name)} title={[r.insured_name, r.mga_name].filter(Boolean).join('\n')} />,
     },
     { id: 'mga', header: t('fields.mga'), className: 'max-w-48 truncate', defaultHidden: true, cell: (r, c) => c.hl(r.mga_name) },
@@ -78,11 +78,13 @@ export function ReceivablesPage() {
     {
       id: 'overdue',
       header: t('rcv.daysOverdue'),
-      cell: (r) => ((r.days_overdue ?? 0) > 0 ? <AgingBadge days={r.days_overdue!} /> : <span className="text-muted-foreground">—</span>),
+      // the header says «days overdue»: the badge carries the number only (the column stays narrow)
+      cell: (r) => ((r.days_overdue ?? 0) > 0 ? <AgingBadge days={r.days_overdue!} label={t('ui.daysCount', { count: r.days_overdue! })} /> : <span className="text-muted-foreground">—</span>),
     },
     { id: 'currency', header: t('fields.currencyShort'), cell: (r) => r.currency },
     { id: 'net', header: t('prem.net'), align: 'right', cell: (r) => formatAmount(r.net_amount) },
-    { id: 'paid', header: t('prem.paid'), align: 'right', defaultHidden: payableView, cell: (r) => formatAmount(r.paid_amount) },
+    // net − outstanding: in «Columns», so the default set fits a 1440 px screen
+    { id: 'paid', header: t('prem.paid'), align: 'right', defaultHidden: true, cell: (r) => formatAmount(r.paid_amount) },
     payableView
       ? { id: 'payable', header: t('prem.payableToMga'), align: 'right', cell: (r) => <Badge tone="info" className="num">{formatAmount(r.payable_amount)}</Badge> }
       : { id: 'outstanding', header: t('rcv.outstanding'), align: 'right', cell: (r) => <span className="font-medium">{formatAmount(r.outstanding_amount)}</span> },
@@ -173,7 +175,7 @@ export function ReceivablesPage() {
 
       <Card className="gap-0 py-0">
         <DataTable
-          id={payableView ? 'payables.v2' : 'receivables.v2'}
+          id={payableView ? 'payables.v2' : 'receivables.v3'}
           columns={columns}
           rows={rows}
           getRowId={(r) => r.id!}
