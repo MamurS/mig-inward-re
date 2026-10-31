@@ -157,11 +157,12 @@ export function insertClaim(db: Record<string, Row[]>, body: Row, userId: string
   return { row }
 }
 
-/** Large loss: our share (estimate or reserves) in USD ≥ 250k → mark and tell management + admin. */
+/** Large loss: our share (estimate or reserves) in USD ≥ the setting (250k) → mark and tell management + admin. */
 export function checkLargeLoss(db: Record<string, Row[]>, c: Row) {
   if (c.large_loss || c.currency !== 'USD') return
   const share = Math.max(n(c.estimate_100) * n(c.signed_share_pct) / 100, (db.claim_reserves ?? []).filter((r) => r.claim_id === c.id).reduce((s, r) => s + n(r.amount), 0))
-  if (share < LARGE_LOSS_USD) return
+  const limit = Number((db.settings ?? []).find((s) => s.key === 'large_loss_threshold_usd')?.value ?? LARGE_LOSS_USD)
+  if (share < limit) return
   c.large_loss = true
   c.large_loss_at = new Date().toISOString()
   for (const role of ['management', 'admin']) {

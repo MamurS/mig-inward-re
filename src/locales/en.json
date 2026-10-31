@@ -1313,6 +1313,8 @@
     "writtenUsd": "Written, USD",
     "earnedUsd": "Earned, USD",
     "noLarge": "No large losses",
+    "largeLossBasis": "Large loss: our share of the estimate (or of the reserves, if higher) ≥ {{threshold}} USD. This claim: {{amount}} USD.",
+    "largeLossSub": "incurred {{incurred}} · outstanding {{outstanding}}",
     "noCashCalls": "No cash calls due",
     "incurredCcy": "Incurred, {{ccy}}"
   },

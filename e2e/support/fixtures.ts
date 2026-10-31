@@ -247,6 +247,8 @@ const settings: Row[] = [
   { key: 'auto_no_response_days', value: 30, description: null, updated_at: iso(DAY), updated_by: null },
   { key: 'premium_grace_days', value: 0, description: null, updated_at: iso(DAY), updated_by: null },
   { key: 'premium_default_terms_days', value: 60, description: null, updated_at: iso(DAY), updated_by: null },
+  // the claims migration's default (20261030095433_claims.sql): our share USD at or above it marks a large loss
+  { key: 'large_loss_threshold_usd', value: 250000, description: null, updated_at: iso(DAY), updated_by: null },
   // AI-assisted entry: switched on in the mock (off by default in the real project — Admin › AI)
   { key: 'ai_enabled', value: true, description: null, updated_at: iso(DAY), updated_by: null },
   { key: 'ai_roles', value: ['admin', 'underwriter', 'finance', 'claims'], description: null, updated_at: iso(DAY), updated_by: null },

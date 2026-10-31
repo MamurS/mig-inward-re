@@ -1313,6 +1313,8 @@
     "writtenUsd": "Yozilgan, USD",
     "earnedUsd": "Ishlangan, USD",
     "noLarge": "Yirik zararlar yoʻq",
+    "largeLossBasis": "Yirik zarar: bahodagi ulushimiz (yoki zaxiralardagi, agar koʻproq boʻlsa) ≥ {{threshold}} USD. Ushbu zarar boʻyicha: {{amount}} USD.",
+    "largeLossSub": "koʻrilgan {{incurred}} · qoldiq {{outstanding}}",
     "noCashCalls": "Toʻlanadigan keshkollar yoʻq",
     "incurredCcy": "Koʻrilgan, {{ccy}}"
   },
