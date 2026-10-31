@@ -237,7 +237,7 @@ export function SubmissionsPage() {
                 {rows.length > 0 && (
                   <span className="ml-auto inline-flex flex-wrap items-center gap-x-3 gap-y-1" data-register-totals>
                     <span data-total-bound>
-                      {t('sub.totalOurGrossUsd')}: <Amount value={totals.boundUsd} human className="font-semibold text-foreground" />
+                      {t('sub.totalBoundUsd')}: <Amount value={totals.boundUsd} human className="font-semibold text-foreground" />
                     </span>
                     <span data-total-pending>
                       {t('sub.totalPending')}: <Amount value={totals.pendingUsd} human className="text-foreground" />
