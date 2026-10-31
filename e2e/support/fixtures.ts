@@ -35,7 +35,7 @@ const profiles: Row[] = Object.values(USERS).map((u) => ({
 }))
 const UW = USERS.underwriter.id
 
-// the 13 currencies of the reference seed, with their RU / UZ names (20261031090000_currency_names.sql)
+// the 13 currencies of the reference seed, with their RU / UZ names (20261031061935_currency_names.sql)
 const currencies: Row[] = [
   ['USD', 'US Dollar', 'Доллар США', 'AQSH dollari', 1], ['EUR', 'Euro', 'Евро', 'Yevro', 2],
   ['GBP', 'Pound Sterling', 'Фунт стерлингов', 'Funt sterling', 3], ['UZS', 'Uzbek Sum', 'Узбекский сум', 'Oʻzbek soʻmi', 4],
