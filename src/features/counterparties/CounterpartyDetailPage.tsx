@@ -31,6 +31,7 @@ import type { Enums, Json } from '@/lib/database.types'
 import { useCountries, useLocalName } from '@/hooks/useReference'
 import { SavedCheck, useFlash } from '@/components/SavedCheck'
 import { LIST_COLUMNS, type SubmissionRow } from '@/features/submissions/api'
+import { isBound, isPending } from '@/features/submissions/totals'
 import { CounterpartyPremium } from '@/features/premium/CounterpartyPremium'
 import { CounterpartyClaims } from '@/features/claims/CounterpartyClaims'
 
@@ -100,9 +101,9 @@ export function CounterpartyDetailPage() {
     const rows = subs.data ?? []
     const year = String(new Date().getFullYear())
     const offered = rows.filter((r) => r.offered_at)
-    const bound = rows.filter((r) => r.status === 'bound')
+    const bound = rows.filter((r) => isBound(r.status))
     const boundYear = bound.filter((r) => r.bound_at?.startsWith(year))
-    const openOffers = rows.filter((r) => r.status === 'offered' || r.status === 'no_response')
+    const openOffers = rows.filter((r) => isPending(r.status))
     const avg = (xs: (number | null)[]) => {
       const v = xs.filter((x): x is number => x !== null)
       return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null

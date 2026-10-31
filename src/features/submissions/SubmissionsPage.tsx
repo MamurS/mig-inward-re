@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { Eye, FileSpreadsheet, FilterX, Loader2, Pencil, Plus, AlertTriangle, Clock } from 'lucide-react'
+import { Eye, FileSpreadsheet, FilterX, Info, Loader2, Pencil, Plus, AlertTriangle, Clock } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/PageHeader'
 import { Button } from '@/components/ui/button'
@@ -12,6 +12,7 @@ import { NameCell } from '@/components/data/NameCell'
 import { EmptyState } from '@/components/EmptyState'
 import { Amount } from '@/components/Amount'
 import { StatusBadge } from '@/components/StatusBadge'
+import { Tooltip } from '@/components/ui/tooltip'
 import { useAuth } from '@/auth/AuthProvider'
 import { can } from '@/lib/roles'
 import { formatAmount, formatDate, formatPct } from '@/lib/format'
@@ -26,6 +27,7 @@ import { FOCUS_SEARCH } from '@/features/search/SearchBar'
 import { MAX_ROWS, useSubmissionsList, type RegisterQuery, type SubmissionRow } from './api'
 import { ExportButton, exportSubmissionsXlsx } from './ExportButton'
 import { SubmissionQuickView } from './SubmissionQuickView'
+import { registerTotals } from './totals'
 
 export function SubmissionsPage() {
   const { t } = useTranslation()
@@ -50,7 +52,8 @@ export function SubmissionsPage() {
   const words = useMemo(() => (parsed ? textWords(parsed) : []), [parsed])
 
   const rows = data?.rows ?? []
-  const totalUsd = rows.reduce((s, r) => s + (r.our_gross_premium_usd ?? 0), 0)
+  // bound business only; offered / no response apart as «pending»; the rest nowhere
+  const totals = registerTotals(rows)
   const searching = state.q.trim().length > 0
 
   const [peek, setPeek] = useState<SubmissionRow | null>(null)
@@ -230,8 +233,18 @@ export function SubmissionsPage() {
             toolbar={
               <>
                 {rows.length > 0 && (
-                  <span className="ml-auto">
-                    {t('sub.totalOurGrossUsd')}: <Amount value={totalUsd} human className="font-semibold text-foreground" />
+                  <span className="ml-auto inline-flex flex-wrap items-center gap-x-3 gap-y-1" data-register-totals>
+                    <span data-total-bound>
+                      {t('sub.totalOurGrossUsd')}: <Amount value={totals.boundUsd} human className="font-semibold text-foreground" />
+                    </span>
+                    <span data-total-pending>
+                      {t('sub.totalPending')}: <Amount value={totals.pendingUsd} human className="text-foreground" />
+                    </span>
+                    <Tooltip content={t('sub.totalsHint')}>
+                      <button type="button" className="inline-flex size-6 items-center justify-center rounded-md text-muted-foreground hover:bg-slate-100" aria-label={t('sub.totalsHint')}>
+                        <Info className="size-4" aria-hidden />
+                      </button>
+                    </Tooltip>
                   </span>
                 )}
               </>

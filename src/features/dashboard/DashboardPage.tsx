@@ -19,6 +19,7 @@ import { chartFontSize } from '@/lib/appearance'
 import { formatAmount, formatDate, formatHuman, formatLongDate, formatMonthShort, formatNumber, isoDate } from '@/lib/format'
 import { errorMessage } from '@/lib/errors'
 import { STATUS_MARK, type SubmissionStatus } from '@/lib/status'
+import { isBound, isPending } from '@/features/submissions/totals'
 import { AgeingBreakdown } from '@/components/AgeingBar'
 import { MostOverduePremium, PremiumDashboard } from '@/features/premium/PremiumDashboard'
 import { CashCallsDue, ClaimsDashboard, LargeLosses } from '@/features/claims/ClaimsDashboard'
@@ -101,11 +102,11 @@ export function DashboardPage() {
     const receivedThisMonth = rows.filter((r) => r.received_at >= monthStart).length
     const underReview = rows.filter((r) => r.status === 'under_review').length
     const notReviewed = rows.filter((r) => r.status === 'received').length
-    const awaiting = rows.filter((r) => r.status === 'offered' || r.status === 'no_response')
+    const awaiting = rows.filter((r) => isPending(r.status))
     // longest overdue first
     const overdueFollowUps = rows.filter((r) => r.follow_up_overdue).sort((a, b) => (a.next_follow_up_at ?? '').localeCompare(b.next_follow_up_at ?? ''))
     const overdue = overdueFollowUps.length
-    const boundYtd = rows.filter((r) => r.status === 'bound' && r.bound_at && r.bound_at >= yearStart)
+    const boundYtd = rows.filter((r) => isBound(r.status) && r.bound_at && r.bound_at >= yearStart)
     const boundYtdUsd = boundYtd.reduce((s, r) => s + (r.our_gross_premium_usd ?? 0), 0)
 
     // KPI trends: the same stretch of the previous month / year, and the last 12 months
@@ -125,7 +126,8 @@ export function DashboardPage() {
     const received = rows.filter((r) => inYear(r.received_at))
     const reviewed = received.filter((r) => r.status !== 'received')
     const offered = rows.filter((r) => inYear(r.offered_at))
-    const bound = rows.filter((r) => r.status === 'bound' && inYear(r.bound_at))
+    // premium totals and rankings: bound business only (docs/totals-audit.md)
+    const bound = rows.filter((r) => isBound(r.status) && inYear(r.bound_at))
     const boundFromOffered = offered.filter((r) => r.status === 'bound')
     const hitRatio = offered.length ? boundFromOffered.length / offered.length : null
     const decided = offered.filter((r) => ['bound', 'ntu', 'no_response'].includes(r.status))
@@ -385,7 +387,7 @@ export function DashboardPage() {
           <Card>
             <CardHeader><CardTitle>{t('dash.awaitingByAge')}</CardTitle></CardHeader>
             <CardContent>
-              <AgeBuckets rows={(data ?? []).filter((r) => r.status === 'offered' || r.status === 'no_response')} />
+              <AgeBuckets rows={(data ?? []).filter((r) => isPending(r.status))} />
             </CardContent>
           </Card>
         </div>

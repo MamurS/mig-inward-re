@@ -270,6 +270,8 @@
     "offerExpired": "Taklif muddati oʻtgan",
     "offerExpiredOn": "Taklif muddati {{date}} da tugagan",
     "totalOurGrossUsd": "Jami bizning yalpi (USD)",
+    "totalPending": "kutilmoqda",
+    "totalsHint": "Jami — faqat tasdiqlanganlar. «Kutilmoqda» — taklif va javob yoʻq, alohida. Qabul qilingan, koʻrib chiqilayotgan, rad etilgan va NTU hech qaysi summaga kirmaydi.",
     "exportExcel": "Excel’ga eksport",
     "exported": "Eksport qilingan qatorlar: {{count}}",
     "saved": "Ariza saqlandi",

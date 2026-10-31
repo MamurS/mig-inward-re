@@ -270,6 +270,8 @@
     "offerExpired": "Offer validity has passed",
     "offerExpiredOn": "Offer expired on {{date}}",
     "totalOurGrossUsd": "Total our gross (USD)",
+    "totalPending": "pending",
+    "totalsHint": "Total: bound business only. Pending: offered and no response, shown apart. Received, under review, declined and NTU are counted in neither.",
     "exportExcel": "Export to Excel",
     "exported": "Exported {{count}} rows",
     "saved": "Submission saved",
