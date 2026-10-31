@@ -477,6 +477,8 @@
     "days": "{{range}} kun",
     "ageNote": "Taklif berilganidan beri kunlar; summalar — bizning yalpi (USD).",
     "oldestOffers": "Javobsiz eng eski takliflar",
+    "all": "Barchasi",
+    "allInRegister": "Barchasi — reestrda ochish",
     "openInRegister": "Reestrda ochish",
     "noOpenOffers": "Javob kutayotgan takliflar yoʻq.",
     "offeredOn": "Taklif sanasi",

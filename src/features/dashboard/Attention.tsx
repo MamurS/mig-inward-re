@@ -12,7 +12,7 @@ export const ATTENTION_MAX = 5
 
 /**
  * One list of the dashboard's «Needs attention» block: a title with how many
- * there are, «Open in register» to the filtered rows, and at most
+ * there are, «All →» to the filtered rows in the register, and at most
  * {@link ATTENTION_MAX} rows (a ref-list grid, see `RefRow` and `RefLines`)
  * — or one quiet line when there is nothing to do.
  */
@@ -39,15 +39,14 @@ export function AttentionCard({
   data: string
   children: ReactNode
 }) {
-  const { t } = useTranslation()
   return (
     <Card className="gap-0 py-0" data-attention-card={data}>
-      <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 py-4">
-        <CardTitle className="flex items-baseline gap-2">
-          {title}
-          {!loading && count > 0 && <span className="text-body font-normal text-muted-foreground num">{count}</span>}
+      <CardHeader className="flex flex-row items-center justify-between gap-3 py-4" data-card-header>
+        <CardTitle className="flex min-w-0 items-baseline gap-2">
+          <span className="truncate" title={title}>{title}</span>
+          {!loading && count > 0 && <span className="shrink-0 text-body font-normal text-muted-foreground num">{count}</span>}
         </CardTitle>
-        <Link to={to} className="text-body text-link hover:underline">{t('dash.openInRegister')}</Link>
+        <RegisterLink to={to} />
       </CardHeader>
       {loading ? (
         <div className="grid gap-2 border-t px-5 py-3">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-8 rounded-md" />)}</div>
@@ -64,6 +63,21 @@ export function AttentionCard({
         </ul>
       )}
     </Card>
+  )
+}
+
+/**
+ * A card header's link to the filtered register: a compact «All →» that stays
+ * on the title's line (a long title truncates instead, with its tooltip); the
+ * full «Open in register» is its tooltip, and its accessible name starts with
+ * the visible word.
+ */
+export function RegisterLink({ to }: { to: string }) {
+  const { t } = useTranslation()
+  return (
+    <Link to={to} className="shrink-0 text-body whitespace-nowrap text-link hover:underline" aria-label={t('dash.allInRegister')} title={t('dash.openInRegister')} data-register-link>
+      {t('dash.all')}<span aria-hidden> →</span>
+    </Link>
   )
 }
 

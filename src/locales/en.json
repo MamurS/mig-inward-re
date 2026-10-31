@@ -477,6 +477,8 @@
     "days": "{{range}} days",
     "ageNote": "Days since the offer was made; amounts are our gross (USD).",
     "oldestOffers": "Oldest unanswered offers",
+    "all": "All",
+    "allInRegister": "All — open in register",
     "openInRegister": "Open in register",
     "noOpenOffers": "No offers are waiting for an answer.",
     "offeredOn": "Offered",
