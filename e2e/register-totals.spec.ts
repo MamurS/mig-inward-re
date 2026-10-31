@@ -40,14 +40,14 @@ test('the total counts bound only; offered / no response are pending; NTU and de
   const everything = subs.reduce((s, r) => s + (r.our_gross_premium_usd ?? 0), 0)
   expect(expected.boundUsd + expected.pendingUsd).toBeLessThan(everything)
 
-  await expect(page.locator('[data-register-totals]')).toContainText('Total our gross (USD)')
+  await expect(page.locator('[data-register-totals]')).toContainText('Bound (USD)')
   await expect(page.locator('[data-register-totals]')).toContainText('pending')
   expect(await exact(page, 'bound')).toBe(en(expected.boundUsd))
   expect(await exact(page, 'pending')).toBe(en(expected.pendingUsd))
 
   // the tooltip says what is counted where
   await page.locator('[data-register-totals] button').hover()
-  await expect(page.getByRole('tooltip')).toContainText('bound business only')
+  await expect(page.getByRole('tooltip')).toContainText('Bound: bound business only')
 })
 
 test('NTU and declined rows add nothing to either figure', async ({ page }) => {
@@ -67,3 +67,14 @@ test('pending rows alone: the total is 0 and the pending figure carries them', a
   const pending = registerTotals(subs.filter((s) => s.status === 'offered' || s.status === 'no_response'))
   expect(await exact(page, 'pending')).toBe(en(pending.pendingUsd))
 })
+
+for (const [lang, bound, pending, old] of [['ru', 'Подтверждено (USD)', 'в ожидании', 'Итого'], ['uz', 'Tasdiqlangan (USD)', 'kutilmoqda', 'Jami']] as const) {
+  test(`${lang}: the bound total reads «${bound}» beside «${pending}»`, async ({ page }) => {
+    await installMock(page.context(), 'underwriter', lang)
+    await page.goto('/submissions')
+    await page.locator('main tbody tr').first().waitFor()
+    await expect(page.locator('[data-total-bound]')).toContainText(bound)
+    await expect(page.locator('[data-total-pending]')).toContainText(pending)
+    await expect(page.locator('[data-register-totals]')).not.toContainText(old)
+  })
+}

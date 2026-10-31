@@ -17,7 +17,7 @@ Their totals are therefore bound-only by construction, or not about submission s
 
 | Total / KPI | Where | Statuses counted | Result |
 |---|---|---|---|
-| «Итого наша брутто (USD)» (register toolbar) | Submissions register (`SubmissionsPage.tsx`) | was **every row shown** (incl. offered, no response, NTU) → now **bound**; «в ожидании» = offered + no response; tooltip says received / under review / declined / NTU are in neither | **Changed** |
+| «Подтверждено (USD)» (register toolbar; was «Итого наша брутто (USD)» until 2026-10-31) | Submissions register (`SubmissionsPage.tsx`) | was **every row shown** (incl. offered, no response, NTU) → now **bound**; «в ожидании» = offered + no response; tooltip says received / under review / declined / NTU are in neither | **Changed** |
 | Excel export of the register | `ExportButton.tsx` | rows only, no total line (export = what is shown) | Already correct (no total) |
 | Received this month (KPI) | Dashboard › Overview | count of all received (an intake figure, no money) | Already correct (count by date, not a premium total) |
 | Under review / not reviewed (KPI) | Dashboard › Overview | count of under review / received | Already correct (status counts) |
@@ -37,8 +37,8 @@ Their totals are therefore bound-only by construction, or not about submission s
 | Loss ratios — written premium and earned premium | Dashboard › Claims, counterparty › Claims (`ratios.ts`, `useRatioRisks`) | bound only (query `.eq('status','bound')` and a `status !== 'bound'` guard) | Already correct |
 | Binders: active, missing / late bordereaux, capacity | Dashboard › Binders, Binders register | binders and bordereau lines (no submission status) | Not status-based |
 | Binder page: premium / loss ratio | Binder detail | installments of the binder's bound submission | Already correct |
-| Counterparties list: submissions (count), bound (count), bound USD + its Excel export | Counterparties register (`CounterpartiesPage.tsx`) | count: all; bound and bound USD: bound | Already correct |
-| Counterparty page: submissions, offered, bound, hit ratio, bound USD (total / this year), open offers (count + USD), average share, declined (count) | Counterparty detail (`CounterpartyDetailPage.tsx`) | bound USD: bound; open offers USD: offered + no response (pending, its own card); declined is a count only | Already correct (now via `isBound` / `isPending`) |
+| Counterparties list: submissions (count), bound (count), bound USD («Подтверждено (USD)») + its Excel export | Counterparties register (`CounterpartiesPage.tsx`) | count: all; bound and bound USD: bound | Already correct |
+| Counterparty page: submissions, offered, bound, hit ratio, bound USD («Подтверждено (USD)», total / this year), open offers (count + USD), average share, declined (count) | Counterparty detail (`CounterpartyDetailPage.tsx`) | bound USD: bound; open offers USD: offered + no response (pending, its own card); declined is a count only | Already correct (now via `isBound` / `isPending`) |
 | AI usage tokens | Admin › AI | not premium | Not status-based |
 
 Summary: one total mixed statuses — the submissions register's «Итого наша брутто (USD)»
@@ -46,3 +46,7 @@ summed every row on screen, NTU and offered included. It now counts bound only, 
 «в ожидании» (offered + no response) beside it. Every other premium total and KPI
 already counted bound business only (or pending, labelled as such) and now reads the
 statuses through the same helper where it filters submissions.
+
+Wording (2026-10-31): the bound total reads «Подтверждено» / "Bound" / «Tasdiqlangan»
+(with «(USD)» where the figure is a USD sum) everywhere it appears — the register toolbar,
+the counterparties list column and the counterparty page KPI — next to «в ожидании» on the register.

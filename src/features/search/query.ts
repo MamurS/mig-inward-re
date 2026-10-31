@@ -22,7 +22,8 @@ export type DateKeyword = 'today' | 'thisweek' | 'thismonth'
 
 type Span = { id: string; start: number; end: number; raw: string; neg: boolean }
 export type TextTerm = Span & { kind: 'text'; words: string[]; phrase: boolean; asText?: boolean }
-export type FieldTerm = Span & { kind: 'field'; field: string; values: string[]; labels: string[] }
+/** `titles`: the values' full names for the chip's tooltip (when a label is a short name). */
+export type FieldTerm = Span & { kind: 'field'; field: string; values: string[]; labels: string[]; titles?: string[] }
 export type NumTerm = Span & { kind: 'num'; field: string; range: Range; display: string }
 export type DateTerm = Span & { kind: 'date'; field: string; range: Range; display: string; keyword?: DateKeyword }
 export type FlagTerm = Span & { kind: 'flag'; flag: string }
@@ -35,7 +36,7 @@ export type SearchContext = {
   today: string // YYYY-MM-DD, Tashkent
   userId: string | null
   counterparties: { id: string; name: string; type: string }[]
-  lobs: { id: string; code: string; name: string; name_ru?: string | null; name_uz?: string | null }[]
+  lobs: { id: string; code: string; name: string; name_ru?: string | null; name_uz?: string | null; short_name?: string | null; short_name_ru?: string | null; short_name_uz?: string | null }[]
   countries: { code: string; name: string; name_ru?: string | null; name_uz?: string | null }[]
   currencies: string[]
   users: { id: string; name: string; role?: string | null }[]
@@ -43,14 +44,19 @@ export type SearchContext = {
   t?: (key: string) => string
   /** A country's or line's name in the UI language. */
   localName?: (row: { name: string; name_ru?: string | null; name_uz?: string | null }) => string
+  /** A line's short name in the UI language (chips, the builder's summary). */
+  localShortName?: (row: SearchContext['lobs'][number]) => string
 }
 
 // ---------------------------------------------------------------------------
 // Scopes: what one page's search knows
 // ---------------------------------------------------------------------------
 
-/** One value of a list field. `names` also count as a bare word / part; `codes` only after `field:`. */
-export type Option = { value: string; label: string; insert: string; names: string[]; codes?: string[] }
+/**
+ * One value of a list field. `names` also count as a bare word / part; `codes` only after `field:`.
+ * `full`: the full name when `label` is a short one (lines of business), for pickers, suggestions and tooltips.
+ */
+export type Option = { value: string; label: string; full?: string; insert: string; names: string[]; codes?: string[] }
 
 type FieldBase = { key: string; aliases: string[]; labelKey: string }
 export type ListField = FieldBase & { kind: 'list'; options: (ctx: SearchContext) => Option[]; partial: 'prefix' | 'contains' | 'none' }
@@ -102,7 +108,7 @@ function vocab(scope: Scope): Vocab {
 export const fieldOf = (scope: Scope, key: string) => scope.fields.find((f) => f.key === key)
 
 /** A field's value → ids / codes: exact names or codes win; otherwise names that start with / contain it. */
-export function resolveList(field: ListField, value: string, ctx: SearchContext): { values: string[]; labels: string[] } | null {
+export function resolveList(field: ListField, value: string, ctx: SearchContext): { values: string[]; labels: string[]; titles: string[] } | null {
   const c = compact(value)
   if (!c) return null
   const options = field.options(ctx)
@@ -113,18 +119,18 @@ export function resolveList(field: ListField, value: string, ctx: SearchContext)
   if (!hits.length) return null
   const seen = new Set<string>()
   hits = hits.filter((o) => !seen.has(o.value) && seen.add(o.value))
-  return { values: hits.map((o) => o.value), labels: hits.map((o) => o.label) }
+  return { values: hits.map((o) => o.value), labels: hits.map((o) => o.label), titles: hits.map((o) => o.full ?? o.label) }
 }
 
 /** A whole part (or a single word) that names something exactly becomes that filter. */
-function exactName(text: string, scope: Scope, ctx: SearchContext): { field: string; value: string; label: string } | null {
+function exactName(text: string, scope: Scope, ctx: SearchContext): { field: string; value: string; label: string; title: string } | null {
   const c = compact(text)
   if (!c) return null
   for (const key of scope.exactFields) {
     const f = fieldOf(scope, key)
     if (f?.kind !== 'list') continue
     const o = f.options(ctx).find((x) => x.names.some((n) => compact(n) === c))
-    if (o) return { field: key, value: o.value, label: o.label }
+    if (o) return { field: key, value: o.value, label: o.label, title: o.full ?? o.label }
   }
   return null
 }
@@ -322,11 +328,12 @@ function parseToken(tok: Piece, scope: Scope, ctx: SearchContext, alone: boolean
         if (range) return { ...base, kind: 'date', field: field.key, range, display: `${op === ':' ? '' : `${op} `}${value}` }
       } else if (op === ':' || op === '=') {
         const parts = value.split('|').map((x) => unquote(x.trim())).filter(Boolean)
-        const res = parts.map((x) => (field.kind === 'like' ? { values: [x], labels: [x] } : resolveList(field, x, ctx)))
+        const res = parts.map((x) => (field.kind === 'like' ? { values: [x], labels: [x], titles: [x] } : resolveList(field, x, ctx)))
         if (res.length && res.every(Boolean)) {
           const values = [...new Set(res.flatMap((r) => r!.values))]
           const labels = [...new Set(res.flatMap((r) => r!.labels))]
-          return { ...base, kind: 'field', field: field.key, values, labels }
+          const titles = [...new Set(res.flatMap((r) => r!.titles))]
+          return { ...base, kind: 'field', field: field.key, values, labels, titles }
         }
       }
     }
@@ -341,7 +348,7 @@ function parseToken(tok: Piece, scope: Scope, ctx: SearchContext, alone: boolean
   const kw = keyword(compact(raw), scope, ctx, base)
   if (kw) return kw
   const named = exactName(raw, scope, ctx)
-  if (named) return { ...base, kind: 'field', field: named.field, values: [named.value], labels: [named.label] }
+  if (named) return { ...base, kind: 'field', field: named.field, values: [named.value], labels: [named.label], titles: [named.title] }
   if (neg) return { ...base, kind: 'text', words: [cleanWord(raw)].filter(Boolean), phrase: false }
   return 'word'
 }
@@ -364,7 +371,7 @@ function parsePart(text: string, part: Piece, scope: Scope, ctx: SearchContext):
     const kw = keyword(compact(part.text), scope, ctx, base)
     if (kw) return [kw]
     const named = exactName(part.text, scope, ctx)
-    if (named) return [{ ...base, kind: 'field', field: named.field, values: [named.value], labels: [named.label] }]
+    if (named) return [{ ...base, kind: 'field', field: named.field, values: [named.value], labels: [named.label], titles: [named.title] }]
   }
   const out: Term[] = []
   let run: Piece[] = [] // consecutive plain words → one text term

@@ -1343,6 +1343,9 @@ export type Database = {
           name: string
           name_ru: string | null
           name_uz: string | null
+          short_name: string | null
+          short_name_ru: string | null
+          short_name_uz: string | null
           sort_order: number
         }
         Insert: {
@@ -1352,6 +1355,9 @@ export type Database = {
           name: string
           name_ru?: string | null
           name_uz?: string | null
+          short_name?: string | null
+          short_name_ru?: string | null
+          short_name_uz?: string | null
           sort_order?: number
         }
         Update: {
@@ -1361,6 +1367,9 @@ export type Database = {
           name?: string
           name_ru?: string | null
           name_uz?: string | null
+          short_name?: string | null
+          short_name_ru?: string | null
+          short_name_uz?: string | null
           sort_order?: number
         }
         Relationships: []

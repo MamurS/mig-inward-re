@@ -1,4 +1,3 @@
-import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { BookCopy, CalendarX, Clock, Gauge } from 'lucide-react'
 import { KpiCard } from '@/components/KpiCard'
@@ -11,7 +10,7 @@ import { errorMessage } from '@/lib/errors'
 import { BINDERS_PAGE, pageLink } from '@/features/search/pages'
 import { useAllBinders } from './api'
 import { CapacityBar } from './BinderBadges'
-import { ATTENTION_MAX, AttentionCard, RefLines, RefRow } from '@/features/dashboard/Attention'
+import { ATTENTION_MAX, AttentionCard, RefLines, RefRow, RegisterLink } from '@/features/dashboard/Attention'
 
 const bl = (q: string) => pageLink(BINDERS_PAGE, q)
 
@@ -47,9 +46,9 @@ export function BindersDashboard() {
       </div>
 
       <Card className="gap-0 py-0">
-        <CardHeader className="flex flex-row items-center justify-between gap-2 py-4">
-          <CardTitle>{t('binder.capacityAlerts')}</CardTitle>
-          <Link to={bl('capacity>=80')} className="text-body text-link hover:underline">{t('dash.openInRegister')}</Link>
+        <CardHeader className="flex flex-row items-center justify-between gap-3 py-4" data-card-header>
+          <CardTitle className="min-w-0 truncate" title={t('binder.capacityAlerts')}>{t('binder.capacityAlerts')}</CardTitle>
+          <RegisterLink to={bl('capacity>=80')} />
         </CardHeader>
         {full.length === 0 ? (
           <EmptyState pictogram="done" title={t('binder.noCapacityAlerts')} compact />

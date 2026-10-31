@@ -149,7 +149,11 @@ export function DashboardPage() {
       return [...map.entries()].map(([name, value]) => ({ name, value: Math.round(value * 100) / 100 })).sort((a, b) => b.value - a.value)
     }
     const byMga = sumBy((r) => r.mga_name)
-    const byLob = sumBy((r) => names.lob(r.lob_id, r.lob_name) ?? '—') // in the UI language
+    // short names in the UI language on the axis; the full name in the bar's tooltip
+    const byLob = sumBy((r) => names.lobShort(r.lob_id, r.lob_name) ?? '—').map((d) => {
+      const r = bound.find((x) => (names.lobShort(x.lob_id, x.lob_name) ?? '—') === d.name)
+      return { ...d, full: r ? names.lob(r.lob_id, r.lob_name) ?? d.name : d.name }
+    })
 
     const byMonth =
       year === 'all'
@@ -403,7 +407,8 @@ function axisWidth(max: number) {
   return Math.max(40, Math.ceil(longest * chartFontSize() * 0.58) + 4)
 }
 
-function RankChart({ data, empty }: { data: { name: string; value: number }[]; empty: string }) {
+/** `full`: the full name for the tooltip when the axis shows a short one (lines of business). */
+function RankChart({ data, empty }: { data: { name: string; value: number; full?: string }[]; empty: string }) {
   const { t } = useTranslation()
   const top = data.slice(0, 8)
   if (top.length === 0) return <EmptyState pictogram="chart" title={empty} compact />
@@ -412,7 +417,7 @@ function RankChart({ data, empty }: { data: { name: string; value: number }[]; e
       <BarChart data={top} layout="vertical" margin={{ left: 8, right: 64 }}>
         <XAxis type="number" hide />
         <YAxis type="category" dataKey="name" width={200} tickLine={false} axisLine={false} tick={tick()} tickFormatter={(v: string) => (v.length > 30 ? `${v.slice(0, 29)}…` : v)} />
-        <Tooltip formatter={(v) => [formatAmount(v as number), t('dash.ourGrossUsd')]} cursor={{ fill: 'var(--color-slate-50)' }} />
+        <Tooltip formatter={(v) => [formatAmount(v as number), t('dash.ourGrossUsd')]} labelFormatter={(label, payload) => (payload?.[0]?.payload as { full?: string } | undefined)?.full ?? label} cursor={{ fill: 'var(--color-slate-50)' }} />
         <Bar dataKey="value" fill={BAR} radius={[0, 4, 4, 0]} isAnimationActive={false}>
           <LabelList dataKey="value" position="right" fontSize={chartFontSize()} fill="var(--color-slate-700)" formatter={(v) => formatHuman(v as number)} />
         </Bar>

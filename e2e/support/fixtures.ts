@@ -53,15 +53,21 @@ const countries: Row[] = [
   ['SA', 'Saudi Arabia', 'Саудовская Аравия', 'Saudiya Arabistoni'], ['OM', 'Oman', 'Оман', 'Ummon'], ['GB', 'United Kingdom', 'Великобритания', 'Buyuk Britaniya'],
 ].map(([code, name, name_ru, name_uz]) => ({ code, name, name_ru, name_uz, active: true }))
 
+// the seeded lines with their short names (20261031163621_lob_short_names.sql)
 const LOB = [
-  ['PROP', 'Property', 'Имущество', 'Mulk'], ['ENG', 'Engineering & Construction', 'Строительно-монтажные риски', 'Muhandislik va qurilish'],
-  ['ENER', 'Energy', 'Энергетика', 'Energetika'], ['CARGO', 'Marine Cargo', 'Грузы', 'Yuklar'], ['HULL', 'Marine Hull', 'Каско судов', 'Kema kaskosi'],
-  ['AVIA', 'Aviation', 'Авиация', 'Aviatsiya'], ['CRED', 'Credit & Surety', 'Кредит и поручительство', 'Kredit va kafillik'],
-  ['FINL', 'Financial Lines (D&O, PI, FI)', 'Финансовые риски (D&O, PI, FI)', 'Moliyaviy xavflar (D&O, PI, FI)'],
-  ['CYBER', 'Cyber', 'Кибер-риски', 'Kiber xavflar'], ['AGRI', 'Agriculture', 'Сельское хозяйство', 'Qishloq xoʻjaligi'],
+  ['PROP', 'Property', 'Имущество', 'Mulk', 'Property', 'Имущество', 'Mulk'],
+  ['ENG', 'Engineering & Construction', 'Строительно-монтажные риски', 'Muhandislik va qurilish', 'Engineering', 'Строительство', 'Qurilish'],
+  ['ENER', 'Energy', 'Энергетика', 'Energetika', 'Energy', 'Энергетика', 'Energetika'],
+  ['CARGO', 'Marine Cargo', 'Грузы', 'Yuklar', 'Cargo', 'Грузы', 'Yuklar'],
+  ['HULL', 'Marine Hull', 'Каско судов', 'Kema kaskosi', 'Hull', 'Каско судов', 'Kema kaskosi'],
+  ['AVIA', 'Aviation', 'Авиация', 'Aviatsiya', 'Aviation', 'Авиация', 'Aviatsiya'],
+  ['CRED', 'Credit & Surety', 'Кредит и поручительство', 'Kredit va kafillik', 'Credit & Surety', 'Кредит и поруч.', 'Kredit va kafillik'],
+  ['FINL', 'Financial Lines (D&O, PI, FI)', 'Финансовые риски (D&O, PI, FI)', 'Moliyaviy xavflar (D&O, PI, FI)', 'Financial Lines', 'Финансовые риски', 'Moliyaviy xavflar'],
+  ['CYBER', 'Cyber', 'Кибер-риски', 'Kiber xavflar', 'Cyber', 'Кибер-риски', 'Kiber xavflar'],
+  ['AGRI', 'Agriculture', 'Сельское хозяйство', 'Qishloq xoʻjaligi', 'Agriculture', 'Сельхоз', 'Qishloq xoʻjaligi'],
 ]
-const lines_of_business: Row[] = LOB.map(([code, name, name_ru, name_uz], i) => ({
-  id: `10000000-0000-4000-8000-${String(i + 1).padStart(12, '0')}`, code, name, name_ru, name_uz, active: true, sort_order: (i + 1) * 10,
+const lines_of_business: Row[] = LOB.map(([code, name, name_ru, name_uz, short_name, short_name_ru, short_name_uz], i) => ({
+  id: `10000000-0000-4000-8000-${String(i + 1).padStart(12, '0')}`, code, name, name_ru, name_uz, short_name, short_name_ru, short_name_uz, active: true, sort_order: (i + 1) * 10,
 }))
 const lobId = (code: string) => lines_of_business.find((l) => l.code === code)!.id as string
 const lobName = (code: string) => lines_of_business.find((l) => l.code === code)!.name as string

@@ -5,7 +5,12 @@
  * mode: DEMO-SUB-…).
  */
 import { expect, test } from '@playwright/test'
+import { readFileSync } from 'node:fs'
 import { installMock } from './support/mockSupabase'
+
+/** Every seeded line's short names [EN, RU, UZ], as the migration writes them. */
+const SEEDED_SHORT = [...readFileSync('supabase/migrations/20261031163621_lob_short_names.sql', 'utf8')
+  .matchAll(/\('([A-Z]+)',\s*'([^']+)',\s*'([^']+)',\s*'([^']+)'\)/g)].map((m) => ({ code: m[1], en: m[2], ru: m[3], uz: m[4] }))
 
 for (const demoMode of [false, true]) {
   for (const lang of ['en', 'ru', 'uz'] as const) {
@@ -38,3 +43,49 @@ test('the register shows the key columns by default; the others stay in «Column
     await expect(page.getByRole('menuitemcheckbox', { name, exact: true })).toHaveAttribute('aria-checked', 'false')
   }
 })
+
+// Lines of business show their short name (the full one in the tooltip): no
+// seeded line is cut with an ellipsis in the register, at 1280 and 1440 px.
+for (const width of [1280, 1440]) {
+  for (const lang of ['en', 'ru', 'uz'] as const) {
+    test(`no line of business is cut in the register · ${width} px · ${lang}`, async ({ browser }) => {
+      const context = await browser.newContext({ viewport: { width, height: 900 } })
+      await installMock(context, 'underwriter', lang)
+      const page = await context.newPage()
+      await page.goto('/submissions')
+      await page.locator('main tbody tr').first().waitFor()
+      await page.waitForLoadState('networkidle')
+      await page.evaluate(() => document.fonts.ready)
+      const cells = await page.locator('main tbody td:has([data-lob-cell])').evaluateAll((tds) =>
+        tds.map((td) => {
+          const span = td.querySelector('[data-lob-cell]') as HTMLElement
+          return { text: span.innerText.trim(), title: span.getAttribute('title'), scroll: td.scrollWidth, client: td.clientWidth, spanScroll: span.scrollHeight, spanClient: span.clientHeight, spanScrollW: span.scrollWidth, spanClientW: span.clientWidth, rowHeight: td.getBoundingClientRect().height }
+        }),
+      )
+      expect(cells.length).toBeGreaterThan(5)
+      for (const c of cells) {
+        expect(c.text, `${c.text} fits its cell`).not.toContain('…')
+        expect(c.scroll, `${c.text} fits its cell`).toBeLessThanOrEqual(c.client)
+        // a long short name may take a second line, never a cut third one, and the row stays 48 px
+        expect(c.spanScroll, `${c.text} is not clipped`).toBeLessThanOrEqual(c.spanClient)
+        expect(c.spanScrollW, `${c.text} is not clipped`).toBeLessThanOrEqual(c.spanClientW)
+        expect(c.rowHeight).toBeLessThanOrEqual(49)
+        // the full name is the tooltip
+        expect(c.title).toBeTruthy()
+      }
+      // every seeded line (the mock holds ten of the fifteen), put in a cell in turn:
+      // it fits the cell and the register still fits the screen
+      expect(SEEDED_SHORT).toHaveLength(15)
+      for (const l of SEEDED_SHORT) {
+        const fit = await page.locator('main tbody [data-lob-cell]').first().evaluate((span, name) => {
+          span.textContent = name
+          const td = span.closest('td')!
+          const box = span.closest('table')!.parentElement!
+          return { span: span.scrollWidth <= span.clientWidth && span.scrollHeight <= span.clientHeight, td: td.scrollWidth <= td.clientWidth, box: box.scrollWidth <= box.clientWidth + 1 }
+        }, l[lang])
+        expect(fit, `${l.code} «${l[lang]}»`).toEqual({ span: true, td: true, box: true })
+      }
+      await context.close()
+    })
+  }
+}

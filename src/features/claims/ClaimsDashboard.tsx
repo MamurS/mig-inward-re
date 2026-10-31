@@ -57,10 +57,14 @@ export function ClaimsDashboard() {
   const cashCalls = cashCallsDue(rows)
   const noRate = rows.filter((r) => r.fx_rate_to_usd === null).length + (payments.data ?? []).filter((p) => p.amount_usd === null).length
   const computed = risks.data ? lossRatios(risks.data, rows, by, today) : null
-  // lines of business in the UI language (grouped by code; the view's English name until the list loads)
-  const ratios = computed && by === 'lob' ? { ...computed, rows: computed.rows.map((r) => ({ ...r, name: names.lobByCode(r.key, r.name) ?? r.name })) } : computed
+  // lines of business in the UI language (grouped by code; the view's English name until the list loads):
+  // the short name in the table and the chart, the full one in the tooltip
+  const ratios = computed && {
+    ...computed,
+    rows: computed.rows.map((r) => (by === 'lob' ? { ...r, name: names.lobShortByCode(r.key, r.name) ?? r.name, full: names.lobByCode(r.key, r.name) ?? r.name } : { ...r, full: r.name })),
+  }
   const chartData = (ratios?.rows ?? []).filter((r) => r.lrWritten !== null || r.lrEarned !== null).slice(0, 8)
-    .map((r) => ({ name: r.name, written: r.lrWritten === null ? 0 : Math.round(r.lrWritten * 1000) / 10, earned: r.lrEarned === null ? 0 : Math.round(r.lrEarned * 1000) / 10 }))
+    .map((r) => ({ name: r.name, full: r.full, written: r.lrWritten === null ? 0 : Math.round(r.lrWritten * 1000) / 10, earned: r.lrEarned === null ? 0 : Math.round(r.lrEarned * 1000) / 10 }))
 
   return (
     <section aria-labelledby="dash-claims" className="mb-4 grid gap-4" data-claims-dashboard>
@@ -93,7 +97,7 @@ export function ClaimsDashboard() {
                     <CartesianGrid horizontal={false} strokeDasharray="3 3" stroke="var(--color-slate-200)" />
                     <XAxis type="number" unit=" %" tick={{ fontSize: chartFontSize(), fill: 'var(--color-slate-600)' }} tickLine={false} axisLine={false} />
                     <YAxis type="category" dataKey="name" width={1} tickLine={false} axisLine={false} tick={NameAbove} interval={0} />
-                    <Tooltip formatter={(v, n) => [`${v} %`, n === 'written' ? t('claim.lrWritten') : t('claim.lrEarned')]} cursor={{ fill: 'var(--color-slate-50)' }} />
+                    <Tooltip formatter={(v, n) => [`${v} %`, n === 'written' ? t('claim.lrWritten') : t('claim.lrEarned')]} labelFormatter={(label, payload) => (payload?.[0]?.payload as { full?: string } | undefined)?.full ?? label} cursor={{ fill: 'var(--color-slate-50)' }} />
                     <Legend formatter={(v) => (v === 'written' ? t('claim.lrWritten') : t('claim.lrEarned'))} />
                     <Bar dataKey="written" fill="var(--color-brand-300)" radius={[0, 3, 3, 0]} barSize={12} isAnimationActive={false} />
                     <Bar dataKey="earned" fill="var(--color-brand-600)" radius={[0, 3, 3, 0]} barSize={12} isAnimationActive={false} />
@@ -115,7 +119,7 @@ export function ClaimsDashboard() {
                   <tbody>
                     {ratios.rows.map((r) => (
                       <tr key={r.key} className="h-12 border-b last:border-0">
-                        <td className="max-w-64 truncate px-3" title={r.name}>{r.name}</td>
+                        <td className="max-w-64 truncate px-3" title={r.full}>{r.name}</td>
                         <td className="px-3 text-right num">{formatAmount(r.written)}</td>
                         <td className="px-3 text-right num">{formatAmount(r.earned)}</td>
                         <td className="px-3 text-right num">{formatAmount(r.incurred)}</td>

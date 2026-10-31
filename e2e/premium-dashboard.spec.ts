@@ -73,7 +73,7 @@ test('dashboard order: KPIs, needs attention, premium, claims, binders, analytic
   const lists = ['overdue-follow-ups', 'oldest-offers', 'most-overdue', 'large-losses', 'cash-calls', 'bordereaux-to-chase']
   for (const l of lists) await expect(attention(page).locator(`[data-attention-card="${l}"]`)).toBeVisible()
   for (const n of await attention(page).locator('[data-ref-list]').evaluateAll((els) => els.map((e) => e.children.length))) expect(n).toBeLessThanOrEqual(5)
-  await attention(page).locator('[data-attention-card="oldest-offers"]').getByRole('link', { name: 'Open in register' }).click()
+  await attention(page).locator('[data-attention-card="oldest-offers"]').getByRole('link', { name: 'All — open in register' }).click()
   await expect(page).toHaveURL(/\/submissions\?q=status/)
   await page.goBack()
   await section(page).waitFor()
