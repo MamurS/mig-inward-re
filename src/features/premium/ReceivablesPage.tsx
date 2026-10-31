@@ -61,15 +61,19 @@ export function ReceivablesPage() {
       id: 'ref_no',
       header: t('fields.refNo'),
       cell: (r, c) => (
-        <Link to={`/submissions/${r.submission_id}`} className="font-medium text-link num hover:underline" onClick={(e) => e.stopPropagation()}>
-          {c.hl(r.ref_no)} <span className="text-muted-foreground">#{r.installment_no}</span>
-        </Link>
+        // the installment number on its own grey line: demo refs (DEMO-SUB-…) are long
+        <span className="block">
+          <Link to={`/submissions/${r.submission_id}`} className="block font-medium text-link num hover:underline" onClick={(e) => e.stopPropagation()}>
+            {c.hl(r.ref_no)}
+          </Link>
+          <span className="block text-caption text-muted-foreground num">{t('rcv.installmentNo', { no: r.installment_no })}</span>
+        </span>
       ),
     },
     {
       id: 'insured',
       header: t('fields.insuredName'),
-      className: 'max-w-48 min-[1440px]:max-w-56',
+      className: 'max-w-48',
       cell: (r, c) => <NameCell name={c.hl(r.insured_name)} sub={r.mga_name && c.hl(r.mga_name)} title={[r.insured_name, r.mga_name].filter(Boolean).join('\n')} />,
     },
     { id: 'mga', header: t('fields.mga'), className: 'max-w-48 truncate', defaultHidden: true, cell: (r, c) => c.hl(r.mga_name) },
@@ -81,8 +85,18 @@ export function ReceivablesPage() {
       // the header says «days overdue»: the badge carries the number only (the column stays narrow)
       cell: (r) => ((r.days_overdue ?? 0) > 0 ? <AgingBadge days={r.days_overdue!} label={t('ui.daysCount', { count: r.days_overdue! })} /> : <span className="text-muted-foreground">—</span>),
     },
-    { id: 'currency', header: t('fields.currencyShort'), cell: (r) => r.currency },
-    { id: 'net', header: t('prem.net'), align: 'right', cell: (r) => formatAmount(r.net_amount) },
+    // the currency rides on the net amount (in «Columns» as its own column too), so the default set fits 1440 px with demo refs
+    { id: 'currency', header: t('fields.currencyShort'), defaultHidden: true, cell: (r) => r.currency },
+    {
+      id: 'net',
+      header: t('prem.net'),
+      align: 'right',
+      cell: (r) => (
+        <span className="whitespace-nowrap">
+          {formatAmount(r.net_amount)} <span className="text-caption text-muted-foreground">{r.currency}</span>
+        </span>
+      ),
+    },
     // net − outstanding: in «Columns», so the default set fits a 1440 px screen
     { id: 'paid', header: t('prem.paid'), align: 'right', defaultHidden: true, cell: (r) => formatAmount(r.paid_amount) },
     payableView
@@ -175,7 +189,7 @@ export function ReceivablesPage() {
 
       <Card className="gap-0 py-0">
         <DataTable
-          id={payableView ? 'payables.v2' : 'receivables.v3'}
+          id={payableView ? 'payables.v3' : 'receivables.v4'}
           columns={columns}
           rows={rows}
           getRowId={(r) => r.id!}

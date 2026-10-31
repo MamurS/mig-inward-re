@@ -1159,7 +1159,8 @@
     "missingRate_one": "{{count}} without an FX rate is not in the USD totals",
     "missingRate_other": "{{count}} without an FX rate are not in the USD totals",
     "none": "Nothing outstanding",
-    "noneHint": "Installments appear here once a bound submission has a premium schedule."
+    "noneHint": "Installments appear here once a bound submission has a premium schedule.",
+    "installmentNo": "Installment {{no}}"
   },
   "claim": {
     "status": {

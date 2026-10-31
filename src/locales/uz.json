@@ -1159,7 +1159,8 @@
     "missingRate_one": "{{count}} ta kurssiz USD jamiga kirmaydi",
     "missingRate_other": "{{count}} ta kurssiz USD jamiga kirmaydi",
     "none": "Qarz yoʻq",
-    "noneHint": "Tasdiqlangan arizada mukofot jadvali boʻlganda toʻlovlar shu yerda koʻrinadi."
+    "noneHint": "Tasdiqlangan arizada mukofot jadvali boʻlganda toʻlovlar shu yerda koʻrinadi.",
+    "installmentNo": "{{no}}-toʻlov"
   },
   "claim": {
     "status": {

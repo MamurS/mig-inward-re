@@ -63,3 +63,44 @@ for (const width of [1440, 1280]) {
     }
   }
 }
+
+/** The live demo world: the whole portfolio with «DEMO » names and «DEMO-» refs (as the demo seed writes them). */
+function demoNames() {
+  const fix = (v: unknown): unknown => {
+    if (Array.isArray(v)) return v.map(fix)
+    if (!v || typeof v !== 'object') return v
+    const o = v as Record<string, unknown>
+    for (const [k, x] of Object.entries(o)) {
+      if (typeof x !== 'string') continue
+      if (/(^|_)name$/.test(k) && k !== 'full_name' && x && !x.startsWith('DEMO ')) o[k] = 'DEMO ' + x
+      else if (k === 'ref_no' && /^(SUB|RCP)-/.test(x)) o[k] = 'DEMO-' + x
+    }
+    return o
+  }
+  const orig = window.fetch.bind(window)
+  window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+    const res = await orig(input, init)
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
+    if (!/premium_installments_v/.test(url) || !(res.headers.get('content-type') ?? '').includes('json')) return res
+    const body = fix(JSON.parse(await res.clone().text()))
+    return new Response(JSON.stringify(body), { status: res.status, statusText: res.statusText, headers: res.headers })
+  }
+}
+
+for (const lang of ['en', 'ru', 'uz'] as const) {
+  test(`receivables: the default columns fit 1440 px with the live demo world's long names · ${lang}`, async ({ browser }) => {
+    const context = await browser.newContext({ viewport: { width: 1440, height: 900 } })
+    await installMock(context, 'finance', lang)
+    await context.addInitScript(demoNames)
+    const page = await context.newPage()
+    await page.goto('/receivables')
+    await page.locator('main tbody tr').first().waitFor()
+    await page.waitForLoadState('networkidle')
+    await page.evaluate(() => document.fonts.ready)
+    await expect(page.locator('main tbody').getByText(/^DEMO-SUB-/).first()).toBeVisible()
+    const m = await measure(page)
+    expect(m.scrolls).toBe(false)
+    expect(m.clipped).toBe(0)
+    await context.close()
+  })
+}
