@@ -15,7 +15,7 @@ import { useAuth } from '@/auth/AuthProvider'
 import { can } from '@/lib/roles'
 import { formatAmount, formatDate, formatDateTime, formatNumber, formatPct } from '@/lib/format'
 import { errorMessage } from '@/lib/errors'
-import { useLocalName, useUsers, userName } from '@/hooks/useReference'
+import { useLocalName, useRefNames, useUsers, userName } from '@/hooks/useReference'
 import { useAuditLog, useEntityDocuments, useEntityFollowUps } from '@/features/submissions/api'
 import { DocumentsPanel } from '@/features/documents/DocumentsPanel'
 import { AddFollowUpButton, CloseFollowUpDialog, FollowUpItem, RescheduleFollowUpDialog, type FollowUp } from '@/features/followups/FollowUps'
@@ -35,6 +35,7 @@ export function BinderDetailPage() {
   const { role } = useAuth()
   const users = useUsers()
   const localName = useLocalName()
+  const names = useRefNames()
   const q = useBinder(id)
   const periods = useBinderPeriods(id)
   const bordereaux = useBordereaux(id)
@@ -137,7 +138,7 @@ export function BinderDetailPage() {
                 ))}
               </ul>
             </Info>
-            <Info label={t('binder.territories')} className="col-span-2">{b.territories?.length ? b.territories.join(', ') : t('binder.anyTerritory')}</Info>
+            <Info label={t('binder.territories')} className="col-span-2">{b.territories?.length ? b.territories.map((c) => names.country(c)).join(', ') : t('binder.anyTerritory')}</Info>
             {b.notes && <Info label={t('fields.notes')} className="col-span-2 md:col-span-4">{b.notes}</Info>}
           </dl>
         </CardContent>

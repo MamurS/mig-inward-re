@@ -13,7 +13,7 @@ import { errorMessage } from '@/lib/errors'
 import { quoteValue } from '@/features/search/query'
 import { pageLink, RECEIPTS_PAGE, RECEIVABLES_PAGE } from '@/features/search/pages'
 import { AGING_BUCKETS } from '@/features/search/scopes'
-import { ATTENTION_MAX, AttentionCard, RefName, RefRow } from '@/features/dashboard/Attention'
+import { ATTENTION_MAX, AttentionCard, RefFigure, RefLines, RefRow } from '@/features/dashboard/Attention'
 import { premiumSummary, usePremiumOverview } from './summary'
 
 const rcv = (q: string) => pageLink(RECEIVABLES_PAGE, q)
@@ -137,9 +137,8 @@ export function MostOverduePremium() {
     >
       {s?.mostOverdue.slice(0, ATTENTION_MAX).map((r) => (
         <RefRow key={r.id} to={`/submissions/${r.submission_id}`}>
-          <span className="font-medium whitespace-nowrap text-link num" data-ref>{r.ref_no} #{r.installment_no}</span>
-          <RefName name={r.insured_name} sub={`${r.mga_name ?? ''} · ${formatAmount(r.outstanding_amount)} ${r.currency ?? ''}`} />
-          <span className="text-right"><AgingBadge days={r.days_overdue ?? 0} /></span>
+          <RefLines name={r.insured_name} refNo={`${r.ref_no} #${r.installment_no}`} sub={r.mga_name} />
+          <RefFigure sub={<span className="num">{formatAmount(r.outstanding_amount)} {r.currency ?? ''}</span>}><AgingBadge days={r.days_overdue ?? 0} /></RefFigure>
         </RefRow>
       ))}
     </AttentionCard>

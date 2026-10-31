@@ -488,7 +488,7 @@ function SubmissionForm({ existing, binderId }: { existing: SubmissionRow | null
             <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <Field label={t('fields.currency')} htmlFor="currency" error={err('currency')} required>
                 <NativeSelect {...reg('currency')}>
-                  {currencies.data?.filter((c) => c.active || c.code === v.currency).map((c) => <option key={c.code} value={c.code}>{c.code} — {c.name}</option>)}
+                  {currencies.data?.filter((c) => c.active || c.code === v.currency).map((c) => <option key={c.code} value={c.code}>{c.code} — {localName(c)}</option>)}
                 </NativeSelect>
               </Field>
               <Field label={t('fields.sumInsured100')} htmlFor="sum_insured_100" error={err('sum_insured_100')}>

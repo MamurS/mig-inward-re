@@ -140,6 +140,20 @@ test('the risk’s Claims tab and the counterparty card', async ({ page }) => {
   await expect(card.locator('[data-loss-ratio]')).toContainText('Loss ratio, incurred / earned')
 })
 
+test('large losses: the list shows the amount that set the flag (our share of the estimate), incurred / outstanding under it', async ({ page }) => {
+  await installMock(page.context(), 'management', 'en')
+  await page.goto('/dashboard')
+  const list = page.locator('[data-attention] [data-large-losses]')
+  await list.waitFor()
+  // the hull: estimate 5.6m × 5 % = 280 000 USD (≥ the 250 000 threshold); reserved 60 000, paid 35 000
+  const row = list.locator('li').filter({ hasText: 'Emirates Aviation Services Hull' })
+  await expect(row.locator('[data-large-loss-basis]')).toHaveAttribute('data-large-loss-basis', '280000')
+  await expect(row.locator('[data-large-loss-basis]')).toContainText(/^280(\.00)?k USD$/i)
+  await expect(row.locator('[data-large-loss-sub]')).toHaveText(/^incurred 60(\.00)?k · outstanding 25(\.00)?k$/i)
+  await row.locator('[data-large-loss-basis]').hover()
+  await expect(page.getByRole('tooltip')).toContainText('Large loss: our share of the estimate (or of the reserves, if higher) ≥ 250,000.00 USD. This claim: 280,000.00 USD.')
+})
+
 test('dashboard: claims figures open the register; loss ratios labelled both ways', async ({ page }) => {
   await installMock(page.context(), 'management', 'en')
   await page.goto('/dashboard')

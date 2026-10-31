@@ -1101,18 +1101,24 @@ export type Database = {
           active: boolean
           code: string
           name: string
+          name_ru: string | null
+          name_uz: string | null
           sort_order: number
         }
         Insert: {
           active?: boolean
           code: string
           name: string
+          name_ru?: string | null
+          name_uz?: string | null
           sort_order?: number
         }
         Update: {
           active?: boolean
           code?: string
           name?: string
+          name_ru?: string | null
+          name_uz?: string | null
           sort_order?: number
         }
         Relationships: []

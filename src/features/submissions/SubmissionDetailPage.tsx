@@ -72,6 +72,9 @@ export function SubmissionDetailPage() {
   const next = s.status ? NEXT_STATUSES[s.status] : []
   const usersById = new Map(users.data?.map((u) => [u.id, u]))
   const country = countries.data?.find((c) => c.code === s.insured_country)
+  // the line of business in the UI language (the view's English name until the list loads)
+  const lobRow = s.lob_id ? lobs.data?.find((l) => l.id === s.lob_id) : undefined
+  const lobName = lobRow ? localName(lobRow) : s.lob_name
   const docsById = new Map(docs.data?.map((d) => [d.id, d]))
   // Premium lives on bound submissions (and on any that already have installments)
   const showPremium = s.status === 'bound' || (premiumRows.data?.length ?? 0) > 0
@@ -105,7 +108,7 @@ export function SubmissionDetailPage() {
       <PageHeader
         breadcrumbs={[{ label: t('pages.submissions.title'), to: '/submissions' }, { label: s.ref_no ?? '' }]}
         title={s.insured_name ?? s.ref_no ?? ''}
-        subtitle={[s.ref_no, s.mga_name, s.lob_name, s.currency].filter(Boolean).join(' · ')}
+        subtitle={[s.ref_no, s.mga_name, lobName, s.currency].filter(Boolean).join(' · ')}
         actions={
           editable && (
             <Button variant="outline" asChild>
@@ -191,7 +194,7 @@ export function SubmissionDetailPage() {
                 <InfoItem label={t('fields.underwriter')}>{s.underwriter_name ?? '—'}</InfoItem>
                 <InfoItem label={t('fields.insuredName')}>{s.insured_name}</InfoItem>
                 <InfoItem label={t('fields.insuredCountry')}>{country ? localName(country) : s.insured_country ?? '—'}</InfoItem>
-                <InfoItem label={t('fields.lob')}>{s.lob_name ?? '—'}</InfoItem>
+                <InfoItem label={t('fields.lob')}>{lobName ?? '—'}</InfoItem>
                 <InfoItem label={t('fields.period')}>{s.period_from || s.period_to ? `${formatDate(s.period_from)} – ${formatDate(s.period_to)}` : '—'}</InfoItem>
                 <InfoItem label={t('fields.riskDescription')} className="sm:col-span-2">{s.risk_description || '—'}</InfoItem>
               </dl>

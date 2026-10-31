@@ -9,17 +9,22 @@ import { Skeleton } from '@/components/Skeleton'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { SegmentedControl } from '@/components/SegmentedControl'
 import { chartFontSize } from '@/lib/appearance'
-import { formatAmount, formatDate, isoDate } from '@/lib/format'
+import { formatAmount, formatDate, formatHuman, isoDate } from '@/lib/format'
+import { Tooltip as Hint } from '@/components/ui/tooltip'
+import { useNumberSetting } from '@/hooks/useSettings'
+import { useRefNames } from '@/hooks/useReference'
 import { errorMessage } from '@/lib/errors'
 import { CLAIMS_PAGE, pageLink } from '@/features/search/pages'
 import { useAllClaims, useClaimPayments, useRatioRisks } from './api'
 import { lossRatios } from './ratios'
 import { pct } from './CounterpartyClaims'
 import { LargeLossBadge } from './ClaimStatusBadge'
-import { ATTENTION_MAX, AttentionCard, RefName, RefRow } from '@/features/dashboard/Attention'
+import { ATTENTION_MAX, AttentionCard, RefFigure, RefLines, RefRow } from '@/features/dashboard/Attention'
 
 const cl = (q: string) => pageLink(CLAIMS_PAGE, q)
 const OPEN = 'status:notified|open|reopened'
+/** The database's fallback when the setting is missing (claim_check_large_loss). */
+const LARGE_LOSS_DEFAULT_USD = 250_000
 
 /**
  * Dashboard › Claims: open claims, outstanding reserves, paid and incurred
@@ -36,6 +41,7 @@ export function ClaimsDashboard() {
   const payments = useClaimPayments(`${year}-01-01`)
   const risks = useRatioRisks()
   const [by, setBy] = useState<'mga' | 'lob' | 'year'>('mga')
+  const names = useRefNames()
 
   if (claims.isLoading || payments.isLoading)
     return <div className={`mb-4 ${KPI_GRID_6}`}>{[0, 1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-32 rounded-xl" />)}</div>
@@ -50,7 +56,9 @@ export function ClaimsDashboard() {
   const large = largeLosses(rows)
   const cashCalls = cashCallsDue(rows)
   const noRate = rows.filter((r) => r.fx_rate_to_usd === null).length + (payments.data ?? []).filter((p) => p.amount_usd === null).length
-  const ratios = risks.data ? lossRatios(risks.data, rows, by, today) : null
+  const computed = risks.data ? lossRatios(risks.data, rows, by, today) : null
+  // lines of business in the UI language (grouped by code; the view's English name until the list loads)
+  const ratios = computed && by === 'lob' ? { ...computed, rows: computed.rows.map((r) => ({ ...r, name: names.lobByCode(r.key, r.name) ?? r.name })) } : computed
   const chartData = (ratios?.rows ?? []).filter((r) => r.lrWritten !== null || r.lrEarned !== null).slice(0, 8)
     .map((r) => ({ name: r.name, written: r.lrWritten === null ? 0 : Math.round(r.lrWritten * 1000) / 10, earned: r.lrEarned === null ? 0 : Math.round(r.lrEarned * 1000) / 10 }))
 
@@ -145,23 +153,47 @@ function NameAbove({ x, y, payload }: { x?: number | string; y?: number | string
 }
 
 type ClaimRows = NonNullable<ReturnType<typeof useAllClaims>['data']>
-const largeLosses = (rows: ClaimRows) => rows.filter((r) => r.large_loss).sort((a, b) => (b.incurred_usd ?? 0) - (a.incurred_usd ?? 0))
+/**
+ * The amount a large loss is flagged on (claim_check_large_loss): our share of
+ * the estimate, or of the reserves when they are higher, in USD. Null without a rate.
+ */
+export const largeLossBasisUsd = (r: Pick<ClaimRows[number], 'estimate_our_share_usd' | 'reserves_total' | 'fx_rate_to_usd'>) => {
+  if (r.fx_rate_to_usd === null) return r.estimate_our_share_usd
+  const reserves = Math.round(Number(r.reserves_total ?? 0) * r.fx_rate_to_usd * 100) / 100
+  return Math.max(r.estimate_our_share_usd ?? 0, reserves)
+}
+const largeLosses = (rows: ClaimRows) => rows.filter((r) => r.large_loss).sort((a, b) => (largeLossBasisUsd(b) ?? 0) - (largeLossBasisUsd(a) ?? 0))
 const cashCallsDue = (rows: ClaimRows) => rows.filter((r) => r.cash_call_due_at).sort((a, b) => a.cash_call_due_at!.localeCompare(b.cash_call_due_at!))
 
 /** «Needs attention»: the largest large losses. */
 export function LargeLosses() {
   const { t } = useTranslation()
   const claims = useAllClaims()
+  const threshold = useNumberSetting('large_loss_threshold_usd', LARGE_LOSS_DEFAULT_USD)
   const large = largeLosses(claims.data ?? [])
+  const human = (v: number | null) => (v === null ? '—' : formatHuman(v))
   return (
     <AttentionCard title={t('claim.largeLosses')} count={large.length} to={cl('large')} empty={t('claim.noLarge')} loading={claims.isLoading} error={claims.error} data="large-losses">
-      {large.slice(0, ATTENTION_MAX).map((r) => (
-        <RefRow key={r.id} to={`/claims/${r.id}`}>
-          <span className="font-medium whitespace-nowrap text-link num" data-ref>{r.claim_no}</span>
-          <RefName name={r.insured_name} sub={<>{r.mga_name} · {formatDate(r.date_of_loss)}</>} />
-          <span className="text-right whitespace-nowrap">{r.incurred_usd === null ? <LargeLossBadge /> : <Amount value={r.incurred_usd} currency="USD" human />}</span>
-        </RefRow>
-      ))}
+      {large.slice(0, ATTENTION_MAX).map((r) => {
+        // the figure that set the flag, not the incurred so far (a fresh loss is reserved far below its estimate)
+        const basis = largeLossBasisUsd(r)
+        return (
+          <RefRow key={r.id} to={`/claims/${r.id}`}>
+            <RefLines name={r.insured_name} refNo={r.claim_no} sub={`${r.mga_name ?? ''} · ${formatDate(r.date_of_loss)}`} />
+            <RefFigure sub={<span className="num" data-large-loss-sub>{t('claim.largeLossSub', { incurred: human(r.incurred_usd), outstanding: human(r.outstanding_usd) })}</span>}>
+              {basis === null ? (
+                <LargeLossBadge />
+              ) : (
+                <Hint content={t('claim.largeLossBasis', { threshold: formatAmount(threshold), amount: formatAmount(basis) })}>
+                  <span tabIndex={0} className="num cursor-default font-semibold underline decoration-slate-300 decoration-dotted underline-offset-4" data-large-loss-basis={basis}>
+                    {formatHuman(basis)} <span className="font-normal text-muted-foreground">USD</span>
+                  </span>
+                </Hint>
+              )}
+            </RefFigure>
+          </RefRow>
+        )
+      })}
     </AttentionCard>
   )
 }
@@ -176,9 +208,8 @@ export function CashCallsDue() {
     <AttentionCard title={t('claim.cashCallsDue')} count={calls.length} to={cl('cashcall')} empty={t('claim.noCashCalls')} loading={claims.isLoading} error={claims.error} data="cash-calls">
       {calls.slice(0, ATTENTION_MAX).map((r) => (
         <RefRow key={r.id} to={`/claims/${r.id}`}>
-          <span className="font-medium whitespace-nowrap text-link num" data-ref>{r.claim_no}</span>
-          <RefName name={r.insured_name} sub={r.mga_name} />
-          <span className={r.cash_call_due_at! < now ? 'whitespace-nowrap text-destructive' : 'whitespace-nowrap'}>{formatDate(r.cash_call_due_at)}</span>
+          <RefLines name={r.insured_name} refNo={r.claim_no} sub={r.mga_name} />
+          <RefFigure className={r.cash_call_due_at! < now ? 'text-destructive' : undefined}>{formatDate(r.cash_call_due_at)}</RefFigure>
         </RefRow>
       ))}
     </AttentionCard>

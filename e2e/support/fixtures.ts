@@ -35,10 +35,16 @@ const profiles: Row[] = Object.values(USERS).map((u) => ({
 }))
 const UW = USERS.underwriter.id
 
+// the 13 currencies of the reference seed, with their RU / UZ names (20261031061935_currency_names.sql)
 const currencies: Row[] = [
-  ['USD', 'US Dollar', 1], ['EUR', 'Euro', 2], ['GBP', 'Pound Sterling', 3], ['UZS', 'Uzbek Sum', 4],
-  ['AED', 'UAE Dirham', 10], ['KZT', 'Kazakhstani Tenge', 11], ['TRY', 'Turkish Lira', 12],
-].map(([code, name, sort_order]) => ({ code, name, sort_order, active: true }))
+  ['USD', 'US Dollar', 'Доллар США', 'AQSH dollari', 1], ['EUR', 'Euro', 'Евро', 'Yevro', 2],
+  ['GBP', 'Pound Sterling', 'Фунт стерлингов', 'Funt sterling', 3], ['UZS', 'Uzbek Sum', 'Узбекский сум', 'Oʻzbek soʻmi', 4],
+  ['AED', 'UAE Dirham', 'Дирхам ОАЭ', 'BAA dirhami', 10], ['KZT', 'Kazakhstani Tenge', 'Казахстанский тенге', 'Qozogʻiston tengesi', 11],
+  ['TRY', 'Turkish Lira', 'Турецкая лира', 'Turk lirasi', 12], ['CHF', 'Swiss Franc', 'Швейцарский франк', 'Shveytsariya franki', 13],
+  ['CNY', 'Chinese Yuan', 'Китайский юань', 'Xitoy yuani', 14], ['INR', 'Indian Rupee', 'Индийская рупия', 'Hindiston rupiyasi', 15],
+  ['SGD', 'Singapore Dollar', 'Сингапурский доллар', 'Singapur dollari', 16], ['JPY', 'Japanese Yen', 'Японская иена', 'Yaponiya iyenasi', 17],
+  ['RUB', 'Russian Ruble', 'Российский рубль', 'Rossiya rubli', 18],
+].map(([code, name, name_ru, name_uz, sort_order]) => ({ code, name, name_ru, name_uz, sort_order, active: true }))
 
 const countries: Row[] = [
   ['UZ', 'Uzbekistan', 'Узбекистан', 'Oʻzbekiston'], ['KZ', 'Kazakhstan', 'Казахстан', 'Qozogʻiston'],
@@ -247,6 +253,8 @@ const settings: Row[] = [
   { key: 'auto_no_response_days', value: 30, description: null, updated_at: iso(DAY), updated_by: null },
   { key: 'premium_grace_days', value: 0, description: null, updated_at: iso(DAY), updated_by: null },
   { key: 'premium_default_terms_days', value: 60, description: null, updated_at: iso(DAY), updated_by: null },
+  // the claims migration's default (20261030095433_claims.sql): our share USD at or above it marks a large loss
+  { key: 'large_loss_threshold_usd', value: 250000, description: null, updated_at: iso(DAY), updated_by: null },
   // AI-assisted entry: switched on in the mock (off by default in the real project — Admin › AI)
   { key: 'ai_enabled', value: true, description: null, updated_at: iso(DAY), updated_by: null },
   { key: 'ai_roles', value: ['admin', 'underwriter', 'finance', 'claims'], description: null, updated_at: iso(DAY), updated_by: null },

@@ -50,7 +50,8 @@ export type Suggestion = {
 }
 
 export type Lists = {
-  lobs: { id: string; code: string; name: string }[]
+  /** `label`: the name in the UI language (shown); `name` (English) is also matched. */
+  lobs: { id: string; code: string; name: string; label?: string }[]
   countries: { code: string }[]
   currencies: { code: string }[]
   parties: Party[]
@@ -105,7 +106,7 @@ export function toSuggestions(ai: AiSubmission, lists: Lists): Suggestion[] {
         const l = lists.lobs.find((x2) => x2.code.toLowerCase() === raw.toLowerCase() || x2.name.toLowerCase() === raw.toLowerCase())
         if (l) {
           s.value = l.id
-          s.display = `${l.code} · ${l.name}`
+          s.display = `${l.code} · ${l.label ?? l.name}`
         } else s.problem = 'unknownLob'
         break
       }

@@ -6,13 +6,15 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { fitWidth, isoDate } from '@/lib/format'
 import { errorMessage } from '@/lib/errors'
+import { useRefNames } from '@/hooks/useReference'
 import { buildSubmissionsQuery, type RegisterQuery, type SubmissionRow } from './api'
 
 const AMOUNT = '#,##0.00'
 const PCT = '0.######'
 
 /** Writes the given rows to an .xlsx (the register's export and its bulk «Export selected»). */
-export async function exportSubmissionsXlsx(rows: SubmissionRow[], t: TFunction) {
+/** `lobName`: the line of business in the UI language (useRefNames); the view's English name without it. */
+export async function exportSubmissionsXlsx(rows: SubmissionRow[], t: TFunction, lobName?: (r: SubmissionRow) => string | null) {
   const { default: writeXlsxFile } = await import('write-excel-file/browser')
 
   type Col = { header: string; value: (r: SubmissionRow) => string | number | Date | null; format?: string; width?: number }
@@ -28,7 +30,7 @@ export async function exportSubmissionsXlsx(rows: SubmissionRow[], t: TFunction)
     { header: t('fields.broker'), value: (r) => r.broker_name, width: 24 },
     { header: t('fields.sourceParty'), value: (r) => r.source_party_name, width: 24 },
     { header: t('fields.businessType'), value: (r) => (r.business_type ? t(`businessType.${r.business_type}`) : null), width: 12 },
-    { header: t('fields.lob'), value: (r) => r.lob_name, width: 24 },
+    { header: t('fields.lob'), value: (r) => (lobName ? lobName(r) : r.lob_name), width: 24 },
     { header: t('fields.periodFrom'), value: (r) => d(r.period_from), format: 'dd.mm.yyyy', width: 12 },
     { header: t('fields.periodTo'), value: (r) => d(r.period_to), format: 'dd.mm.yyyy', width: 12 },
     { header: t('fields.currency'), value: (r) => r.currency, width: 8 },
@@ -75,6 +77,7 @@ export async function exportSubmissionsXlsx(rows: SubmissionRow[], t: TFunction)
 /** Excel export of exactly the rows the register currently shows (the same query: search and sort). */
 export function ExportButton({ query, disabled }: { query: RegisterQuery; disabled?: boolean }) {
   const { t } = useTranslation()
+  const names = useRefNames()
   const [busy, setBusy] = useState(false)
 
   async function exportXlsx() {
@@ -83,7 +86,7 @@ export function ExportButton({ query, disabled }: { query: RegisterQuery; disabl
       const { data, error } = await buildSubmissionsQuery(query)
       if (error) throw error
       const rows = (data ?? []) as unknown as SubmissionRow[]
-      await exportSubmissionsXlsx(rows, t)
+      await exportSubmissionsXlsx(rows, t, (r) => names.lob(r.lob_id, r.lob_name))
       toast.success(t('sub.exported', { count: rows.length }))
     } catch (e) {
       toast.error(errorMessage(e))

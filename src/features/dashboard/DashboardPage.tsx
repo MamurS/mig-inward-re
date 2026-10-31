@@ -15,15 +15,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { NativeSelect } from '@/components/ui/native-select'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/auth/AuthProvider'
+import { useRefNames } from '@/hooks/useReference'
 import { chartFontSize } from '@/lib/appearance'
 import { formatAmount, formatDate, formatHuman, formatLongDate, formatMonthShort, formatNumber, isoDate } from '@/lib/format'
 import { errorMessage } from '@/lib/errors'
 import { STATUS_MARK, type SubmissionStatus } from '@/lib/status'
+import { isBound, isPending } from '@/features/submissions/totals'
 import { AgeingBreakdown } from '@/components/AgeingBar'
 import { MostOverduePremium, PremiumDashboard } from '@/features/premium/PremiumDashboard'
 import { CashCallsDue, ClaimsDashboard, LargeLosses } from '@/features/claims/ClaimsDashboard'
 import { BindersDashboard, BordereauxToChase } from '@/features/binders/BindersDashboard'
-import { ATTENTION_MAX, AttentionCard, RefName, RefRow } from './Attention'
+import { ATTENTION_MAX, AttentionCard, RefFigure, RefLines, RefRow } from './Attention'
 import { SectionNav, type DashSection } from './SectionNav'
 
 type Row = {
@@ -37,6 +39,7 @@ type Row = {
   offer_valid_until: string | null
   mga_id: string
   mga_name: string
+  lob_id: string | null
   lob_name: string | null
   our_gross_premium_usd: number | null
   follow_up_overdue: boolean
@@ -50,7 +53,7 @@ const partOfDay = () => {
 }
 
 const COLUMNS =
-  'id, ref_no, insured_name, status, received_at, offered_at, bound_at, offer_valid_until, mga_id, mga_name, lob_name, our_gross_premium_usd, follow_up_overdue, next_follow_up_at, offer_expired'
+  'id, ref_no, insured_name, status, received_at, offered_at, bound_at, offer_valid_until, mga_id, mga_name, lob_id, lob_name, our_gross_premium_usd, follow_up_overdue, next_follow_up_at, offer_expired'
 
 const BAR = 'var(--color-brand-500)'
 /** Axis text: slate-600 reads at 6.5 : 1 on white. */
@@ -78,6 +81,7 @@ function useDashboardRows() {
 export function DashboardPage() {
   const { t } = useTranslation()
   const { profile, role } = useAuth()
+  const names = useRefNames()
   const { data, isLoading, error } = useDashboardRows()
   const seesPremium = role === 'admin' || role === 'management' || role === 'finance'
   const seesClaims = role === 'admin' || role === 'management' || role === 'finance' || role === 'claims'
@@ -101,11 +105,11 @@ export function DashboardPage() {
     const receivedThisMonth = rows.filter((r) => r.received_at >= monthStart).length
     const underReview = rows.filter((r) => r.status === 'under_review').length
     const notReviewed = rows.filter((r) => r.status === 'received').length
-    const awaiting = rows.filter((r) => r.status === 'offered' || r.status === 'no_response')
+    const awaiting = rows.filter((r) => isPending(r.status))
     // longest overdue first
     const overdueFollowUps = rows.filter((r) => r.follow_up_overdue).sort((a, b) => (a.next_follow_up_at ?? '').localeCompare(b.next_follow_up_at ?? ''))
     const overdue = overdueFollowUps.length
-    const boundYtd = rows.filter((r) => r.status === 'bound' && r.bound_at && r.bound_at >= yearStart)
+    const boundYtd = rows.filter((r) => isBound(r.status) && r.bound_at && r.bound_at >= yearStart)
     const boundYtdUsd = boundYtd.reduce((s, r) => s + (r.our_gross_premium_usd ?? 0), 0)
 
     // KPI trends: the same stretch of the previous month / year, and the last 12 months
@@ -125,7 +129,8 @@ export function DashboardPage() {
     const received = rows.filter((r) => inYear(r.received_at))
     const reviewed = received.filter((r) => r.status !== 'received')
     const offered = rows.filter((r) => inYear(r.offered_at))
-    const bound = rows.filter((r) => r.status === 'bound' && inYear(r.bound_at))
+    // premium totals and rankings: bound business only (docs/totals-audit.md)
+    const bound = rows.filter((r) => isBound(r.status) && inYear(r.bound_at))
     const boundFromOffered = offered.filter((r) => r.status === 'bound')
     const hitRatio = offered.length ? boundFromOffered.length / offered.length : null
     const decided = offered.filter((r) => ['bound', 'ntu', 'no_response'].includes(r.status))
@@ -144,7 +149,7 @@ export function DashboardPage() {
       return [...map.entries()].map(([name, value]) => ({ name, value: Math.round(value * 100) / 100 })).sort((a, b) => b.value - a.value)
     }
     const byMga = sumBy((r) => r.mga_name)
-    const byLob = sumBy((r) => r.lob_name ?? '—')
+    const byLob = sumBy((r) => names.lob(r.lob_id, r.lob_name) ?? '—') // in the UI language
 
     const byMonth =
       year === 'all'
@@ -170,7 +175,7 @@ export function DashboardPage() {
       offeredCount: offered.length, boundFromOffered: boundFromOffered.length, boundUsd: bound.reduce((s, r) => s + (r.our_gross_premium_usd ?? 0), 0),
       oldestOffers,
     }
-  }, [data, year, years, thisYear, t])
+  }, [data, year, years, thisYear, t, names])
 
   // the switcher names only the sections this role sees
   const sections = useMemo<DashSection[]>(
@@ -265,9 +270,8 @@ export function DashboardPage() {
           >
             {m.overdueFollowUps.slice(0, ATTENTION_MAX).map((r) => (
               <RefRow key={r.id} to={`/submissions/${r.id}`}>
-                <span className="font-medium whitespace-nowrap text-link num" data-ref>{r.ref_no}</span>
-                <RefName name={r.insured_name} sub={r.mga_name} />
-                <span className="text-right"><AgingBadge days={Math.max(daysSince(r.next_follow_up_at) ?? 1, 1)} /></span>
+                <RefLines name={r.insured_name} refNo={r.ref_no} sub={r.mga_name} />
+                <RefFigure><AgingBadge days={Math.max(daysSince(r.next_follow_up_at) ?? 1, 1)} /></RefFigure>
               </RefRow>
             ))}
           </AttentionCard>
@@ -282,14 +286,13 @@ export function DashboardPage() {
               const days = daysSince(r.offered_at) ?? 0
               return (
                 <RefRow key={r.id} to={`/submissions/${r.id}`}>
-                  <span className="font-medium whitespace-nowrap text-link num" data-ref>{r.ref_no}</span>
-                  <RefName name={r.insured_name} sub={r.our_gross_premium_usd === null ? r.mga_name : `${r.mga_name} · ${formatHuman(r.our_gross_premium_usd)} USD`} />
-                  <span className="inline-flex items-center justify-end gap-2">
+                  <RefLines name={r.insured_name} refNo={r.ref_no} sub={r.mga_name} />
+                  <RefFigure sub={r.our_gross_premium_usd === null ? undefined : <span className="num">{formatHuman(r.our_gross_premium_usd)} USD</span>}>
                     {r.offer_expired && (
                       <span title={t('sub.offerExpiredOn', { date: formatDate(r.offer_valid_until) })}><AlertTriangle className="size-4 text-warning-600" /></span>
                     )}
                     <AgingBadge days={Math.max(days, 1)} label={t('ui.daysWaiting', { count: days })} />
-                  </span>
+                  </RefFigure>
                 </RefRow>
               )
             })}
@@ -385,7 +388,7 @@ export function DashboardPage() {
           <Card>
             <CardHeader><CardTitle>{t('dash.awaitingByAge')}</CardTitle></CardHeader>
             <CardContent>
-              <AgeBuckets rows={(data ?? []).filter((r) => r.status === 'offered' || r.status === 'no_response')} />
+              <AgeBuckets rows={(data ?? []).filter((r) => isPending(r.status))} />
             </CardContent>
           </Card>
         </div>

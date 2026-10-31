@@ -270,6 +270,8 @@
     "offerExpired": "Offer validity has passed",
     "offerExpiredOn": "Offer expired on {{date}}",
     "totalOurGrossUsd": "Total our gross (USD)",
+    "totalPending": "pending",
+    "totalsHint": "Total: bound business only. Pending: offered and no response, shown apart. Received, under review, declined and NTU are counted in neither.",
     "exportExcel": "Export to Excel",
     "exported": "Exported {{count}} rows",
     "saved": "Submission saved",
@@ -695,6 +697,7 @@
       "evening": "Good evening, {{name}}"
     },
     "daysWaiting": "{{count}} d waiting",
+    "daysCount": "{{count}} d",
     "editDetails": "Edit details",
     "thisYear": "this year",
     "openOffers": "Open offers: {{count}}",
@@ -1156,7 +1159,8 @@
     "missingRate_one": "{{count}} without an FX rate is not in the USD totals",
     "missingRate_other": "{{count}} without an FX rate are not in the USD totals",
     "none": "Nothing outstanding",
-    "noneHint": "Installments appear here once a bound submission has a premium schedule."
+    "noneHint": "Installments appear here once a bound submission has a premium schedule.",
+    "installmentNo": "Installment {{no}}"
   },
   "claim": {
     "status": {
@@ -1311,6 +1315,8 @@
     "writtenUsd": "Written, USD",
     "earnedUsd": "Earned, USD",
     "noLarge": "No large losses",
+    "largeLossBasis": "Large loss: our share of the estimate (or of the reserves, if higher) ≥ {{threshold}} USD. This claim: {{amount}} USD.",
+    "largeLossSub": "incurred {{incurred}} · outstanding {{outstanding}}",
     "noCashCalls": "No cash calls due",
     "incurredCcy": "Incurred, {{ccy}}"
   },

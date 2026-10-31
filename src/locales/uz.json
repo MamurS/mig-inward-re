@@ -270,6 +270,8 @@
     "offerExpired": "Taklif muddati oʻtgan",
     "offerExpiredOn": "Taklif muddati {{date}} da tugagan",
     "totalOurGrossUsd": "Jami bizning yalpi (USD)",
+    "totalPending": "kutilmoqda",
+    "totalsHint": "Jami — faqat tasdiqlanganlar. «Kutilmoqda» — taklif va javob yoʻq, alohida. Qabul qilingan, koʻrib chiqilayotgan, rad etilgan va NTU hech qaysi summaga kirmaydi.",
     "exportExcel": "Excel’ga eksport",
     "exported": "Eksport qilingan qatorlar: {{count}}",
     "saved": "Ariza saqlandi",
@@ -695,6 +697,7 @@
       "evening": "Xayrli kech, {{name}}"
     },
     "daysWaiting": "{{count}} kun kutmoqda",
+    "daysCount": "{{count}} kun",
     "editDetails": "Maʼlumotlarni tahrirlash",
     "thisYear": "bu yil",
     "openOffers": "Ochiq takliflar: {{count}}",
@@ -1156,7 +1159,8 @@
     "missingRate_one": "{{count}} ta kurssiz USD jamiga kirmaydi",
     "missingRate_other": "{{count}} ta kurssiz USD jamiga kirmaydi",
     "none": "Qarz yoʻq",
-    "noneHint": "Tasdiqlangan arizada mukofot jadvali boʻlganda toʻlovlar shu yerda koʻrinadi."
+    "noneHint": "Tasdiqlangan arizada mukofot jadvali boʻlganda toʻlovlar shu yerda koʻrinadi.",
+    "installmentNo": "{{no}}-toʻlov"
   },
   "claim": {
     "status": {
@@ -1311,6 +1315,8 @@
     "writtenUsd": "Yozilgan, USD",
     "earnedUsd": "Ishlangan, USD",
     "noLarge": "Yirik zararlar yoʻq",
+    "largeLossBasis": "Yirik zarar: bahodagi ulushimiz (yoki zaxiralardagi, agar koʻproq boʻlsa) ≥ {{threshold}} USD. Ushbu zarar boʻyicha: {{amount}} USD.",
+    "largeLossSub": "koʻrilgan {{incurred}} · qoldiq {{outstanding}}",
     "noCashCalls": "Toʻlanadigan keshkollar yoʻq",
     "incurredCcy": "Koʻrilgan, {{ccy}}"
   },
