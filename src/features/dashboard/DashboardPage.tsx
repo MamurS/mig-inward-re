@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { NativeSelect } from '@/components/ui/native-select'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/auth/AuthProvider'
+import { useRefNames } from '@/hooks/useReference'
 import { chartFontSize } from '@/lib/appearance'
 import { formatAmount, formatDate, formatHuman, formatLongDate, formatMonthShort, formatNumber, isoDate } from '@/lib/format'
 import { errorMessage } from '@/lib/errors'
@@ -38,6 +39,7 @@ type Row = {
   offer_valid_until: string | null
   mga_id: string
   mga_name: string
+  lob_id: string | null
   lob_name: string | null
   our_gross_premium_usd: number | null
   follow_up_overdue: boolean
@@ -51,7 +53,7 @@ const partOfDay = () => {
 }
 
 const COLUMNS =
-  'id, ref_no, insured_name, status, received_at, offered_at, bound_at, offer_valid_until, mga_id, mga_name, lob_name, our_gross_premium_usd, follow_up_overdue, next_follow_up_at, offer_expired'
+  'id, ref_no, insured_name, status, received_at, offered_at, bound_at, offer_valid_until, mga_id, mga_name, lob_id, lob_name, our_gross_premium_usd, follow_up_overdue, next_follow_up_at, offer_expired'
 
 const BAR = 'var(--color-brand-500)'
 /** Axis text: slate-600 reads at 6.5 : 1 on white. */
@@ -79,6 +81,7 @@ function useDashboardRows() {
 export function DashboardPage() {
   const { t } = useTranslation()
   const { profile, role } = useAuth()
+  const names = useRefNames()
   const { data, isLoading, error } = useDashboardRows()
   const seesPremium = role === 'admin' || role === 'management' || role === 'finance'
   const seesClaims = role === 'admin' || role === 'management' || role === 'finance' || role === 'claims'
@@ -146,7 +149,7 @@ export function DashboardPage() {
       return [...map.entries()].map(([name, value]) => ({ name, value: Math.round(value * 100) / 100 })).sort((a, b) => b.value - a.value)
     }
     const byMga = sumBy((r) => r.mga_name)
-    const byLob = sumBy((r) => r.lob_name ?? '—')
+    const byLob = sumBy((r) => names.lob(r.lob_id, r.lob_name) ?? '—') // in the UI language
 
     const byMonth =
       year === 'all'
@@ -172,7 +175,7 @@ export function DashboardPage() {
       offeredCount: offered.length, boundFromOffered: boundFromOffered.length, boundUsd: bound.reduce((s, r) => s + (r.our_gross_premium_usd ?? 0), 0),
       oldestOffers,
     }
-  }, [data, year, years, thisYear, t])
+  }, [data, year, years, thisYear, t, names])
 
   // the switcher names only the sections this role sees
   const sections = useMemo<DashSection[]>(

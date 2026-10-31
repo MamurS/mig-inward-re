@@ -475,7 +475,9 @@ function ReferenceTab() {
           title={t('admin.ref.currencies')}
           cols={[
             { key: 'code', label: t('admin.ref.code'), width: 'w-20', upper: true, maxLength: 3 },
-            { key: 'name', label: t('fields.name'), width: 'w-48' },
+            { key: 'name', label: 'EN', width: 'w-36' },
+            { key: 'name_ru', label: 'RU', width: 'w-36' },
+            { key: 'name_uz', label: 'UZ', width: 'w-36' },
           ]}
         />
         <RefTable

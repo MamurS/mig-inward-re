@@ -12,6 +12,7 @@ import { chartFontSize } from '@/lib/appearance'
 import { formatAmount, formatDate, formatHuman, isoDate } from '@/lib/format'
 import { Tooltip as Hint } from '@/components/ui/tooltip'
 import { useNumberSetting } from '@/hooks/useSettings'
+import { useRefNames } from '@/hooks/useReference'
 import { errorMessage } from '@/lib/errors'
 import { CLAIMS_PAGE, pageLink } from '@/features/search/pages'
 import { useAllClaims, useClaimPayments, useRatioRisks } from './api'
@@ -40,6 +41,7 @@ export function ClaimsDashboard() {
   const payments = useClaimPayments(`${year}-01-01`)
   const risks = useRatioRisks()
   const [by, setBy] = useState<'mga' | 'lob' | 'year'>('mga')
+  const names = useRefNames()
 
   if (claims.isLoading || payments.isLoading)
     return <div className={`mb-4 ${KPI_GRID_6}`}>{[0, 1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-32 rounded-xl" />)}</div>
@@ -54,7 +56,9 @@ export function ClaimsDashboard() {
   const large = largeLosses(rows)
   const cashCalls = cashCallsDue(rows)
   const noRate = rows.filter((r) => r.fx_rate_to_usd === null).length + (payments.data ?? []).filter((p) => p.amount_usd === null).length
-  const ratios = risks.data ? lossRatios(risks.data, rows, by, today) : null
+  const computed = risks.data ? lossRatios(risks.data, rows, by, today) : null
+  // lines of business in the UI language (grouped by code; the view's English name until the list loads)
+  const ratios = computed && by === 'lob' ? { ...computed, rows: computed.rows.map((r) => ({ ...r, name: names.lobByCode(r.key, r.name) ?? r.name })) } : computed
   const chartData = (ratios?.rows ?? []).filter((r) => r.lrWritten !== null || r.lrEarned !== null).slice(0, 8)
     .map((r) => ({ name: r.name, written: r.lrWritten === null ? 0 : Math.round(r.lrWritten * 1000) / 10, earned: r.lrEarned === null ? 0 : Math.round(r.lrEarned * 1000) / 10 }))
 

@@ -1,7 +1,9 @@
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '@/lib/supabase'
 import type { Tables } from '@/lib/database.types'
+import { pickName, type Named } from '@/lib/refName'
 
 const STALE = 5 * 60_000
 
@@ -74,10 +76,35 @@ export function userName(u: Pick<Tables<'profiles'>, 'full_name' | 'email'> | un
 export function useLocalName() {
   const { i18n } = useTranslation()
   const lang = i18n.resolvedLanguage
-  return (row: { name: string; name_ru?: string | null; name_uz?: string | null } | undefined | null) => {
-    if (!row) return '—'
-    if (lang === 'ru' && row.name_ru) return row.name_ru
-    if (lang === 'uz' && row.name_uz) return row.name_uz
-    return row.name
-  }
+  return (row: Named | undefined | null) => pickName(row, lang)
+}
+
+/**
+ * Reference names in the UI language, from the cached reference lists: a line
+ * of business by id or code, a country or a currency by code. Falls back to
+ * the English name (or the given fallback, e.g. a view's `lob_name`) while the
+ * lists load or when the RU / UZ name is empty. Views keep their English
+ * columns; the screen maps ids and codes here.
+ */
+export function useRefNames() {
+  const lobs = useLinesOfBusiness()
+  const countries = useCountries()
+  const currencies = useCurrencies()
+  const { i18n } = useTranslation()
+  const lang = i18n.resolvedLanguage
+  return useMemo(() => {
+    const lobById = new Map((lobs.data ?? []).map((l) => [l.id, l]))
+    const lobByCode = new Map((lobs.data ?? []).map((l) => [l.code, l]))
+    const countryByCode = new Map((countries.data ?? []).map((c) => [c.code, c]))
+    const ccyByCode = new Map((currencies.data ?? []).map((c) => [c.code, c]))
+    const pick = (row: Named | undefined, fallback?: string | null) => (row ? pickName(row, lang) : fallback || null)
+    return {
+      /** A line of business by id (the code as a second key); `fallback` is the view's English name. */
+      lob: (id: string | null | undefined, fallback?: string | null, code?: string | null) =>
+        pick((id ? lobById.get(id) : undefined) ?? (code ? lobByCode.get(code) : undefined), fallback),
+      lobByCode: (code: string | null | undefined, fallback?: string | null) => pick(code ? lobByCode.get(code) : undefined, fallback),
+      country: (code: string | null | undefined, fallback?: string | null) => pick(code ? countryByCode.get(code) : undefined, fallback ?? code),
+      currency: (code: string | null | undefined) => pick(code ? ccyByCode.get(code) : undefined, code),
+    }
+  }, [lobs.data, countries.data, currencies.data, lang])
 }

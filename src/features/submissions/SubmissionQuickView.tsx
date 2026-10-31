@@ -7,6 +7,7 @@ import { InfoItem } from '@/components/Field'
 import { StatusBadge } from '@/components/StatusBadge'
 import { Amount } from '@/components/Amount'
 import { useAuth } from '@/auth/AuthProvider'
+import { useRefNames } from '@/hooks/useReference'
 import { can } from '@/lib/roles'
 import { formatDate, formatPct } from '@/lib/format'
 import type { SubmissionRow } from './api'
@@ -15,6 +16,7 @@ import type { SubmissionRow } from './api'
 export function SubmissionQuickView({ row, onClose }: { row: SubmissionRow | null; onClose: () => void }) {
   const { t } = useTranslation()
   const { role } = useAuth()
+  const names = useRefNames()
   const r = row
   return (
     <Dialog open={Boolean(r)} onOpenChange={(o) => !o && onClose()}>
@@ -27,7 +29,7 @@ export function SubmissionQuickView({ row, onClose }: { row: SubmissionRow | nul
                 <StatusBadge status={r.status} />
               </div>
               <DialogTitle>{r.insured_name}</DialogTitle>
-              <DialogDescription>{[r.mga_name, r.lob_name].filter(Boolean).join(' · ')}</DialogDescription>
+              <DialogDescription>{[r.mga_name, names.lob(r.lob_id, r.lob_name)].filter(Boolean).join(' · ')}</DialogDescription>
             </DialogHeader>
 
             <div className="grid grid-cols-2 gap-3 rounded-lg bg-muted p-4">

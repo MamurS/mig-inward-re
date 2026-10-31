@@ -10,7 +10,7 @@ import { Field } from '@/components/Field'
 import { SegmentedControl } from '@/components/SegmentedControl'
 import { formatDate } from '@/lib/format'
 import { cn } from '@/lib/utils'
-import { useCounterparties, useCountries, useCurrencies, useLinesOfBusiness } from '@/hooks/useReference'
+import { useCounterparties, useCountries, useCurrencies, useLinesOfBusiness, useLocalName } from '@/hooks/useReference'
 import { AI_FILE_TYPES, AiError, extractSubmission, useDuplicates } from './api'
 import { defaultPicks, toSuggestions, type AiSubmission, type Suggestion } from './apply'
 import { ConfidenceBadge } from './ConfidenceBadge'
@@ -36,11 +36,16 @@ export function AiFillPanel({ open, onClose, onApply, excludeId }: {
   onApply: (picked: Suggestion[]) => void
   excludeId?: string
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const lobs = useLinesOfBusiness()
   const countries = useCountries()
   const currencies = useCurrencies()
   const parties = useCounterparties()
+  const localName = useLocalName()
+  // lines of business shown in the UI language
+  const lang = i18n.resolvedLanguage
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const lobLists = useMemo(() => (lobs.data ?? []).map((l) => ({ ...l, label: localName(l) })), [lobs.data, lang])
   const [source, setSource] = useState<'file' | 'text'>('file')
   const [file, setFile] = useState<File | null>(null)
   const [text, setText] = useState('')
@@ -50,8 +55,8 @@ export function AiFillPanel({ open, onClose, onApply, excludeId }: {
   const [picks, setPicks] = useState<Set<string>>(new Set())
 
   const suggestions = useMemo(
-    () => (result ? toSuggestions(result, { lobs: lobs.data ?? [], countries: countries.data ?? [], currencies: currencies.data ?? [], parties: parties.data ?? [] }) : []),
-    [result, lobs.data, countries.data, currencies.data, parties.data],
+    () => (result ? toSuggestions(result, { lobs: lobLists, countries: countries.data ?? [], currencies: currencies.data ?? [], parties: parties.data ?? [] }) : []),
+    [result, lobLists, countries.data, currencies.data, parties.data],
   )
   const val = (k: string) => suggestions.find((s) => s.form === k)?.value || null
   const dupes = useDuplicates(result ? { insured_name: val('insured_name'), mga_id: val('mga_id'), period_from: val('period_from') } : null)
@@ -69,7 +74,7 @@ export function AiFillPanel({ open, onClose, onApply, excludeId }: {
     try {
       const r = await extractSubmission(source === 'file' && file ? { file } : { text })
       setResult(r)
-      const s = toSuggestions(r, { lobs: lobs.data ?? [], countries: countries.data ?? [], currencies: currencies.data ?? [], parties: parties.data ?? [] })
+      const s = toSuggestions(r, { lobs: lobLists, countries: countries.data ?? [], currencies: currencies.data ?? [], parties: parties.data ?? [] })
       setPicks(defaultPicks(s))
     } catch (e) {
       const code = e instanceof AiError ? e.code : 'error'

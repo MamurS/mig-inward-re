@@ -14,6 +14,7 @@ import { Amount } from '@/components/Amount'
 import { StatusBadge } from '@/components/StatusBadge'
 import { Tooltip } from '@/components/ui/tooltip'
 import { useAuth } from '@/auth/AuthProvider'
+import { useRefNames } from '@/hooks/useReference'
 import { can } from '@/lib/roles'
 import { formatAmount, formatDate, formatPct } from '@/lib/format'
 import { cn } from '@/lib/utils'
@@ -33,6 +34,7 @@ export function SubmissionsPage() {
   const { t } = useTranslation()
   const { role } = useAuth()
   const navigate = useNavigate()
+  const names = useRefNames()
   const [params, setParams] = useSearchParams()
   const state = useMemo(() => parseRegister(params), [params])
   const { ctx, parsed, filter } = useParsedQuery(state.q, SUBMISSIONS_PAGE)
@@ -77,7 +79,7 @@ export function SubmissionsPage() {
       className: 'max-w-40 min-[1440px]:max-w-64',
       cell: (r, c) => <NameCell name={c.hl(r.insured_name)} sub={r.mga_name && c.hl(r.mga_name)} title={[r.insured_name, r.mga_name].filter(Boolean).join('\n')} />,
     },
-    { id: 'lob_name', header: t('fields.lobShort'), sortKey: 'lob_name', className: 'max-w-24 truncate min-[1440px]:max-w-32', cell: (r) => <span title={r.lob_name ?? ''}>{r.lob_name ?? '—'}</span> },
+    { id: 'lob_name', header: t('fields.lobShort'), sortKey: 'lob_name', className: 'max-w-24 truncate min-[1440px]:max-w-32', cell: (r) => { const lob = names.lob(r.lob_id, r.lob_name); return <span title={lob ?? ''}>{lob ?? '—'}</span> } },
     {
       id: 'status',
       header: t('fields.status'),
@@ -203,7 +205,7 @@ export function SubmissionsPage() {
                 className="text-white hover:bg-white/10 hover:text-white"
                 onClick={async () => {
                   try {
-                    await exportSubmissionsXlsx(selected, t)
+                    await exportSubmissionsXlsx(selected, t, (r) => names.lob(r.lob_id, r.lob_name))
                     toast.success(t('sub.exported', { count: selected.length }))
                   } catch (e) {
                     toast.error(errorMessage(e))

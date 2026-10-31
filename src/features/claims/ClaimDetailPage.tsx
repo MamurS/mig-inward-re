@@ -17,7 +17,7 @@ import { CLAIM_DOC_TYPES, CLAIM_NEXT } from '@/lib/status'
 import { chartFontSize } from '@/lib/appearance'
 import { formatAmount, formatDate, formatDateTime, formatHuman, formatPct } from '@/lib/format'
 import { errorMessage } from '@/lib/errors'
-import { useUsers, userName } from '@/hooks/useReference'
+import { useRefNames, useUsers, userName } from '@/hooks/useReference'
 import { useAuditLog, useEntityDocuments, useEntityFollowUps } from '@/features/submissions/api'
 import { DocumentsPanel } from '@/features/documents/DocumentsPanel'
 import { AddFollowUpButton, CloseFollowUpDialog, FollowUpItem, RescheduleFollowUpDialog, type FollowUp } from '@/features/followups/FollowUps'
@@ -29,6 +29,7 @@ import { ClaimStatusDialog, EditClaimDialog, PaymentDialog, RecoveryDialog, Rese
 export function ClaimDetailPage() {
   const { id } = useParams()
   const { t } = useTranslation()
+  const names = useRefNames()
   const { role } = useAuth()
   const users = useUsers()
   const claim = useClaim(id)
@@ -81,7 +82,7 @@ export function ClaimDetailPage() {
       <PageHeader
         breadcrumbs={[{ label: t('pages.claims.title'), to: '/claims' }, { label: c.claim_no ?? '' }]}
         title={c.insured_name ?? c.claim_no ?? ''}
-        subtitle={[c.claim_no, c.mga_name, c.lob_name, ccy].filter(Boolean).join(' · ')}
+        subtitle={[c.claim_no, c.mga_name, names.lob(c.lob_id, c.lob_name), ccy].filter(Boolean).join(' · ')}
         actions={
           <>
             {manage && CLAIM_NEXT[c.status!].map((s) => (
