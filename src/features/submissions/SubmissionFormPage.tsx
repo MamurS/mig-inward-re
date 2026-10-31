@@ -10,6 +10,7 @@ import { toast } from 'sonner'
 import { PageHeader } from '@/components/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DecimalInput } from '@/components/ui/decimal-input'
 import { DateInput } from '@/components/ui/date-input'
 import { Textarea } from '@/components/ui/textarea'
 import { NativeSelect } from '@/components/ui/native-select'
@@ -21,7 +22,7 @@ import { StatusBadge } from '@/components/StatusBadge'
 import { FullPageSpinner } from '@/components/FullPageSpinner'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/auth/AuthProvider'
-import { calcFigures, cleanDecimal, isDecimal, toScaled } from '@/lib/decimal'
+import { calcFigures, cleanDecimal, isDecimal, toScaled, type NumberKind } from '@/lib/decimal'
 import { formatAmount, formatDate as formatDateShort, formatPct, isoDate } from '@/lib/format'
 import { errorMessage } from '@/lib/errors'
 import { useCounterparties, useCountries, useCurrencies, useLinesOfBusiness, useLocalName, useUsers, userName } from '@/hooks/useReference'
@@ -48,7 +49,7 @@ const amount = z
 const pct = z
   .string()
   .refine((v) => v.trim() === '' || isDecimal(v, 6), 'v.pct')
-  .refine((v) => v.trim() === '' || (Number(cleanDecimal(v)) >= 0 && Number(cleanDecimal(v)) <= 100), 'v.pctRange')
+  .refine((v) => v.trim() === '' || (Number(cleanDecimal(v, 'pct')) >= 0 && Number(cleanDecimal(v, 'pct')) <= 100), 'v.pctRange')
 
 const schema = z
   .object({
@@ -72,9 +73,9 @@ const schema = z
     gross_premium_100: amount,
     commission_pct: pct,
     brokerage_pct: pct,
-    written_share_pct: pct.refine((v) => v.trim() === '' || Number(cleanDecimal(v)) > 0, 'v.shareAboveZero'),
+    written_share_pct: pct.refine((v) => v.trim() === '' || Number(cleanDecimal(v, 'pct')) > 0, 'v.shareAboveZero'),
     offer_valid_until: z.string(),
-    payment_terms_days: z.string().refine((v) => v.trim() === '' || /^\d{1,4}$/.test(v.trim()), 'v.days'),
+    payment_terms_days: z.string().refine((v) => v.trim() === '' || /^\d{1,4}$/.test(cleanDecimal(v, 'int')), 'v.days'),
     ppw_date: z.string(),
     notes: z.string(),
   })
@@ -91,7 +92,7 @@ type FormValues = z.infer<typeof schema>
 
 const toStr = (v: number | string | null | undefined) => (v === null || v === undefined ? '' : String(v))
 const orNull = (v: string) => (v.trim() === '' ? null : v.trim())
-const decOrNull = (v: string) => (v.trim() === '' ? null : cleanDecimal(v))
+const decOrNull = (v: string, kind: NumberKind = 'amount') => (v.trim() === '' ? null : cleanDecimal(v, kind))
 
 /** The fields AI-assisted entry can fill (the ids of their inputs). */
 const LABEL_KEYS = Object.fromEntries(
@@ -153,11 +154,11 @@ function formToPayload(v: FormValues) {
     limit_100: decOrNull(v.limit_100),
     deductible: decOrNull(v.deductible),
     gross_premium_100: decOrNull(v.gross_premium_100),
-    commission_pct: decOrNull(v.commission_pct) ?? '0',
-    brokerage_pct: decOrNull(v.brokerage_pct) ?? '0',
-    written_share_pct: decOrNull(v.written_share_pct),
+    commission_pct: decOrNull(v.commission_pct, 'pct') ?? '0',
+    brokerage_pct: decOrNull(v.brokerage_pct, 'pct') ?? '0',
+    written_share_pct: decOrNull(v.written_share_pct, 'pct'),
     offer_valid_until: orNull(v.offer_valid_until),
-    payment_terms_days: v.payment_terms_days.trim() === '' ? null : Number(v.payment_terms_days),
+    payment_terms_days: v.payment_terms_days.trim() === '' ? null : Number(cleanDecimal(v.payment_terms_days, 'int')),
     ppw_date: orNull(v.ppw_date),
     notes: orNull(v.notes),
   }
@@ -490,23 +491,23 @@ function SubmissionForm({ existing, binderId }: { existing: SubmissionRow | null
                 </NativeSelect>
               </Field>
               <Field label={t('fields.sumInsured100')} htmlFor="sum_insured_100" error={err('sum_insured_100')}>
-                <Input inputMode="decimal" className="text-right tabular-nums" {...reg('sum_insured_100')} />
+                <DecimalInput className="text-right tabular-nums" {...reg('sum_insured_100')} />
               </Field>
               <Field label={t('fields.limit100')} htmlFor="limit_100" error={err('limit_100')}>
-                <Input inputMode="decimal" className="text-right tabular-nums" {...reg('limit_100')} />
+                <DecimalInput className="text-right tabular-nums" {...reg('limit_100')} />
               </Field>
               <Field label={t('fields.deductible')} htmlFor="deductible" error={err('deductible')}>
-                <Input inputMode="decimal" className="text-right tabular-nums" {...reg('deductible')} />
+                <DecimalInput className="text-right tabular-nums" {...reg('deductible')} />
               </Field>
               <Field label={t('fields.grossPremium100')} htmlFor="gross_premium_100" error={err('gross_premium_100')}>
-                <Input inputMode="decimal" className="text-right tabular-nums" {...reg('gross_premium_100')} />
+                <DecimalInput className="text-right tabular-nums" {...reg('gross_premium_100')} />
               </Field>
               <div />
               <Field label={t('fields.commissionPct')} htmlFor="commission_pct" error={err('commission_pct')} hint={t('sub.commissionHint')}>
-                <Input inputMode="decimal" className="text-right tabular-nums" {...reg('commission_pct')} />
+                <DecimalInput kind="pct" className="text-right tabular-nums" {...reg('commission_pct')} />
               </Field>
               <Field label={t('fields.brokeragePct')} htmlFor="brokerage_pct" error={err('brokerage_pct')}>
-                <Input inputMode="decimal" className="text-right tabular-nums" {...reg('brokerage_pct')} />
+                <DecimalInput kind="pct" className="text-right tabular-nums" {...reg('brokerage_pct')} />
               </Field>
             </CardContent>
           </Card>
@@ -516,7 +517,7 @@ function SubmissionForm({ existing, binderId }: { existing: SubmissionRow | null
             <CardHeader><CardTitle>{t('sub.section.terms')}</CardTitle></CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <Field label={t('fields.writtenSharePct')} htmlFor="written_share_pct" error={err('written_share_pct')} hint={t('sub.writtenHint')}>
-                <Input inputMode="decimal" className="text-right tabular-nums" {...reg('written_share_pct')} />
+                <DecimalInput kind="pct" className="text-right tabular-nums" {...reg('written_share_pct')} />
               </Field>
               <Field label={t('fields.signedSharePct')}>
                 <Input value={existing?.signed_share_pct === null || existing?.signed_share_pct === undefined ? '' : formatPct(existing.signed_share_pct)} disabled placeholder={t('sub.signedSetOnBind')} />
@@ -525,7 +526,7 @@ function SubmissionForm({ existing, binderId }: { existing: SubmissionRow | null
                 <DateField control={control} name="offer_valid_until" invalid={Boolean(errors.offer_valid_until)} />
               </Field>
               <Field label={t('fields.paymentTermsDays')} htmlFor="payment_terms_days" error={err('payment_terms_days')}>
-                <Input inputMode="numeric" className="text-right tabular-nums" {...reg('payment_terms_days')} />
+                <DecimalInput kind="int" className="text-right tabular-nums" {...reg('payment_terms_days')} />
               </Field>
               <Field label={t('fields.ppwDate')} htmlFor="ppw_date" hint={t('sub.ppwHint')}>
                 <DateField control={control} name="ppw_date" invalid={Boolean(errors.ppw_date)} />

@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { PageHeader } from '@/components/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DecimalInput } from '@/components/ui/decimal-input'
 import { DateInput } from '@/components/ui/date-input'
 import { NativeSelect } from '@/components/ui/native-select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -21,7 +22,7 @@ import { supabase } from '@/lib/supabase'
 import { ALL_ROLES, type AppRole } from '@/lib/roles'
 import { formatDate, formatDateTime, formatNumber, isoDate } from '@/lib/format'
 import { cn } from '@/lib/utils'
-import { cleanDecimal, isDecimal } from '@/lib/decimal'
+import { cleanDecimal, formatDecimalInput, isDecimal } from '@/lib/decimal'
 import { errorMessage } from '@/lib/errors'
 import type { Tables } from '@/lib/database.types'
 import { useCurrencies } from '@/hooks/useReference'
@@ -521,11 +522,11 @@ function FxTab() {
   })
 
   async function add() {
-    if (!ccy || !date || !isDecimal(rate, 10) || Number(cleanDecimal(rate)) <= 0) {
+    if (!ccy || !date || !isDecimal(rate, 10) || Number(cleanDecimal(rate, 'rate')) <= 0) {
       toast.error(t('admin.fx.invalid'))
       return
     }
-    const { error } = await supabase.from('fx_rates').upsert({ currency: ccy, rate_date: date, rate_to_usd: cleanDecimal(rate) as never, source: 'manual' })
+    const { error } = await supabase.from('fx_rates').upsert({ currency: ccy, rate_date: date, rate_to_usd: cleanDecimal(rate, 'rate') as never, source: 'manual' })
     if (error) return toast.error(errorMessage(error))
     setRate('')
     toast.success(t('admin.saved'))
@@ -575,7 +576,7 @@ function FxTab() {
             <DateInput value={date} onChange={setDate} className="w-40" />
           </Field>
           <Field label={t('admin.fx.rate', { ccy: ccy || '…' })}>
-            <Input inputMode="decimal" value={rate} onChange={(e) => setRate(e.target.value)} className="w-48 text-right" placeholder="0.0000785" />
+            <DecimalInput kind="rate" value={rate} onChange={(e) => setRate(e.target.value)} className="w-48 text-right" placeholder={formatDecimalInput('0.0000785', 'rate')} />
           </Field>
           <Button onClick={() => void add()}>
             <Plus />
@@ -680,6 +681,9 @@ export const SETTING_GROUPS: { id: string; settings: SettingDef[] }[] = [
   },
 ]
 const ALL_SETTINGS = SETTING_GROUPS.flatMap((g) => g.settings)
+/** A setting as typed («1 000 000», «30») → its number (NaN when unreadable; empty is 0, as before). */
+const settingNumber = (v: string | boolean | undefined, kind: SettingDef['kind']) =>
+  typeof v === 'string' && v.trim() !== '' ? Number(cleanDecimal(v, kind === 'days' ? 'int' : 'amount')) : Number(v ?? NaN)
 
 function SettingsTab() {
   const { t } = useTranslation()
@@ -705,14 +709,14 @@ function SettingsTab() {
   async function save() {
     for (const d of ALL_SETTINGS) {
       if (d.kind === 'bool' || disabledBy(d.key)) continue
-      const n = Number(vals[d.key])
+      const n = settingNumber(vals[d.key], d.kind)
       if (!Number.isFinite(n) || (d.kind === 'days' && !Number.isInteger(n)) || n < (d.min ?? 0) || n > (d.max ?? Infinity)) {
         toast.error(t('admin.settings.invalid', { label: t(`admin.settings.${d.key}`), min: d.min ?? 0, max: d.max ?? '∞' }))
         return
       }
     }
     setBusy(true)
-    const rows = ALL_SETTINGS.filter((d) => vals[d.key] !== undefined).map((d) => ({ key: d.key, value: d.kind === 'bool' ? Boolean(vals[d.key]) : Number(vals[d.key]) }))
+    const rows = ALL_SETTINGS.filter((d) => vals[d.key] !== undefined).map((d) => ({ key: d.key, value: d.kind === 'bool' ? Boolean(vals[d.key]) : settingNumber(vals[d.key], d.kind) }))
     const { error } = await supabase.from('settings').upsert(rows)
     setBusy(false)
     if (error) return toast.error(errorMessage(error))
@@ -734,11 +738,9 @@ function SettingsTab() {
                 </label>
               ) : (
                 <Field key={d.key} label={t(`admin.settings.${d.key}`)} hint={t(`admin.settings.${d.key}Hint`)} htmlFor={`setting-${d.key}`}>
-                  <Input
+                  <DecimalInput
                     id={`setting-${d.key}`}
-                    type="number"
-                    min={d.min}
-                    max={d.max}
+                    kind={d.kind === 'days' ? 'int' : 'amount'}
                     className="w-40 text-right tabular-nums"
                     value={String(vals[d.key] ?? '')}
                     onChange={(e) => setVals({ ...vals, [d.key]: e.target.value })}

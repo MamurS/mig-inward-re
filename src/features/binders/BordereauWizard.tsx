@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DecimalInput } from '@/components/ui/decimal-input'
 import { DateInput } from '@/components/ui/date-input'
 import { Textarea } from '@/components/ui/textarea'
 import { NativeSelect } from '@/components/ui/native-select'
@@ -453,7 +454,7 @@ export function BordereauWizard({ open, onClose, binder, lobs, periods, initialK
                 <p className="flex h-11 items-center justify-end rounded-md border bg-slate-50 px-3 font-medium num" data-computed-total>{formatAmount(computed)}</p>
               </Field>
               <Field label={t('bdx.statedTotal')} hint={t('bdx.statedTotalHint')} error={statedOk ? undefined : t('v.amount')}>
-                <Input inputMode="decimal" className="text-right tabular-nums" value={stated} onChange={(e) => setStated(e.target.value)} data-stated-total />
+                <DecimalInput className="text-right tabular-nums" value={stated} onChange={(e) => setStated(e.target.value)} data-stated-total />
               </Field>
               {totalsDiffer && (
                 <div role="alert" className="grid gap-2 rounded-md border border-warning-300 bg-warning-50 p-3 sm:col-span-2">

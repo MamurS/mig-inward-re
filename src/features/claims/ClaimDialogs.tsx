@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DecimalInput } from '@/components/ui/decimal-input'
 import { DateInput } from '@/components/ui/date-input'
 import { Textarea } from '@/components/ui/textarea'
 import { NativeSelect } from '@/components/ui/native-select'
@@ -130,7 +131,7 @@ export function ReserveDialog({ claim, open, onClose }: { claim: ClaimRow; open:
           </Field>
           <Field label={t('claim.amountCcy', { ccy: claim.currency })} required htmlFor="reserve-amount" error={amount && !ok ? t('v.amount') : undefined}
             hint={after !== null ? t('claim.outstandingAfter', { amount: formatAmount(after), ccy: claim.currency }) : undefined}>
-            <Input id="reserve-amount" inputMode="decimal" className="text-right tabular-nums" value={amount} onChange={(e) => setAmount(e.target.value)} />
+            <DecimalInput id="reserve-amount" className="text-right tabular-nums" value={amount} onChange={(e) => setAmount(e.target.value)} />
           </Field>
           <Field label={t('claim.movementDate')} required htmlFor="reserve-date">
             <DateInput id="reserve-date" value={date} onChange={setDate} />
@@ -175,7 +176,7 @@ export function RecoveryDialog({ claim, open, onClose }: { claim: ClaimRow; open
             <SegmentedControl ariaLabel={t('claim.recoveryType')} value={form.type} onChange={(type) => setForm({ ...form, type })} options={RECOVERY_TYPES.map((x) => ({ value: x, label: t(`claim.recovery.${x}`) }))} />
           </Field>
           <Field label={t('claim.amountCcy', { ccy: claim.currency })} required htmlFor="recovery-amount" error={form.amount && !ok ? t('v.amount') : undefined}>
-            <Input id="recovery-amount" inputMode="decimal" className="text-right tabular-nums" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+            <DecimalInput id="recovery-amount" className="text-right tabular-nums" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
           </Field>
           <Field label={t('claim.recoveryDate')} required htmlFor="recovery-date">
             <DateInput id="recovery-date" value={form.recovery_date} onChange={(v) => setForm({ ...form, recovery_date: v })} />
@@ -245,7 +246,7 @@ export function PaymentDialog({ claim, open, onClose }: { claim: ClaimRow; open:
             <SegmentedControl ariaLabel={t('claim.paymentType')} value={form.type} onChange={(type) => setForm({ ...form, type })} options={PAYMENT_TYPES.map((x) => ({ value: x, label: t(`claim.paymentTypes.${x}`) }))} />
           </Field>
           <Field label={t('claim.amountCcy', { ccy: claim.currency })} required htmlFor="payment-amount" error={form.amount && !amountOk ? t('v.amount') : undefined}>
-            <Input id="payment-amount" inputMode="decimal" className="text-right tabular-nums" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+            <DecimalInput id="payment-amount" className="text-right tabular-nums" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
           </Field>
           <Field label={t('claim.paymentDate')} required htmlFor="payment-date">
             <DateInput id="payment-date" value={form.payment_date} onChange={(v) => setForm({ ...form, payment_date: v })} />
@@ -342,7 +343,7 @@ export function EditClaimDialog({ claim, open, onClose }: { claim: ClaimRow; ope
         <DialogHeader><DialogTitle>{t('claim.edit')}</DialogTitle></DialogHeader>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label={t('claim.estimate100', { ccy: claim.currency })} htmlFor="edit-estimate" error={estimateOk ? undefined : t('v.amount')}>
-            <Input id="edit-estimate" inputMode="decimal" className="text-right tabular-nums" value={form.estimate_100} onChange={set('estimate_100')} />
+            <DecimalInput id="edit-estimate" className="text-right tabular-nums" value={form.estimate_100} onChange={set('estimate_100')} />
           </Field>
           <Field label={t('claim.handler')} htmlFor="edit-handler">
             <NativeSelect id="edit-handler" value={form.handler_id} onChange={set('handler_id')}>

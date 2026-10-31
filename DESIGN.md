@@ -374,6 +374,12 @@ All under `src/components/`; screens compose them, never re-style them.
   decorative — the error says what is needed.
 - Validate on blur (`mode: 'onTouched'`): nothing is red until the user
   leaves the field; after that the field re-checks as they type.
+- Numbers are typed into `DecimalInput` (`src/components/ui/decimal-input.tsx`):
+  «,» and «.» are both decimal separators, spaces and apostrophes group
+  thousands, pasted «1 234 567,89» / «1,234,567.89» both work (rules in
+  `parseDecimalInput`, `src/lib/decimal.ts`). On blur the field shows the
+  number as read, in the interface language («1 234 567,89» / «1,234,567.89»);
+  what is saved is a plain decimal string.
 - Buttons name the outcome: «Create submission», «Save changes», «Close
   follow-up», «Move follow-up», «Set new password» — never a bare «Save» or
   «OK».

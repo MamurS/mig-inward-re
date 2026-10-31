@@ -4,7 +4,7 @@ import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { DecimalInput } from '@/components/ui/decimal-input'
 import { DateInput } from '@/components/ui/date-input'
 import { Textarea } from '@/components/ui/textarea'
 import { Field } from '@/components/Field'
@@ -90,7 +90,7 @@ export function AdjustmentDialog({
             <DateInput value={due} onChange={setDue} />
           </Field>
           <Field label={t('prem.grossAmount', { ccy: s.currency })} required hint={t('prem.positiveHint')}>
-            <Input inputMode="decimal" className="text-right num" value={gross} onChange={(e) => setGross(e.target.value)} />
+            <DecimalInput className="text-right num" value={gross} onChange={(e) => setGross(e.target.value)} />
           </Field>
           <Field label={t('fields.notes')} className="sm:col-span-2">
             <Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />

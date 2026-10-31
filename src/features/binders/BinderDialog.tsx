@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DecimalInput } from '@/components/ui/decimal-input'
 import { DateInput } from '@/components/ui/date-input'
 import { Textarea } from '@/components/ui/textarea'
 import { NativeSelect } from '@/components/ui/native-select'
@@ -37,7 +38,10 @@ type Form = {
   lobs: Record<string, string> // lob id → limit at 100 % ('' = no own limit)
 }
 
-const pct = (v: string, allowZero = true) => isDecimal(v, 6) && Number(cleanDecimal(v)) <= 100 && (allowZero ? Number(cleanDecimal(v)) >= 0 : Number(cleanDecimal(v)) > 0)
+const pct = (v: string, allowZero = true) => {
+  const n = Number(cleanDecimal(v, 'pct'))
+  return isDecimal(v, 6) && n <= 100 && (allowZero ? n >= 0 : n > 0)
+}
 const amountOk = (v: string) => v.trim() === '' || (isDecimal(v, 2) && Number(cleanDecimal(v)) > 0)
 
 /**
@@ -94,7 +98,7 @@ export function BinderDialog({ open, onClose, binder, lobs, onSaved }: { open: b
   if (!pct(form.brokerage_pct)) errors.brokerage_pct = t('v.pct')
   if (!amountOk(form.limit_per_risk)) errors.limit_per_risk = t('v.amount')
   if (!amountOk(form.aggregate_limit)) errors.aggregate_limit = t('v.amount')
-  if (!/^\d{1,3}$/.test(form.bordereau_due_days) || Number(form.bordereau_due_days) > 365) errors.bordereau_due_days = t('binder.v.days')
+  if (!/^\d{1,3}$/.test(cleanDecimal(form.bordereau_due_days, 'int')) || Number(cleanDecimal(form.bordereau_due_days, 'int')) > 365) errors.bordereau_due_days = t('binder.v.days')
   if (Object.keys(form.lobs).length === 0) errors.lobs = t('binder.v.lobs')
   if (Object.values(form.lobs).some((v) => !amountOk(v))) errors.lobs = t('v.amount')
   const err = (k: keyof Form) => (touched ? errors[k] : undefined)
@@ -111,10 +115,10 @@ export function BinderDialog({ open, onClose, binder, lobs, onSaved }: { open: b
         binder?.id ?? null,
         {
           binder_ref: form.binder_ref.trim(), mga_id: form.mga_id, broker_id: form.broker_id || null, underwriter_id: form.underwriter_id || null,
-          period_from: form.period_from, period_to: form.period_to, currency: form.currency, our_share_pct: cleanDecimal(form.our_share_pct),
-          commission_pct: cleanDecimal(form.commission_pct), brokerage_pct: cleanDecimal(form.brokerage_pct), limit_per_risk: n(form.limit_per_risk),
+          period_from: form.period_from, period_to: form.period_to, currency: form.currency, our_share_pct: cleanDecimal(form.our_share_pct, 'pct'),
+          commission_pct: cleanDecimal(form.commission_pct, 'pct'), brokerage_pct: cleanDecimal(form.brokerage_pct, 'pct'), limit_per_risk: n(form.limit_per_risk),
           aggregate_limit: n(form.aggregate_limit), territories: form.territories, bordereau_frequency: form.bordereau_frequency,
-          bordereau_due_days: Number(form.bordereau_due_days), bordereau_kinds: form.bordereau_kinds, status: form.status, notes: form.notes.trim() || null,
+          bordereau_due_days: Number(cleanDecimal(form.bordereau_due_days, 'int')), bordereau_kinds: form.bordereau_kinds, status: form.status, notes: form.notes.trim() || null,
         },
         Object.entries(form.lobs).map(([lob_id, v]) => ({ lob_id, limit_100: n(v) })),
       )
@@ -180,21 +184,21 @@ export function BinderDialog({ open, onClose, binder, lobs, onSaved }: { open: b
             </NativeSelect>
           </Field>
           <Field label={t('binder.ourShare')} required error={err('our_share_pct')}>
-            <Input inputMode="decimal" className="text-right tabular-nums" value={form.our_share_pct} onChange={set('our_share_pct')} />
+            <DecimalInput kind="pct" className="text-right tabular-nums" value={form.our_share_pct} onChange={set('our_share_pct')} />
           </Field>
           <div className="grid grid-cols-2 gap-4">
             <Field label={t('fields.commissionPct')} error={err('commission_pct')}>
-              <Input inputMode="decimal" className="text-right tabular-nums" value={form.commission_pct} onChange={set('commission_pct')} />
+              <DecimalInput kind="pct" className="text-right tabular-nums" value={form.commission_pct} onChange={set('commission_pct')} />
             </Field>
             <Field label={t('fields.brokeragePct')} error={err('brokerage_pct')}>
-              <Input inputMode="decimal" className="text-right tabular-nums" value={form.brokerage_pct} onChange={set('brokerage_pct')} />
+              <DecimalInput kind="pct" className="text-right tabular-nums" value={form.brokerage_pct} onChange={set('brokerage_pct')} />
             </Field>
           </div>
           <Field label={t('binder.limitPerRiskCcy', { ccy: form.currency })} hint={t('binder.at100')} error={err('limit_per_risk')}>
-            <Input inputMode="decimal" className="text-right tabular-nums" value={form.limit_per_risk} onChange={set('limit_per_risk')} />
+            <DecimalInput className="text-right tabular-nums" value={form.limit_per_risk} onChange={set('limit_per_risk')} />
           </Field>
           <Field label={t('binder.aggregateLimitCcy', { ccy: form.currency })} hint={t('binder.aggregateHint')} error={err('aggregate_limit')}>
-            <Input inputMode="decimal" className="text-right tabular-nums" value={form.aggregate_limit} onChange={set('aggregate_limit')} />
+            <DecimalInput className="text-right tabular-nums" value={form.aggregate_limit} onChange={set('aggregate_limit')} />
           </Field>
         </div>
 
@@ -220,9 +224,8 @@ export function BinderDialog({ open, onClose, binder, lobs, onSaved }: { open: b
                     <span className="truncate" title={localName(l)}><span className="num">{l.code}</span> · {localName(l)}</span>
                   </label>
                   {on && (
-                    <Input
+                    <DecimalInput
                       aria-label={t('binder.lobLimit', { lob: l.code })}
-                      inputMode="decimal"
                       placeholder={t('binder.noOwnLimit')}
                       className="h-9 w-32 text-right tabular-nums"
                       value={form.lobs[l.id]}
@@ -264,7 +267,7 @@ export function BinderDialog({ open, onClose, binder, lobs, onSaved }: { open: b
             </NativeSelect>
           </Field>
           <Field label={t('binder.dueDays')} hint={t('binder.dueDaysHint')} error={err('bordereau_due_days')}>
-            <Input inputMode="numeric" className="text-right tabular-nums" value={form.bordereau_due_days} onChange={set('bordereau_due_days')} />
+            <DecimalInput kind="int" className="text-right tabular-nums" value={form.bordereau_due_days} onChange={set('bordereau_due_days')} />
           </Field>
           <fieldset className="grid content-start gap-2">
             <legend className="text-small font-medium">{t('binder.kindsOwed')}</legend>

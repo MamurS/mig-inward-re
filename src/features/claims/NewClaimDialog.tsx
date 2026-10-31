@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DecimalInput } from '@/components/ui/decimal-input'
 import { DateInput } from '@/components/ui/date-input'
 import { Textarea } from '@/components/ui/textarea'
 import { NativeSelect } from '@/components/ui/native-select'
@@ -201,7 +202,7 @@ export function NewClaimDialog({ open, onClose, submissionId }: { open: boolean;
             </Field>
             <Field label={t('claim.estimate100', { ccy: form.currency })} error={estimateOk ? undefined : t('v.amount')} htmlFor="claim-estimate"
               hint={ourShare !== null ? t('claim.ourShareIs', { amount: formatAmount(ourShare), ccy: form.currency }) : undefined}>
-              <Input id="claim-estimate" inputMode="decimal" className="text-right tabular-nums" value={form.estimate_100} onChange={set('estimate_100')} />
+              <DecimalInput id="claim-estimate" className="text-right tabular-nums" value={form.estimate_100} onChange={set('estimate_100')} />
             </Field>
             <Field label={t('claim.cause')} htmlFor="claim-cause"><Input id="claim-cause" value={form.cause} onChange={set('cause')} /></Field>
             <Field label={t('claim.location')} htmlFor="claim-location"><Input id="claim-location" value={form.location} onChange={set('location')} /></Field>

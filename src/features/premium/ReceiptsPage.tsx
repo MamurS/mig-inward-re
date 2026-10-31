@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/PageHeader'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DecimalInput } from '@/components/ui/decimal-input'
 import { DateInput } from '@/components/ui/date-input'
 import { Textarea } from '@/components/ui/textarea'
 import { NativeSelect } from '@/components/ui/native-select'
@@ -236,7 +237,7 @@ function NewReceiptDialog({ open, onClose }: { open: boolean; onClose: () => voi
             </NativeSelect>
           </Field>
           <Field label={t('rcp.amountIn', { ccy: form.currency })} required>
-            <Input inputMode="decimal" className="text-right num" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+            <DecimalInput className="text-right num" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
           </Field>
           <Field label={t('rcp.bankReference')}>
             <Input value={form.bank_reference} onChange={(e) => setForm({ ...form, bank_reference: e.target.value })} placeholder="SWIFT MT103 …" />

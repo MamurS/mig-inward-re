@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DecimalInput } from '@/components/ui/decimal-input'
 import { DateInput } from '@/components/ui/date-input'
 import { Badge } from '@/components/ui/badge'
 import { Field } from '@/components/Field'
@@ -137,7 +138,7 @@ export function ScheduleEditor({
               <DateInput value={single.due_date} onChange={(v) => setSingle({ ...single, due_date: v })} />
             </Field>
             <Field label={t('prem.grossAmount', { ccy: s.currency })} required>
-              <Input inputMode="decimal" className="text-right num" value={single.gross_amount} onChange={(e) => setSingle({ ...single, gross_amount: e.target.value })} />
+              <DecimalInput className="text-right num" value={single.gross_amount} onChange={(e) => setSingle({ ...single, gross_amount: e.target.value })} />
             </Field>
           </div>
         )}
@@ -168,7 +169,7 @@ export function ScheduleEditor({
               <div key={i} className="grid grid-cols-[2rem_minmax(0,1fr)_minmax(0,1fr)_2.25rem] items-center gap-2">
                 <span className="text-caption text-muted-foreground num">#{i + 1}</span>
                 <DateInput aria-label={t('prem.dueDate')} value={r.due_date} onChange={(v) => setCustomRow(i, { due_date: v })} />
-                <Input inputMode="decimal" aria-label={t('prem.grossAmount', { ccy: s.currency })} className="text-right num" value={r.gross_amount} onChange={(e) => setCustomRow(i, { gross_amount: e.target.value })} />
+                <DecimalInput aria-label={t('prem.grossAmount', { ccy: s.currency })} className="text-right num" value={r.gross_amount} onChange={(e) => setCustomRow(i, { gross_amount: e.target.value })} />
                 <Button variant="ghost" size="icon" aria-label={t('common.remove')} disabled={custom.length <= 1} onClick={() => setCustom(custom.filter((_, j) => j !== i))}>
                   <Trash2 />
                 </Button>
